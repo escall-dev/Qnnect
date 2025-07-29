@@ -1,0 +1,185 @@
+/* Standardized Pagination Styling for QR Code Attendance System */
+
+/* Basic pagination container styles */
+.pagination-container {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Pagination list styling */
+.pagination {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: 0.25rem;
+    justify-content: center !important;
+    gap: 5px;
+}
+
+/* Pagination link styling */
+.page-link {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.75rem;
+    margin-left: 0;
+    line-height: 1.25;
+    color: #098744;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+    border-radius: 0;
+    min-width: 40px;
+    text-align: center;
+}
+
+.page-link:hover {
+    z-index: 2;
+    color: #076a34;
+    text-decoration: none;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-link:focus {
+    z-index: 3;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(9, 135, 68, 0.25);
+}
+
+/* First and last page item styling */
+.page-item:first-child .page-link {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.page-item:last-child .page-link {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Active page styling */
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #098744;
+    border-color: #098744;
+}
+
+/* Disabled page styling */
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: auto;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* DataTables specific styling */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0;
+    margin: 0;
+    border: none !important;
+    background: transparent !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button:active {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: transparent !important;
+    border: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link {
+    background-color: #098744;
+    color: white;
+    border-color: #098744;
+}
+
+/* DataTables additional styling */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 15px;
+}
+
+.dataTables_wrapper .dataTables_info {
+    padding-top: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Enhances visual appeal for tables */
+table.dataTable thead > tr > th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #098744 !important;
+    color: #343a40;
+    position: relative;
+}
+
+table.dataTable thead > tr > th:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #098744;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+table.dataTable thead > tr > th:hover:after {
+    transform: scaleX(1);
+}
+
+/* Table row styling and hover effects */
+table.dataTable tbody tr {
+    transition: all 0.2s ease;
+}
+
+table.dataTable tbody tr:hover {
+    background-color: rgba(9, 135, 68, 0.05) !important;
+    transform: translateX(5px);
+}
+
+/* Updated pagination style to match activity-logs.php */
+.pagination .page-item {
+    margin: 0 2px !important;
+}
+
+.pagination .page-item .page-link {
+    border-radius: 0;
+    border: 1px solid #dee2e6;
+    min-width: 40px;
+    text-align: center;
+    padding: 0.5rem 0.75rem;
+    margin-left: 0;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #098744;
+    border-color: #098744;
+    color: white;
+}
+
+/* First/previous/next/last buttons styling */
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+    border-radius: 0;
+}
+
+/* Ensure the pagination is centered */
+.dataTables_paginate {
+    text-align: center !important;
+    float: none !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 15px !important;
+} 

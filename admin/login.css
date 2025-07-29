@@ -1,0 +1,109 @@
+  
+    *{
+        padding:0px;
+        margin:0px;
+        box-sizing: border-box;
+    }
+    body{
+        background-color:#098744;
+        
+        
+    }
+    .Container{
+        max-height:100vh;
+        display:flex;
+        justify-content: center;
+        margin:150px;
+        
+    }
+    .box{
+        width: 600px;
+        height:550px;
+        background-color: lightgreen; 
+        border-radius: 20px;
+    }
+    .box-content{
+        display:flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .title-top-content{
+        display:flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-top:30px;
+        font-size: 24px;
+        letter-spacing: 1px;
+        color:#098744;
+    }
+    img{
+        margin-top:10px;
+    }
+    .middle-content{
+    
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .login{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+       
+    }
+    .log{
+        margin: 15px 0px;
+        font-size: 20px;
+        color:#098744;
+        letter-spacing:1px;
+        text-transform: uppercase;
+    }
+    .middle-content form input[type="email"]{
+        margin-left:25px;
+        margin-top:5px; 
+        margin-bottom:15px;
+        width:200px;
+    }
+    .middle-content form input[type="password"]{
+        width:200px;
+    }
+    input[type="submit"]{
+        border:none;
+        border-radius: 15px;
+        background-color: #098744;
+        margin-top: 10px;
+        margin-left: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width:255px;
+        height:30px;
+        color:white;
+        font-size: 16px;
+        
+        }
+        .sign-up{
+            margin-top: 15px;
+            display:flex;
+            font-size: 12px;
+            align-items: center;
+            justify-content: center;
+            color:gray;
+        }
+        .sign-up a{
+           
+           margin-left:10px;
+        }
+        .sign-up p{
+           
+            margin-top:15px;
+         }
+
+        .forgot-password{
+            margin: 20px 0px;
+          
+        }
+
+        

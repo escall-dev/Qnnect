@@ -1,0 +1,529 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898;
+    background-blend-mode: multiply,multiply;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* Main content area */
+.main {
+    margin-left: 250px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* When sidebar is minimized (active) */
+.main.active {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+}
+
+.attendance-container {
+    display: flex;
+    flex-direction: row !important;
+    gap: 20px;
+    height: auto !important;
+    max-height: calc(100vh - 40px);
+    padding: 20px !important;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    overflow: hidden !important;
+}
+
+.qr-container {
+    flex: 0 0 400px;
+    min-width: 400px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    height: fit-content;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.attendance-list {
+    flex: 1;
+    min-width: 0;
+    background: white;
+    padding: 20px !important;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    overflow-y: auto;
+    padding-right: 20px !important;
+    max-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+}
+
+.table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Format table for better readability */
+#attendanceTable {
+    table-layout: fixed !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin: 0 !important;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* Style table header to match container */
+#attendanceTable thead {
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    overflow: hidden;
+}
+
+#attendanceTable thead th:first-child {
+    border-top-left-radius: 15px;
+}
+
+#attendanceTable thead th:last-child {
+    border-top-right-radius: 15px;
+}
+
+/* Style table body bottom corners */
+#attendanceTable tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 15px;
+}
+
+#attendanceTable tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 15px;
+}
+
+/* Prevent date and time cells from wrapping */
+#attendanceTable td:nth-child(4),
+#attendanceTable td:nth-child(5),
+#attendanceTable td:nth-child(6),
+#attendanceTable th:nth-child(4),
+#attendanceTable th:nth-child(5),
+#attendanceTable th:nth-child(6) {
+    white-space: nowrap;
+}
+
+/* Adjust column widths for better spacing */
+#attendanceTable th:nth-child(1),
+#attendanceTable td:nth-child(1) {
+    width: 5% !important;
+}
+
+#attendanceTable th:nth-child(2),
+#attendanceTable td:nth-child(2) {
+    width: 20% !important;
+}
+
+#attendanceTable th:nth-child(3),
+#attendanceTable td:nth-child(3) {
+    width: 15% !important;
+}
+
+#attendanceTable th:nth-child(4),
+#attendanceTable td:nth-child(4) {
+    width: 15% !important;
+    min-width: 120px !important;
+}
+
+#attendanceTable th:nth-child(5),
+#attendanceTable td:nth-child(5),
+#attendanceTable th:nth-child(6),
+#attendanceTable td:nth-child(6) {
+    width: 15% !important;
+    min-width: 100px !important;
+}
+
+#attendanceTable th:nth-child(7),
+#attendanceTable td:nth-child(7) {
+    width: 10% !important;
+}
+
+/* Make sure table cells have proper padding */
+#attendanceTable td, 
+#attendanceTable th {
+    padding: 12px 8px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid #0ca557 !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+}
+
+/* Keep header cells centered */
+#attendanceTable thead th {
+    text-align: center !important;
+}
+
+/* Make the table responsive while preserving column formatting */
+.table-responsive {
+    overflow-x: auto !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .attendance-container {
+        flex-direction: column !important;
+        overflow-y: auto;
+    }
+    
+    .qr-container {
+        flex: none;
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .attendance-list {
+        width: 100%;
+    }
+}
+
+/* Custom Alert Box Styles */
+.custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    z-index: 1000;
+    display: none;
+    animation: slideIn 0.5s ease-out;
+}
+
+.custom-alert.success {
+    background-color: #098744; /* Green background for success */
+}
+
+.custom-alert.error {
+    background-color: #ff4444; /* Red background for error */
+}
+
+/* Background overlay */
+.overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.6);
+z-index: 9998;
+display: none;
+}
+
+/* Popup box for confirmation */
+.popup {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background-color: #098744;
+color: #fff;
+border-radius: 12px;
+padding: 20px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+width: 300px;
+text-align: center;
+z-index: 9999;
+display: none;
+}
+
+/* Success message popup */
+.success-popup {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background-color: #098744;
+color: #fff;
+border-radius: 12px;
+padding: 20px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+width: 300px;
+text-align: center;
+z-index: 9999;
+display: none;
+}
+
+/* Buttons inside popups */
+.popup button, .success-popup button {
+background-color: #fff;
+color: #098744;
+border: none;
+border-radius: 6px;
+padding: 8px 16px;
+margin: 10px 5px;
+cursor: pointer;
+font-size: 14px;
+}
+
+.popup button:hover, .success-popup button:hover {
+background-color: #e0e0e0;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Sidebar styles */
+.sidebar {
+    height: 100vh;
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #098744;
+    padding-top: 20px;
+    color: white;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.active {
+    width: 60px;
+}
+
+/* Animate sidebar elements */
+.sidebar-brand h4,
+.sidebar-brand h5,
+.sidebar-nav li a span,
+.arrow,
+.year-arrow {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar.active .sidebar-brand h4,
+.sidebar.active .sidebar-brand h5,
+.sidebar.active .sidebar-nav li a span,
+.sidebar.active .arrow,
+.sidebar.active .year-arrow {
+    display: none;
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.sidebar-nav li a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    display: block;
+    transition: all 0.3s ease;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.sidebar-nav li a i {
+    transition: transform 0.3s ease, margin 0.3s ease;
+}
+
+.sidebar.active .sidebar-nav li a i {
+    font-size: 20px;
+    margin-right: 0;
+    transform: scale(1.2);
+}
+
+/* Sidebar toggle button animation */
+.sidebar-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+    background-color: #098744;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 25px;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease;
+    border-radius: 4px;
+}
+
+.sidebar-toggle:hover {
+    background-color: #076b33;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-toggle.rotate {
+    transform: rotate(180deg);
+}
+
+/* Submenu styles */
+.submenu {
+    list-style: none;
+    padding-left: 20px;
+    display: none;
+}
+
+.submenu.show {
+    display: block;
+}
+
+.course-submenu {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.arrow.rotate {
+    transform: rotate(180deg);
+}
+
+.year-arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    float: right;
+}
+
+.year-arrow.rotate {
+    transform: rotate(180deg);
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 0;
+        overflow: hidden;
+    }
+
+    .sidebar.active {
+        width: 60px;
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .main.active {
+        margin-left: 60px;
+    }
+
+    .sidebar-toggle {
+        display: block;
+    }
+}
+
+.sidebar-toggle {
+    transition: transform 0.3s ease;
+}
+
+.sidebar-toggle.active {
+    transform: rotate(90deg);
+}
+
+.rotate {
+    transform: rotate(90deg);
+    transition: transform 0.3s ease; /* Smooth transition */
+}
+
+/* Transition state for body */
+body.sidebar-transition * {
+    transition-duration: 0.3s;
+}
+
+/* Smooth transition for containers when sidebar toggles */
+.qr-container, 
+.attendance-list {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Overlay animation for sidebar */
+.sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(9, 135, 68, 0.9), rgba(9, 135, 68, 0.7));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.sidebar.active::before {
+    opacity: 1;
+}
+
+/* Make icons pop when sidebar is collapsed */
+.sidebar.active .sidebar-nav li a:hover i {
+    transform: scale(1.3);
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Enhanced animation for toggle button */
+.sidebar-toggle {
+    perspective: 800px;
+}
+
+.sidebar-toggle.rotate {
+    transform: rotate(180deg);
+}
+
+/* Add ripple effect to sidebar items */
+.sidebar-nav li a {
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-nav li a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+.sidebar-nav li a:active::after {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0) translate(-50%, -50%);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(20) translate(-50%, -50%);
+        opacity: 0;
+    }
+}

@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898;
+    background-blend-mode: multiply,multiply;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 95.5vh;
+}
+
+.student-container {
+    height: 100%;
+    width: 95%;
+    border-radius: 20px;
+    padding: 25px;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.student-container > div {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-radius: 10px;
+    padding: 20px;
+   
+}
+
+.title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+table.dataTable thead > tr > th.sorting, table.dataTable thead > tr > th.sorting_asc, table.dataTable thead > tr > th.sorting_desc, table.dataTable thead > tr > th.sorting_asc_disabled, table.dataTable thead > tr > th.sorting_desc_disabled, table.dataTable thead > tr > td.sorting, table.dataTable thead > tr > td.sorting_asc, table.dataTable thead > tr > td.sorting_desc, table.dataTable thead > tr > td.sorting_asc_disabled, table.dataTable thead > tr > td.sorting_desc_disabled {
+    text-align: center;
+}
+
+@media print {
+    body {
+        visibility: visible !important;
+        background: none;
+    }
+    .student-container {
+        background: none;
+        box-shadow: none;
+        height: auto;
+        width: 100%;
+        padding: 0;
+    }
+    .table-container {
+        width: 100%;
+    }
+    #studentTable {
+        width: 100% !important;
+        visibility: visible !important;
+    }
+    #studentTable th,
+    #studentTable td {
+        visibility: visible !important;
+    }
+    .action-button, 
+    .pagination-container,
+    .dataTables_filter,
+    .dataTables_info,
+    .dataTables_paginate,
+    nav,
+    button,
+    .title button {
+        display: none !important;
+    }
+    .title h4 {
+        text-align: center;
+        width: 100%;
+    }
+    #studentTable th:last-child,
+    #studentTable td:last-child {
+        display: none;
+    }
+}
+
+        /* Sidebar styles */
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #098744;
+            padding-top: 20px;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .sidebar.active {
+            width: 60px;
+        }
+
+        .sidebar.active .sidebar-brand h4,
+        .sidebar.active .sidebar-brand h5,
+        .sidebar.active .sidebar-nav li a span,
+        .sidebar.active .arrow,
+        .sidebar.active .year-arrow {
+            display: none;
+        }
+
+        .sidebar.active .sidebar-nav li a {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .sidebar.active .sidebar-nav li a i {
+            font-size: 20px;
+        }
+
+        .sidebar-brand {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-nav li {
+            padding: 10px 15px;
+        }
+
+        .sidebar-nav li a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar-nav li a:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        .sidebar-nav li.active a {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background-color: #098744;
+            color: white;
+            border: none;
+            padding: 10px; /* Increased padding for a bigger button */
+            font-size: 25px; /* Increased font size for better visibility */
+            cursor: pointer;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main.active {
+            margin-left: 60px;
+        }
+
+        /* Submenu styles */
+        .submenu {
+            list-style: none;
+            padding-left: 20px;
+            display: none;
+        }
+
+        .submenu.show {
+            display: block;
+        }
+
+        .course-submenu {
+            list-style: none;
+            padding-left: 20px;
+        }
+
+        .arrow {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .arrow.rotate {
+            transform: rotate(180deg);
+        }
+
+        .year-arrow {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            float: right;
+        }
+
+        .year-arrow.rotate {
+            transform: rotate(180deg);
+        }
+
+        /* Responsive sidebar */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+
+            .sidebar.active {
+                width: 60px;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .main.active {
+                margin-left: 60px;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        .sidebar-toggle {
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-toggle.active {
+            transform: rotate(180deg);
+        }
+
+        .rotate {
+            transform: rotate(180deg);
+            transition: transform 0.3s ease; /* Smooth transition */
+        }
+
+        /* Pagination styles */
+        .pagination-container {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding-left: 0;
+            list-style: none;
+            border-radius: 0.25rem;
+            gap: 20px; /* Increase gap to separate pagination items */
+        }
+
+        .page-item {
+            margin: 0 10px; /* Add margin for additional separation */
+        }
+
+        .page-link {
+            position: relative;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            margin-left: -1px;
+            line-height: 1.25;
+            color: #098744;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+        }
+
+        .page-link:hover {
+            color: #076a34;
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .page-item.active .page-link {
+            z-index: 1;
+            color: #fff;
+            background-color: #098744;
+            border-color: #098744;
+        }
+
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .pagination {
+                flex-wrap: wrap;
+            }
+        }
+        

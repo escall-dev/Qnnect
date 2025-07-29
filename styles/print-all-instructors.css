@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: #fff;
+    padding: 20px;
+}
+
+.container {
+    margin-top: 20px;
+}
+
+.table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse; /* Ensures proper table styling */
+    border: 2px solid black; /* Ensures outer border is 2px solid black */
+}
+
+.table th,
+.table td {
+    border: 2px solid black !important; /* Ensures all cell borders are 2px solid black */
+    padding: 8px;
+    text-align: center;
+}
+
+.table tr {
+    border: 2px solid black !important; /* Ensures row separators are also 2px solid black */
+}
+
+.table thead {
+    background-color: #098744;
+    font-weight: bold;
+}
+
+.table tbody tr:hover {
+    background-color: #ddd; /* Hover effect */
+}
+
+@media print {
+    .btn {
+        display: none; /* Hide buttons when printing */
+    }
+}

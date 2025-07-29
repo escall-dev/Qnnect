@@ -1,0 +1,197 @@
+/* Main content styles */
+.main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin-left: 240px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.main.collapsed {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+}
+
+.main.expanded {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Analytics container styles */
+.analytics-container {
+    height: 90vh; /* Fixed height to ensure it doesn't overflow viewport */
+    width: 95%;
+    border-radius: 20px;
+    padding: 25px;
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+.analytics-content {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    overflow-y: auto;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    max-height: calc(100% - 20px);
+    scrollbar-width: thin;
+    scrollbar-color: #098744 transparent;
+}
+
+/* Scrollbar styling for webkit browsers */
+.analytics-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.analytics-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.analytics-content::-webkit-scrollbar-thumb {
+    background-color: #098744;
+    border-radius: 4px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    padding: 15px;
+    margin: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.title h4 {
+    margin: 0;
+    color: #098744;
+}
+
+.chart-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    height: 100%;
+    margin-bottom: 40px; /* Add space after each chart card */
+}
+
+.chart-container {
+    height: 300px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* Remove the previous spacing attempt */
+.row:first-of-type {
+    margin-top: 20px;
+}
+
+/* Add space before the summary table row */
+.row:last-of-type {
+    margin-top: 20px;
+}
+
+.summary-table {
+    background-color: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    margin: 20px;
+    margin-top: 40px; /* Additional space above the summary table */
+}
+
+.summary-table h5 {
+    margin-bottom: 15px;  /* Reduced from 24px to 15px */
+    color: #098744;
+}
+
+/* Table styles */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-bottom: 2px solid #098744;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.table td, .table th {
+    padding: 12px;
+    vertical-align: middle;
+    text-align: left;
+}
+
+/* Responsive styles */
+@media (max-width: 1200px) {
+    .main.collapsed {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+    }
+}
+
+@media (max-width: 992px) {
+    .main.collapsed {
+        margin-left: 180px;
+        width: calc(100% - 180px);
+    }
+}
+
+@media (max-width: 768px) {
+    .main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 15px;
+    }
+    
+    .main.active {
+        margin-left: 0 !important;
+    }
+    
+    .analytics-container {
+        width: 100%;
+        padding: 15px;
+    }
+    
+    .analytics-content {
+        padding: 15px;
+    }
+    
+    .chart-card {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-table {
+        padding: 15px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main {
+        padding: 10px;
+    }
+    
+    .analytics-container {
+        padding: 10px;
+    }
+    
+    .analytics-content {
+        padding: 10px;
+    }
+} 
