@@ -1,0 +1,56 @@
+# Database files
+*.sql
+*.db
+
+# Configuration files with sensitive data
+config.php
+database.php
+conn.php
+
+# Temporary files
+temp/
+*.tmp
+*.temp
+
+# Log files
+*.log
+
+# Uploaded files (except face_images which are needed)
+uploads/profile_images/
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+
+# Backup files
+backup/
+admin/backup/
+
+# Composer files (if not needed)
+vendor/
+composer.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# PHP session files
+*.sess
+
+# Cache files
+cache/
+*.cache
+
+# Large model files (if any)
+*.model
+*.weights 
