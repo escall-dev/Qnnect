@@ -3,9 +3,33 @@
 require_once 'includes/session_config.php';
 
 // Check if user is logged in
-if (!isset($_SESSION['email'])) {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
     header("Location: admin/login.php");
     exit;
+}
+
+// Include database connections
+include('./conn/db_connect.php');
+
+// Get user's school_id from session (already set during login)
+$school_id = $_SESSION['school_id'];
+$user_id = $_SESSION['user_id'];
+
+// Debug: Log session contents
+error_log('Masterlist session contents: ' . print_r($_SESSION, true));
+
+// Check if school_id column exists in tbl_student, if not add it
+$check_column_query = "SHOW COLUMNS FROM tbl_student LIKE 'school_id'";
+$column_result = $conn_qr->query($check_column_query);
+
+if ($column_result->num_rows == 0) {
+    // Add school_id column to tbl_student table
+    $add_column_query = "ALTER TABLE tbl_student ADD COLUMN school_id INT DEFAULT 1";
+    $conn_qr->query($add_column_query);
+    
+    // Update existing records to have school_id = 1
+    $update_query = "UPDATE tbl_student SET school_id = 1 WHERE school_id IS NULL";
+    $conn_qr->query($update_query);
 }
 ?>
 <!DOCTYPE html>
@@ -505,66 +529,65 @@ if (!isset($_SESSION['email'])) {
     <div class="main collapsed" id="main">
         <div class="student-container">
             <div class="student-list">
-                <div class="title" style="justify-content: center; gap: 20px;">
-                    <h4><i class="fas fa-chalkboard-teacher"></i> List of Students</h4></div>
-                    <div style="text-align: right;">
-                        <button class="btn" style="background-color: #098744; color: white;" data-toggle="modal" data-target="#addStudentModal">
-                            <i class="fas fa-user-plus"></i> Add Student
-                        </button>
-                    </div>
+                <div class="title" style="justify-content: center; align-items: center; gap: 20px; display: flex;">
+                    <span class="text-center w-100"><h4><i class="fas fa-chalkboard-teacher"></i> List of Students</h4></span>
+                </div>
                 <hr>
-                <div class="table-container table-responsive">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <!-- Search bar on the left -->
-                            <div class="input-group" style="max-width: 300px;">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <!-- Search bar on the left -->
+                        <div class="input-group" style="max-width: 300px;">
                             <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                             </div>
                             <input type="search" class="form-control" placeholder="Search students..." id="studentSearch">
                         </div>
-                            
-                            <!-- Filter, Sort, and Apply button on the right -->
-                            <div class="d-flex align-items-center">
-                                <span class="mr-2" style="white-space: nowrap;">Filter By:</span>
-                                <select class="form-control mx-2" id="filterBy" style="width: 150px;">
-                                    <option value="">All Courses</option>
-                                    <option value="BSIS-301">BSIS-301</option>
-                                    <option value="BSIS-302">BSIS-302</option>
-                                    <option value="BSIT-301">BSIT-301</option>
-                                    <option value="BSIT-302">BSIT-302</option>
-                                    <option value="BSIT-401">BSIT-401</option>
-                                    <option value="BSIT-402">BSIT-402</option>
-                                </select>
-                                <select class="form-control mx-2" id="sortBy" style="width: 150px;">
-                                    <option value="">Sort By:</option>
-                                    <option value="name_asc">Name (A-Z)</option>
-                                    <option value="name_desc">Name (Z-A)</option>
-                                    <option value="course_asc">Course (A-Z)</option>
-                                    <option value="course_desc">Course (Z-A)</option>
-                                </select>
-                                <button class="btn mx-1" style="background-color: #098744; color: white;" id="applyFilters">
-                                    <i class="fas fa-check"></i> Apply
-                                </button>
-                                <button class="btn btn-secondary mx-1" id="resetFilters">
-                                    <i class="fas fa-undo"></i> Reset
-                                </button>
-                    </div>
+                        <!-- Filter, Sort, and Apply button on the right -->
+                        <div class="d-flex align-items-center">
+                            <span class="mr-2" style="white-space: nowrap;">Filter By:</span>
+                            <select class="form-control mx-2" id="filterBy" style="width: 150px;">
+                                <option value="">All Courses</option>
+                                <option value="BSIS-301">BSIS-301</option>
+                                <option value="BSIS-302">BSIS-302</option>
+                                <option value="BSIT-301">BSIT-301</option>
+                                <option value="BSIT-302">BSIT-302</option>
+                                <option value="BSIT-401">BSIT-401</option>
+                                <option value="BSIT-402">BSIT-402</option>
+                            </select>
+                            <select class="form-control mx-2" id="sortBy" style="width: 150px;">
+                                <option value="">Sort By:</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="course_asc">Course (A-Z)</option>
+                                <option value="course_desc">Course (Z-A)</option>
+                            </select>
+                            <button class="btn mx-1" style="background-color: #098744; color: white;" id="applyFilters">
+                                <i class="fas fa-check"></i> Apply
+                            </button>
+                            <button class="btn btn-secondary mx-1" id="resetFilters">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
                         </div>
-
-                        <!-- Export Buttons -->
-                        <div class="d-flex mb-3" style="gap: 5px;">
-                            <button class="btn" style="background-color: #098744; color: white;" onclick="exportToExcel()">
+                    </div>
+                    <!-- Export/Print and Add Student Buttons Row -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <button class="btn" style="background-color: #098744; color: white; margin-right: 8px;" onclick="exportToExcel()">
                                 <i class="fas fa-file-excel"></i> Excel
                             </button>
-                            <button class="btn" style="background-color: #098744; color: white;" onclick="exportToPDF()">
+                            <button class="btn" style="background-color: #098744; color: white; margin-right: 8px;" onclick="exportToPDF()">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
-                            <button class="btn" style="background-color: #098744; color: white;" onclick="printTable()">
+                            <button class="btn" style="background-color: #098744; color: white; margin-right: 8px;" onclick="printTable()">
                                 <i class="fas fa-print"></i> Print
                             </button>
                         </div>
+                        <button class="btn" style="background-color: #098744; color: white; min-width: 140px; font-weight: 500;" data-toggle="modal" data-target="#addStudentModal">
+                            <i class="fas fa-user-plus"></i> Add Student
+                        </button>
                     </div>
+                </div>
+                <div class="table-container table-responsive">
                     <table class="table text-center table-sm table-bordered" id="studentTable">
                         <thead style="background-color: #098744; color: white; position: sticky; top: 0; z-index: 1;">
                             <tr>
@@ -578,26 +601,46 @@ if (!isset($_SESSION['email'])) {
                         <?php 
 include ('./conn/conn.php');
 
-                        // Get all students for client-side search
-                        $allStudentsStmt = $conn->prepare("SELECT * FROM tbl_student ORDER BY tbl_student_id DESC");
-                        $allStudentsStmt->execute();
-                        $allStudents = $allStudentsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-                        // Store all students in a hidden input for JavaScript
-                        echo '<input type="hidden" id="allStudentsData" value="' . htmlspecialchars(json_encode($allStudents)) . '">';
 
-                        // Regular pagination for initial display
-                        $limit = 10;
+
+// Add session check for user isolation
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('User session expired or not logged in. Please log in again.'); window.location.href = 'login.php';</script>";
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'] ?? 1;
+
+// Get all students for client-side search (filtered by school_id AND user_id)
+$allStudentsStmt = $conn->prepare("SELECT * FROM tbl_student WHERE school_id = :school_id AND user_id = :user_id ORDER BY tbl_student_id DESC");
+$allStudentsStmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+$allStudentsStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$allStudentsStmt->execute();
+$allStudents = $allStudentsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Store all students in a hidden input for JavaScript
+echo '<input type="hidden" id="allStudentsData" value="' . htmlspecialchars(json_encode($allStudents)) . '">';
+
+// Regular pagination for initial display (filtered by school_id AND user_id)
+$limit = 10;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-$stmt = $conn->prepare("SELECT * FROM tbl_student ORDER BY tbl_student_id DESC LIMIT :limit OFFSET :offset");
+$stmt = $conn->prepare("SELECT * FROM tbl_student WHERE school_id = :school_id AND user_id = :user_id ORDER BY tbl_student_id DESC LIMIT :limit OFFSET :offset");
+$stmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+$stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
 $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$totalStmt = $conn->prepare("SELECT COUNT(*) FROM tbl_student");
+$totalStmt = $conn->prepare("SELECT COUNT(*) FROM tbl_student WHERE school_id = :school_id AND user_id = :user_id");
+$totalStmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+$totalStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 $totalStmt->execute();
 $totalRecords = $totalStmt->fetchColumn();
 $totalPages = ceil($totalRecords / $limit);
@@ -635,6 +678,9 @@ foreach ($result as $row) {
 ?>
                         </tbody>
                     </table>
+                </div>
+                <!-- Centered Add Student Button below the table -->
+              
 
                     <!-- Update the pagination section -->
                     <div class="pagination-container" id="paginationContainer">
@@ -701,6 +747,7 @@ foreach ($result as $row) {
                                 <option value="custom">Custom Course or Grade Level & Section</option>
                             </select>
                             <input type="text" class="form-control mt-2" id="customStudentCourse" name="custom_course_section" placeholder="Enter custom Course or Grade Level & Section" style="display: none;">
+                            <input type="hidden" id="finalCourseSection" name="final_course_section">
                         </div>
                         
                         <!-- Face Capture Section -->
@@ -798,6 +845,7 @@ foreach ($result as $row) {
                                 <option value="custom">Custom Course & Section</option>
                             </select>
                             <input type="text" class="form-control mt-2" id="updateCustomStudentCourse" name="update_custom_course_section" placeholder="Enter custom Course or Grade Level & Section" style="display: none;">
+                            <input type="hidden" id="updateFinalCourseSection" name="update_final_course_section">
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -1179,14 +1227,27 @@ foreach ($result as $row) {
             }
             
             const qrImg = document.getElementById('qrImg');
-            let text = generateRandomCode(10);
-            $("#generatedCode").val(text);
             
-            if (text === "") {
+            // Get course and section data from the form
+            const course_code = $("#studentCourse").val() || "BSIT";
+            const section = $("#studentSection").val() || "A";
+            const instructor_id = $("#instructor_id").val() || "1";
+            const studentName = $("#studentName").val() || "";
+            
+            // Generate unique QR code for this specific student
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(2, 18);
+            const studentHash = btoa(studentName + course_code + section).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+            
+            // Create unique QR code format: STU-{timestamp}-{hash}-{random}
+            const qrText = `STU-${timestamp}-${studentHash}-${randomString}`;
+            $("#generatedCode").val(qrText);
+            
+            if (qrText === "") {
                 alert("Please enter text to generate a QR code.");
                 return;
             } else {
-                const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+                const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
                 
                 qrImg.src = apiUrl;
                 document.getElementById('studentName').style.pointerEvents = 'none';
@@ -1303,7 +1364,12 @@ foreach ($result as $row) {
                         customCourseInput.focus();
                         return false;
                     }
+                    // Set the custom value to both the select field and the hidden field
                     courseSelect.val(customValue);
+                    $('#finalCourseSection').val(customValue);
+                } else {
+                    // For predefined options, set the value to the hidden field as well
+                    $('#finalCourseSection').val(courseSelect.val());
                 }
 
                 // Validate QR code generation
@@ -1336,15 +1402,23 @@ foreach ($result as $row) {
             
             // Form submission for update student
             $('#updateStudentForm').on('submit', function(e) {
-                if ($('#updateStudentCourse').val() === 'custom') {
-                    // If custom option selected, set the course_section value to the custom input
-                    const customValue = $('#updateCustomStudentCourse').val();
-                    if (customValue) {
-                        $('#updateStudentCourse').val(customValue);
-                    } else {
+                const updateCourseSelect = $('#updateStudentCourse');
+                const updateCustomCourseInput = $('#updateCustomStudentCourse');
+                
+                if (updateCourseSelect.val() === 'custom') {
+                    // If custom option selected, validate and set the course_section value
+                    const customValue = updateCustomCourseInput.val().trim();
+                    if (!customValue || customValue.length < 3) {
                         e.preventDefault();
-                        alert('Please enter a custom course & section');
+                        alert('Please enter a valid custom course & section (minimum 3 characters)');
+                        updateCustomCourseInput.focus();
+                        return false;
                     }
+                    updateCourseSelect.val(customValue);
+                    $('#updateFinalCourseSection').val(customValue);
+                } else {
+                    // For predefined options, set the value to the hidden field as well
+                    $('#updateFinalCourseSection').val(updateCourseSelect.val());
                 }
             });
         });

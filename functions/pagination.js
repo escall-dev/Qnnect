@@ -133,8 +133,19 @@ function initializeStandardDataTable(selector, options = {}) {
  * @param {string} containerId - The ID of the container to insert pagination into
  */
 function createStandardPagination(currentPage, totalPages, baseUrl, containerId) {
+    console.log('Creating pagination:', { currentPage, totalPages, baseUrl, containerId });
+    
     const container = $('#' + containerId);
-    if (!container.length) return;
+    if (!container.length) {
+        console.error('Pagination container not found:', containerId);
+        return;
+    }
+    
+    // If there's only one page or no pages, don't show pagination
+    if (totalPages <= 1) {
+        container.empty();
+        return;
+    }
     
     let paginationHtml = `
     <div class="pagination-container">

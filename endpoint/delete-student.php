@@ -8,7 +8,7 @@ if (isset($_GET['student'])) {
     if (!is_numeric($student)) {
         echo "<script>
             alert('Invalid student ID!');
-            window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
         </script>";
         exit;
     }
@@ -23,7 +23,7 @@ if (isset($_GET['student'])) {
         if (!$result) {
             echo "<script>
                 alert('Student record not found!');
-                window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
             </script>";
             exit;
         }
@@ -39,30 +39,30 @@ if (isset($_GET['student'])) {
         if ($query_execute && $stmt->rowCount() > 0) {
             echo "<script>
                 alert('Student \"" . addslashes($studentName) . "\" deleted successfully!');
-                window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
             </script>";
         } else {
             echo "<script>
                 alert('Failed to delete student! No rows were affected.');
-                window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
             </script>";
         }
 
     } catch (PDOException $e) {
         echo "<script>
             alert('Database Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
         </script>";
     } catch (Exception $e) {
         echo "<script>
             alert('Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
         </script>";
     }
 } else {
     echo "<script>
         alert('No student ID provided!');
-        window.location.href = 'http://localhost/qr-code-attendance-system/masterlist.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
     </script>";
 }
 ?>

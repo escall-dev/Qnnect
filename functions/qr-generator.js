@@ -47,7 +47,14 @@ function generateQRCode(text, elementId) {
     }
 }
 
-// Function to generate random code
+// Function to generate QR code with proper format
+function generateFormattedQRCode(course_code, section, instructor_id, elementId) {
+    const qrText = `${course_code}|${section}|${instructor_id}`;
+    console.log('Generating formatted QR code:', qrText);
+    return generateQRCode(qrText, elementId);
+}
+
+// Function to generate random code (kept for backward compatibility)
 function generateRandomCode(length) {
     const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let randomString = '';
@@ -72,16 +79,18 @@ function handleQRCodeGeneration() {
         // Clear previous QR code if any
         qrContainer.innerHTML = '<div id="qrImg" style="display: flex; justify-content: center; align-items: center; margin: 0 auto;"></div>';
         
-        let text = generateRandomCode(10);
-        console.log('Generated random code:', text);
-        $("#generatedCode").val(text);
-
-        if (text === "") {
-            alert("Please enter text to generate a QR code.");
-            return;
-        }
-
-        generateQRCode(text, 'qrImg');
+        // Get course and section data from the form
+        const course_code = $("#studentCourse").val() || "BSIT";
+        const section = $("#studentSection").val() || "A";
+        const instructor_id = $("#instructor_id").val() || "1";
+        
+        // Generate QR code with proper format
+        generateFormattedQRCode(course_code, section, instructor_id, 'qrImg');
+        
+        // Store the generated code for reference
+        const qrText = `${course_code}|${section}|${instructor_id}`;
+        $("#generatedCode").val(qrText);
+        
         document.getElementById('studentName').style.pointerEvents = 'none';
         document.getElementById('studentCourse').style.pointerEvents = 'none';
         document.querySelector('.modal-close').style.display = '';

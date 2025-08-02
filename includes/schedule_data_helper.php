@@ -1,7 +1,15 @@
 <?php
 require_once(__DIR__ . '/schedule_helper.php');
 
-function getFilteredScheduleData($conn, $instructor = null, $section = null, $subject = null, $school_id = 1) {
+/**
+ * Get filtered schedule data from class_schedules table
+ * @param mysqli $conn - Database connection
+ * @param int $school_id - The school ID to filter data for (required)
+ * @param string|null $instructor - Instructor name to filter by
+ * @param string|null $section - Section to filter by
+ * @param string|null $subject - Subject to filter by
+ */
+function getFilteredScheduleData($conn, $school_id, $instructor = null, $section = null, $subject = null) {
     try {
         $conditions = ["school_id = ?"];
         $params = [$school_id];

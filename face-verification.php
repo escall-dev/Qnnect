@@ -447,7 +447,15 @@ unset($_SESSION['error_message']);
                                             <?php
                                             include('./conn/conn.php');
                                             try {
-                                                $stmt = $conn->prepare("SELECT tbl_student_id, student_name FROM tbl_student ORDER BY student_name");
+                                                // Get user's school_id and user_id from session
+                                                $school_id = $_SESSION['school_id'] ?? 1;
+                                                $user_id = $_SESSION['user_id'] ?? 1;
+                                                
+                                                $stmt = $conn->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
+                                                                        WHERE school_id = :school_id AND user_id = :user_id 
+                                                                        ORDER BY student_name");
+                                                $stmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+                                                $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                                                 $stmt->execute();
                                                 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 

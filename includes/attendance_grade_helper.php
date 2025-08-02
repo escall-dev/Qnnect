@@ -224,14 +224,14 @@ function createAttendanceSession($pdo, $instructorId, $courseId, $term, $section
  * @param string|null $scanTime Scan time (default: current time)
  * @return bool Success status
  */
-function recordAttendance($pdo, $sessionId, $studentId, $scanTime = null) {
+function recordAttendance($pdo, $sessionId, $studentId, $scanTime = null, $schoolId = 1) {
     if ($scanTime === null) {
         $scanTime = date('Y-m-d H:i:s');
     }
     
-    $query = "INSERT INTO attendance_logs (session_id, student_id, scan_time)
-             VALUES (?, ?, ?)";
+    $query = "INSERT INTO attendance_logs (session_id, student_id, scan_time, school_id)
+             VALUES (?, ?, ?, ?)";
     
     $stmt = $pdo->prepare($query);
-    return $stmt->execute([$sessionId, $studentId, $scanTime]);
+    return $stmt->execute([$sessionId, $studentId, $scanTime, $schoolId]);
 } 

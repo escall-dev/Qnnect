@@ -26,6 +26,17 @@ if (!$conn_login) {
 // Use QR database connection for attendance
 $conn = $conn_qr;
 
+// Add session check for user isolation
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
+    echo "<script>alert('User session expired or not logged in. Please log in again.'); window.location.href = 'login.php';</script>";
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'];
+
 // Fetch user data from login_register database
 if (isset($_SESSION['email'])) {
     try {
@@ -59,38 +70,53 @@ if (isset($_SESSION['email'])) {
     }
 }
 
-// Fetch dashboard statistics
 // Total Students
-$total_students_query = "SELECT COUNT(DISTINCT tbl_student_id) as total_students FROM tbl_student";
-$total_students_result = $conn_qr->query($total_students_query);
+$total_students_query = "SELECT COUNT(DISTINCT tbl_student_id) as total_students FROM tbl_student WHERE school_id = ? AND user_id = ?";
+$total_students_stmt = $conn_qr->prepare($total_students_query);
+$total_students_stmt->bind_param("ii", $school_id, $user_id);
+$total_students_stmt->execute();
+$total_students_result = $total_students_stmt->get_result();
 $total_students = ($total_students_result && $total_students_result->num_rows > 0) ? $total_students_result->fetch_assoc()['total_students'] : 0;
 
 // Total Attendance Records
-$total_attendance_query = "SELECT COUNT(*) as total_attendance FROM tbl_attendance";
-$total_attendance_result = $conn_qr->query($total_attendance_query);
+$total_attendance_query = "SELECT COUNT(*) as total_attendance FROM tbl_attendance WHERE school_id = ? AND user_id = ?";
+$total_attendance_stmt = $conn_qr->prepare($total_attendance_query);
+$total_attendance_stmt->bind_param("ii", $school_id, $user_id);
+$total_attendance_stmt->execute();
+$total_attendance_result = $total_attendance_stmt->get_result();
 $total_attendance = ($total_attendance_result && $total_attendance_result->num_rows > 0) ? $total_attendance_result->fetch_assoc()['total_attendance'] : 0;
 
-// Total Courses/Subjects
-$total_subjects_query = "SELECT COUNT(*) as total_subjects FROM tbl_subjects";
-$total_subjects_result = $conn_qr->query($total_subjects_query);
+// Total Courses/Subjects (NO user_id filter)
+$total_subjects_query = "SELECT COUNT(*) as total_subjects FROM tbl_subjects WHERE school_id = ?";
+$total_subjects_stmt = $conn_qr->prepare($total_subjects_query);
+$total_subjects_stmt->bind_param("i", $school_id);
+$total_subjects_stmt->execute();
+$total_subjects_result = $total_subjects_stmt->get_result();
 $total_subjects = ($total_subjects_result && $total_subjects_result->num_rows > 0) ? $total_subjects_result->fetch_assoc()['total_subjects'] : 0;
 
 // Total Instructors
-$total_instructors_query = "SELECT COUNT(*) as total_instructors FROM tbl_instructors";
-$total_instructors_result = $conn_qr->query($total_instructors_query);
+$total_instructors_query = "SELECT COUNT(*) as total_instructors FROM tbl_instructors WHERE school_id = ? AND user_id = ?";
+$total_instructors_stmt = $conn_qr->prepare($total_instructors_query);
+$total_instructors_stmt->bind_param("ii", $school_id, $user_id);
+$total_instructors_stmt->execute();
+$total_instructors_result = $total_instructors_stmt->get_result();
 $total_instructors = ($total_instructors_result && $total_instructors_result->num_rows > 0) ? $total_instructors_result->fetch_assoc()['total_instructors'] : 0;
 
-// Recent Attendance (last 5)
+// Recent Attendance (last 5) - filtered by user
 $recent_attendance_query = "
     SELECT a.*, s.student_name, i.instructor_name, sub.subject_name 
     FROM tbl_attendance a
     LEFT JOIN tbl_student s ON a.tbl_student_id = s.tbl_student_id
     LEFT JOIN tbl_instructors i ON a.instructor_id = i.instructor_id
     LEFT JOIN tbl_subjects sub ON a.subject_id = sub.subject_id
+    WHERE a.school_id = ? AND a.user_id = ?
     ORDER BY a.time_in DESC
     LIMIT 5
 ";
-$recent_attendance_result = $conn_qr->query($recent_attendance_query);
+$recent_attendance_stmt = $conn_qr->prepare($recent_attendance_query);
+$recent_attendance_stmt->bind_param("ii", $school_id, $user_id);
+$recent_attendance_stmt->execute();
+$recent_attendance_result = $recent_attendance_stmt->get_result();
 $recent_attendance = [];
 if ($recent_attendance_result && $recent_attendance_result->num_rows > 0) {
     while ($row = $recent_attendance_result->fetch_assoc()) {
@@ -98,22 +124,29 @@ if ($recent_attendance_result && $recent_attendance_result->num_rows > 0) {
     }
 }
 
-// Today's Attendance Count
+// Today's Attendance Count - filtered by user
 $today = date('Y-m-d');
-$today_attendance_query = "SELECT COUNT(*) as today_count FROM tbl_attendance WHERE DATE(time_in) = '$today'";
-$today_attendance_result = $conn_qr->query($today_attendance_query);
+$today_attendance_query = "SELECT COUNT(*) as today_count FROM tbl_attendance WHERE school_id = ? AND user_id = ? AND DATE(time_in) = ?";
+$today_attendance_stmt = $conn_qr->prepare($today_attendance_query);
+$today_attendance_stmt->bind_param("iis", $school_id, $user_id, $today);
+$today_attendance_stmt->execute();
+$today_attendance_result = $today_attendance_stmt->get_result();
 $today_attendance = ($today_attendance_result && $today_attendance_result->num_rows > 0) ? $today_attendance_result->fetch_assoc()['today_count'] : 0;
 
-// Get attendance data per course for charts
+// Get attendance data per course for charts - filtered by user
 $attendance_by_course_query = "
     SELECT sub.subject_name, COUNT(*) as attendance_count
     FROM tbl_attendance a
     LEFT JOIN tbl_subjects sub ON a.subject_id = sub.subject_id
+    WHERE a.school_id = ? AND a.user_id = ?
     GROUP BY a.subject_id
     ORDER BY attendance_count DESC
     LIMIT 5
 ";
-$attendance_by_course_result = $conn_qr->query($attendance_by_course_query);
+$attendance_by_course_stmt = $conn_qr->prepare($attendance_by_course_query);
+$attendance_by_course_stmt->bind_param("ii", $school_id, $user_id);
+$attendance_by_course_stmt->execute();
+$attendance_by_course_result = $attendance_by_course_stmt->get_result();
 $course_labels = [];
 $course_data = [];
 $attendanceData = [];
@@ -129,16 +162,20 @@ if ($attendance_by_course_result && $attendance_by_course_result->num_rows > 0) 
     }
 }
 
-// Get top 5 students with most attendance
+// Get top 5 students with most attendance - filtered by user
 $top_students_query = "
     SELECT s.student_name, s.tbl_student_id, COUNT(*) as attendance_count
     FROM tbl_attendance a
     JOIN tbl_student s ON a.tbl_student_id = s.tbl_student_id
+    WHERE a.school_id = ? AND a.user_id = ? AND s.school_id = ? AND s.user_id = ?
     GROUP BY a.tbl_student_id
     ORDER BY attendance_count DESC
     LIMIT 5
 ";
-$top_students_result = $conn_qr->query($top_students_query);
+$top_students_stmt = $conn_qr->prepare($top_students_query);
+$top_students_stmt->bind_param("iiii", $school_id, $user_id, $school_id, $user_id);
+$top_students_stmt->execute();
+$top_students_result = $top_students_stmt->get_result();
 $top_students = [];
 if ($top_students_result && $top_students_result->num_rows > 0) {
     while ($row = $top_students_result->fetch_assoc()) {

@@ -103,6 +103,11 @@ if (isset($_POST["login"])) {
         $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
         
         if ($user && password_verify($password, $user["password"])) {
+            // Ensure session is started
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            
             // Set session variables
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = htmlspecialchars($user['email']);
@@ -112,6 +117,10 @@ if (isset($_POST["login"])) {
             $_SESSION['school_id'] = $user['school_id'];
             $_SESSION['login_recorded'] = false;
             $_SESSION['session_created_this_login'] = false;
+            
+            // Debug: Log session variables after setting
+            error_log('Login successful. Session variables set: ' . print_r($_SESSION, true));
+            error_log('User ID: ' . $user['id'] . ', School ID: ' . $user['school_id']);
             
             // Update recent login tracking
             $update_sql = "INSERT INTO recent_logins (username, profile_image, school_id, last_login) 
@@ -1386,7 +1395,7 @@ $schools = getSchools($conn);
         <span>A&nbsp;Capstone &nbsp;Project &nbsp;Developed by: &nbsp; &nbsp; San Pedro City Polytechnic College &nbsp; &nbsp; BSIT-402 &nbsp; &nbsp; Group - I</span>
         <span>Copyright © 2025</span>   
         <span>To God be the Glory</span>   
-        <span style="margin-left: 650px;">Current Version: 1.3.0</span>
+        <span>Current Version: 1.3.0</span>
     </div>
 </body>
 </html>

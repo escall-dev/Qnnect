@@ -1,0 +1,44 @@
+/* Custom pagination styling for 8-item attendance list */
+.attendance-pagination {
+    margin-top: 15px;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.attendance-pagination .pagination {
+    margin-bottom: 0;
+}
+
+.attendance-pagination .page-link {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.65rem;
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+.attendance-pagination .page-item.active .page-link {
+    background-color: #098744;
+    border-color: #098744;
+    font-weight: bold;
+}
+
+.attendance-pagination .page-records-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* Add subtle animation for page transitions */
+.attendance-table-row {
+    transition: all 0.2s ease-in-out;
+}
+
+.attendance-table-row.recent-attendance {
+    animation: highlightRow 1.5s ease-in-out;
+}
+
+@keyframes highlightRow {
+    0% { background-color: rgba(9, 135, 68, 0.2); }
+    100% { background-color: transparent; }
+}

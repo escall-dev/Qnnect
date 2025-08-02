@@ -92,11 +92,17 @@ if ($refreshRequested) {
     }
 }
 
+// Get user's school_id and user_id from session
+$school_id = $_SESSION['school_id'] ?? 1;
+$user_id = $_SESSION['user_id'] ?? 1;
+
 // Get all unique courses and sections for filter dropdowns
 try {
-    // Get courses/sections
-    $coursesQuery = "SELECT DISTINCT course_section FROM tbl_student ORDER BY course_section";
+    // Get courses/sections (filtered by school and user)
+    $coursesQuery = "SELECT DISTINCT course_section FROM tbl_student 
+                     WHERE school_id = ? AND user_id = ? ORDER BY course_section";
     $coursesStmt = $conn_qr->prepare($coursesQuery);
+    $coursesStmt->bind_param("ii", $school_id, $user_id);
     $coursesStmt->execute();
     $coursesResult = $coursesStmt->get_result();
     $courses = [];
@@ -111,14 +117,14 @@ try {
         }
     }
     
-    // Get distinct sections for the selected course
+    // Get distinct sections for the selected course (filtered by school and user)
     $sectionsQuery = "SELECT DISTINCT SUBSTRING_INDEX(course_section, '-', -1) AS section 
                      FROM tbl_student 
-                     WHERE course_section LIKE ?
+                     WHERE course_section LIKE ? AND school_id = ? AND user_id = ?
                      ORDER BY section";
     $sectionsStmt = $conn_qr->prepare($sectionsQuery);
     $courseFilter = $selectedCourse . '-%';
-    $sectionsStmt->bind_param("s", $courseFilter);
+    $sectionsStmt->bind_param("sii", $courseFilter, $school_id, $user_id);
     $sectionsStmt->execute();
     $sectionsResult = $sectionsStmt->get_result();
     $sections = [];
@@ -156,7 +162,7 @@ try {
         return $aOrder - $bOrder;
     });
     
-    // Get student attendance grades data
+    // Get student attendance grades data (filtered by school and user)
     $gradesQuery = "
         SELECT 
             s.tbl_student_id, 
@@ -171,35 +177,35 @@ try {
             attendance_grades g ON s.tbl_student_id = g.student_id
         LEFT JOIN
             tbl_subjects subj ON g.course_id = subj.subject_id
-        WHERE 1=1
+        WHERE s.school_id = ? AND s.user_id = ?
     ";
     
-    $gradesParams = [];
+    $gradesParams = [$school_id, $user_id];
+    $gradesTypes = "ii";
     
     if (!empty($selectedCourse)) {
         $gradesQuery .= " AND s.course_section LIKE ?";
         $gradesParams[] = $selectedCourse . '-%';
+        $gradesTypes .= "s";
     }
     
     if (!empty($selectedSection)) {
         $gradesQuery .= " AND s.course_section LIKE ?";
         $gradesParams[] = '%-' . $selectedSection;
+        $gradesTypes .= "s";
     }
     
     if (!empty($selectedTerm)) {
         $gradesQuery .= " AND (g.term = ? OR g.term IS NULL)";
         $gradesParams[] = $selectedTerm;
+        $gradesTypes .= "s";
     }
     
     // Force refresh from tbl_student even if no grades exist yet
     $gradesQuery .= " ORDER BY s.course_section, s.student_name";
     
     $gradesStmt = $conn_qr->prepare($gradesQuery);
-    
-    if (!empty($gradesParams)) {
-        $gradesTypes = str_repeat('s', count($gradesParams));
-        $gradesStmt->bind_param($gradesTypes, ...$gradesParams);
-    }
+    $gradesStmt->bind_param($gradesTypes, ...$gradesParams);
     
     $gradesStmt->execute();
     $gradesResult = $gradesStmt->get_result();

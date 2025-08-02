@@ -9,12 +9,18 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
+// Get user's school_id and user_id from session
+$school_id = $_SESSION['school_id'] ?? 1;
+$user_id = $_SESSION['user_id'] ?? 1;
+
 // Use mysqli prepared statement and get_result() instead of PDO
 $query = "SELECT 
     tbl_student.course_section,
     COUNT(*) as attendance_count 
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id 
+    WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? 
+        AND tbl_student.school_id = ?
     GROUP BY tbl_student.course_section";
 
 try {
@@ -25,6 +31,7 @@ try {
     
     // Prepare and execute the query using mysqli
     $stmt = $conn_qr->prepare($query);
+    $stmt->bind_param("iii", $school_id, $user_id, $school_id);
     $stmt->execute();
     $result = $stmt->get_result();
     

@@ -4,11 +4,16 @@ require_once 'includes/session_config.php';
 require_once 'includes/asset_helper.php';
 include('./conn/db_connect.php');
 
-// Check if user is logged in
-if (!isset($_SESSION['email'])) {
-    header("Location: admin/login.php");
-    exit;
+// Add session check for user isolation
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('User session expired or not logged in. Please log in again.'); window.location.href = 'login.php';</script>";
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'] ?? 1;
 
 // Get selected status filter (if any)
 $selected_status = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
@@ -42,9 +47,10 @@ if ($selected_date_range == 'today') {
 }
 
 try {
-    // Get all courses for filter dropdown
-    $coursesQuery = "SELECT DISTINCT course_section FROM tbl_student ORDER BY course_section";
+    // Get all courses for filter dropdown (filtered by user)
+    $coursesQuery = "SELECT DISTINCT course_section FROM tbl_student WHERE school_id = ? AND user_id = ? ORDER BY course_section";
     $coursesStmt = $conn_qr->prepare($coursesQuery);
+    $coursesStmt->bind_param("ii", $school_id, $user_id);
     $coursesStmt->execute();
     $coursesResult = $coursesStmt->get_result();
     $courses = [];
@@ -53,7 +59,16 @@ try {
         $courses[] = $row['course_section'];
     }
     
-    // Get attendance status records with filtering
+    // Get current user's name from the users table
+    $userNameQuery = "SELECT username, full_name FROM users WHERE id = ?";
+    $userNameStmt = $conn_login->prepare($userNameQuery);
+    $userNameStmt->bind_param("i", $user_id);
+    $userNameStmt->execute();
+    $userResult = $userNameStmt->get_result();
+    $userData = $userResult->fetch_assoc();
+    $instructorName = $userData['full_name'] ?? $userData['username'] ?? 'Current User';
+    
+    // Get attendance status records with filtering (filtered by user)
     $statusQuery = "SELECT 
         tbl_student.student_name,
         tbl_student.course_section,
@@ -61,15 +76,14 @@ try {
         DATE_FORMAT(tbl_attendance.time_in, '%r') AS time_in,
         tbl_attendance.status,
         tbl_subjects.subject_name,
-        tbl_instructors.instructor_name
+        ? AS instructor_name
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id
     LEFT JOIN tbl_subjects ON tbl_attendance.subject_id = tbl_subjects.subject_id
-    LEFT JOIN tbl_instructors ON tbl_attendance.instructor_id = tbl_instructors.instructor_id
-    WHERE DATE(tbl_attendance.time_in) BETWEEN ? AND ?";
+    WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? AND DATE(tbl_attendance.time_in) BETWEEN ? AND ?";
     
-    $params = [$start_date, $end_date];
-    $types = "ss";
+    $params = [$instructorName, $school_id, $user_id, $start_date, $end_date];
+    $types = "siiss";
     
     // Add status filter if selected
     if (!empty($selected_status)) {

@@ -20,14 +20,22 @@ if (!$conn_qr) {
 // Debug connection
 error_log("Attempting to connect to database with username: $dbUser and database: $qrDb");
 
+// Get user's school_id and user_id from session
+$school_id = $_SESSION['school_id'] ?? 1;
+$user_id = $_SESSION['user_id'] ?? 1;
+
 // Get verification logs
 try {
     // Debug query execution
     error_log("Executing query for students filter");
     
-    // Get distinct students for filter
-    $students_query = "SELECT DISTINCT student_name FROM tbl_face_verification_logs ORDER BY student_name";
-    $students_result = mysqli_query($conn_qr, $students_query);
+    // Get distinct students for filter (filtered by school and user)
+    $students_query = "SELECT DISTINCT student_name FROM tbl_face_verification_logs 
+                       WHERE school_id = ? AND user_id = ? ORDER BY student_name";
+    $stmt = $conn_qr->prepare($students_query);
+    $stmt->bind_param("ii", $school_id, $user_id);
+    $stmt->execute();
+    $students_result = $stmt->get_result();
     
     if (!$students_result) {
         error_log("Students query failed: " . mysqli_error($conn_qr));
@@ -43,9 +51,14 @@ try {
     // Debug logs query
     error_log("Executing query for all logs");
     
-    // Get all logs
-    $logs_query = "SELECT * FROM tbl_face_verification_logs ORDER BY verification_time DESC";
-    $logs_result = mysqli_query($conn_qr, $logs_query);
+    // Get all logs (filtered by school and user)
+    $logs_query = "SELECT * FROM tbl_face_verification_logs 
+                    WHERE school_id = ? AND user_id = ? 
+                    ORDER BY verification_time DESC";
+    $stmt = $conn_qr->prepare($logs_query);
+    $stmt->bind_param("ii", $school_id, $user_id);
+    $stmt->execute();
+    $logs_result = $stmt->get_result();
     
     if (!$logs_result) {
         error_log("Logs query failed: " . mysqli_error($conn_qr));
@@ -64,9 +77,13 @@ try {
     $students = [];
 }
 
-// Test query
-$test_query = "SELECT COUNT(*) as count FROM tbl_face_verification_logs";
-$test_result = mysqli_query($conn_qr, $test_query);
+// Test query (filtered by school and user)
+$test_query = "SELECT COUNT(*) as count FROM tbl_face_verification_logs 
+               WHERE school_id = ? AND user_id = ?";
+$stmt = $conn_qr->prepare($test_query);
+$stmt->bind_param("ii", $school_id, $user_id);
+$stmt->execute();
+$test_result = $stmt->get_result();
 if ($test_result) {
     $row = mysqli_fetch_assoc($test_result);
     error_log("Number of records: " . $row['count']);

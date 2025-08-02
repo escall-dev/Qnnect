@@ -8,13 +8,15 @@
  */
 function recordUserLogin($conn, $username, $email = '', $user_type = 'User') {
     $ip_address = $_SERVER['REMOTE_ADDR'];
+    $user_id = $_SESSION['user_id'] ?? 0;
+    $school_id = $_SESSION['school_id'] ?? 0;
     
-    // Use query without email column since it doesn't exist in the table
-    $query = "INSERT INTO tbl_user_logs (username, user_type, log_in_time, ip_address) 
-              VALUES (?, ?, NOW(), ?)";
+    // Use query with user_id and school_id for data isolation
+    $query = "INSERT INTO tbl_user_logs (username, user_type, log_in_time, ip_address, user_id, school_id) 
+              VALUES (?, ?, NOW(), ?, ?, ?)";
     
     $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "sss", $username, $user_type, $ip_address);
+    mysqli_stmt_bind_param($stmt, "sssii", $username, $user_type, $ip_address, $user_id, $school_id);
     
     $result = mysqli_stmt_execute($stmt);
     

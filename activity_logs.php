@@ -41,6 +41,10 @@ if (isset($_POST['export']) && isset($_POST['format'])) {
     }
 }
 
+// Get user's school_id and user_id from session
+$school_id = $_SESSION['school_id'] ?? 1;
+$current_user_id = $_SESSION['user_id'] ?? 1;
+
 // Get filter parameters
 $start_date = $_GET['start_date'] ?? null;
 $end_date = $_GET['end_date'] ?? null;
@@ -48,9 +52,9 @@ $action_type = $_GET['action_type'] ?? null;
 $user_id = $_GET['user_id'] ?? null;
 
 // Build query
-$where_conditions = [];
-$params = [];
-$types = "";
+$where_conditions = ["al.school_id = ?", "al.user_id = ?"];
+$params = [$school_id, $current_user_id];
+$types = "ii";
 
 if ($start_date && $end_date) {
     $where_conditions[] = "al.created_at BETWEEN ? AND ?";
@@ -71,7 +75,7 @@ if ($user_id) {
     $types .= "i";
 }
 
-$where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
+$where_clause = "WHERE " . implode(" AND ", $where_conditions);
 
 // Get activity logs
 $sql = "SELECT 
@@ -93,14 +97,22 @@ $stmt->execute();
 $result = $stmt->get_result();
 $logs = $result->fetch_all(MYSQLI_ASSOC);
 
-// Get unique action types for filter
-$action_types_sql = "SELECT DISTINCT action_type FROM activity_logs ORDER BY action_type";
-$action_types_result = $conn_qr->query($action_types_sql);
+// Get unique action types for filter (filtered by school and user)
+$action_types_sql = "SELECT DISTINCT action_type FROM activity_logs 
+                     WHERE school_id = ? AND user_id = ? ORDER BY action_type";
+$stmt = $conn_qr->prepare($action_types_sql);
+$stmt->bind_param("ii" . "ii" . , $school_id, $current_user_id . ", $school_id, $current_user_id" . );
+$stmt->execute();
+$action_types_result = $stmt->get_result();
 $action_types = $action_types_result->fetch_all(MYSQLI_ASSOC);
 
-// Get users for filter
-$users_sql = "SELECT id, email, firstname, lastname FROM users ORDER BY lastname, firstname";
-$users_result = $conn_qr->query($users_sql);
+// Get users for filter (filtered by school)
+$users_sql = "SELECT id, email, firstname, lastname FROM users 
+              WHERE school_id = ? ORDER BY lastname, firstname";
+$stmt = $conn_qr->prepare($users_sql);
+$stmt->bind_param("i" . "ii" . , $school_id . ", $school_id, $current_user_id" . );
+$stmt->execute();
+$users_result = $stmt->get_result();
 $users = $users_result->fetch_all(MYSQLI_ASSOC);
 ?>
 

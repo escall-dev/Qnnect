@@ -214,11 +214,14 @@ function exportToPDF($data) {
 // Function to record user login
 function recordUserLogin($conn, $username, $email, $user_type) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-    $query = "INSERT INTO tbl_user_logs (username, email, user_type, ip_address) 
-              VALUES (?, ?, ?, ?)";
+    $user_id = $_SESSION['user_id'] ?? 0;
+    $school_id = $_SESSION['school_id'] ?? 0;
+    
+    $query = "INSERT INTO tbl_user_logs (username, email, user_type, ip_address, user_id, school_id) 
+              VALUES (?, ?, ?, ?, ?, ?)";
     
     $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "ssss", $username, $email, $user_type, $ip);
+    mysqli_stmt_bind_param($stmt, "ssssii", $username, $email, $user_type, $ip, $user_id, $school_id);
     
     $result = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
@@ -255,25 +258,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['format'])) {
     $user_type = $_POST['user_type'] ?? '';
     $date = $_POST['date'] ?? '';
     
-    // Build query with filters
-    $query = "SELECT * FROM tbl_user_logs WHERE 1=1";
+    // Get session variables for filtering
+    $current_user_id = $_SESSION['user_id'] ?? 0;
+    $current_school_id = $_SESSION['school_id'] ?? 0;
+    
+    // Build query with filters (including data isolation)
+    $query = "SELECT * FROM tbl_user_logs WHERE school_id = ? AND user_id = ?";
+    $params = [$current_school_id, $current_user_id];
+    $types = "ii";
     
     if (!empty($user)) {
-        $query .= " AND username = '" . mysqli_real_escape_string($conn, $user) . "'";
+        $query .= " AND username = ?";
+        $params[] = $user;
+        $types .= "s";
     }
     
     if (!empty($user_type)) {
-        $query .= " AND user_type = '" . mysqli_real_escape_string($conn, $user_type) . "'";
+        $query .= " AND user_type = ?";
+        $params[] = $user_type;
+        $types .= "s";
     }
     
     if (!empty($date)) {
-        $query .= " AND DATE(log_in_time) = '" . mysqli_real_escape_string($conn, $date) . "'";
+        $query .= " AND DATE(log_in_time) = ?";
+        $params[] = $date;
+        $types .= "s";
     }
     
     $query .= " ORDER BY log_in_time DESC";
     
-    // Execute query
-    $result = mysqli_query($conn, $query);
+    // Execute query with prepared statement
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
     if (!$result) {
         die("Query failed: " . mysqli_error($conn));

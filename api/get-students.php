@@ -5,9 +5,20 @@ include('../conn/conn.php');
 // Set the response content type to JSON
 header('Content-Type: application/json');
 
+session_start();
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Session expired or not logged in.']);
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'];
+
 try {
     // Fetch all students from the database
-    $stmt = $conn->prepare("SELECT * FROM tbl_student ORDER BY tbl_student_id DESC");
+    $stmt = $conn->prepare("SELECT * FROM tbl_student WHERE school_id = :school_id AND user_id = :user_id ORDER BY tbl_student_id DESC");
+    $stmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

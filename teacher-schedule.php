@@ -4,11 +4,16 @@
 // Teacher Schedule Management System
 require_once 'includes/session_config.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['email'])) {
-    header("Location: admin/login.php");
-    exit;
+// Add session check for user isolation
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('User session expired or not logged in. Please log in again.'); window.location.href = 'login.php';</script>";
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'] ?? 1;
 
 // Get user data
 $user_email = $_SESSION['email'];
@@ -121,32 +126,34 @@ try {
     error_log("Error processing national holidays: " . $e->getMessage());
 }
 
-// Get teacher's schedules (fixed weekly schedule)
+// Get teacher's schedules (fixed weekly schedule) - filtered by user
 $teacher_schedules = [];
 try {
     $stmt = $pdo->prepare("
         SELECT * FROM teacher_schedules 
         WHERE teacher_username = ? 
         AND school_id = ? 
+        AND user_id = ?
         AND status = 'active'
         ORDER BY FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'), start_time
     ");
-    $stmt->execute([$teacher_username, $user_school_id]);
+    $stmt->execute([$teacher_username, $school_id, $user_id]);
     $teacher_schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     error_log("Error fetching teacher schedules: " . $e->getMessage());
 }
 
-// Get available subjects for this teacher
+// Get available subjects for this teacher - filtered by user
 $teacher_subjects = [];
 try {
     $stmt = $pdo->prepare("
         SELECT DISTINCT subject FROM teacher_schedules 
         WHERE teacher_username = ? 
         AND school_id = ? 
+        AND user_id = ?
         AND status = 'active'
     ");
-    $stmt->execute([$teacher_username, $user_school_id]);
+    $stmt->execute([$teacher_username, $school_id, $user_id]);
     $teacher_subjects = $stmt->fetchAll(PDO::FETCH_COLUMN);
 } catch (Exception $e) {
     error_log("Error fetching teacher subjects: " . $e->getMessage());
@@ -156,7 +163,7 @@ try {
 $school_info = [];
 try {
     $stmt = $pdo->prepare("SELECT * FROM school_info WHERE school_id = ?");
-    $stmt->execute([$user_school_id]);
+    $stmt->execute([$school_id]);
     $school_info = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     error_log("Error fetching school info: " . $e->getMessage());
@@ -395,6 +402,8 @@ foreach ($teacher_schedules as $schedule) {
             background-color: white !important;
             color: #333 !important;
             border: 1px solid #ced4da !important;
+            position: relative !important;
+            z-index: 1070 !important;
         }
         
         .modal input[type="text"]:focus,
@@ -404,14 +413,6 @@ foreach ($teacher_schedules as $schedule) {
             border-color: #80bdff !important;
             outline: 0 !important;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-        }
-        
-        .modal input[type="text"]:disabled,
-        .modal input[type="time"]:disabled,
-        .modal select:disabled,
-        .modal textarea:disabled {
-            background-color: #e9ecef !important;
-            opacity: 0.65 !important;
         }
         
         /* Fix modal interaction issues */
@@ -431,15 +432,11 @@ foreach ($teacher_schedules as $schedule) {
         
         .modal-backdrop {
             z-index: 1040 !important;
-            /* Make backdrop less prominent or remove it */
-            background-color: rgba(0, 0, 0, 0.3) !important; /* Lighter overlay */
-            /* Or remove backdrop entirely: */
-            /* display: none !important; */
+            background-color: rgba(0, 0, 0, 0.3) !important;
         }
         
-        /* Alternative: Remove backdrop completely */
         .modal-backdrop.show {
-            opacity: 0.3 !important; /* Very light overlay */
+            opacity: 0.3 !important;
         }
         
         /* Ensure modal form is interactive */
@@ -462,17 +459,6 @@ foreach ($teacher_schedules as $schedule) {
             pointer-events: auto !important;
             position: relative !important;
             z-index: 1070 !important;
-        }
-        
-        /* Remove any potential overlays */
-        .modal::before,
-        .modal::after {
-            display: none !important;
-        }
-        
-        .modal-content::before,
-        .modal-content::after {
-            display: none !important;
         }
         
         .calendar-section {
@@ -1050,14 +1036,21 @@ $(document).ready(function() {
     // Ensure modal is properly initialized
     $('#scheduleModal').on('shown.bs.modal', function () {
         console.log('Modal shown');
+        
         // Force focus on first input
         $('#modal_subject').focus();
         
-        // Ensure all inputs are enabled
+        // Ensure all inputs are enabled and interactive
         $('#scheduleModal input, #scheduleModal select, #scheduleModal textarea').prop('disabled', false);
+        
+        // Force enable time inputs specifically
+        $('#modal_start_time, #modal_end_time').prop('disabled', false).attr('readonly', false);
         
         // Remove any potential overlays
         $('.modal-backdrop').css('pointer-events', 'none');
+        
+        // Ensure modal is on top
+        $('#scheduleModal').css('z-index', '1070');
     });
     
     // Fixed weekly schedule - no navigation needed
@@ -1407,25 +1400,33 @@ function showHolidayDetails(date) {
 }
 
 function deleteSchedule(scheduleId) {
+    console.log('Attempting to delete schedule ID:', scheduleId);
     $.ajax({
         url: 'api/delete-teacher-schedule.php',
         type: 'POST',
         data: JSON.stringify({id: scheduleId}),
         contentType: 'application/json',
         success: function(response) {
+            console.log('Raw response:', response);
             try {
                 var data = JSON.parse(response);
+                console.log('Parsed response:', data);
                 if (data.success) {
+                    alert('Schedule deleted successfully');
                     location.reload();
                 } else {
                     alert('Error: ' + data.message);
                 }
             } catch (e) {
-                alert('Error processing response');
+                console.error('Error parsing response:', e);
+                alert('Error processing response: ' + response);
             }
         },
-        error: function() {
-            alert('Error deleting schedule');
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+            alert('Error deleting schedule: ' + error);
         }
     });
 }

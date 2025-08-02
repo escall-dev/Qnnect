@@ -66,7 +66,11 @@ let scanner;
 let lastScannedQR = null;
 
 function startScanner() {
-    scanner = new Instascan.Scanner({ video: document.getElementById('interactive') });
+    scanner = new Instascan.Scanner({ 
+        video: document.getElementById('interactive'),
+        mirror: true, // Enable mirroring
+        scanPeriod: 5 // Reduce scan frequency to improve performance
+    });
 
     scanner.addListener('scan', function (content) {
         if (lastScannedQR === content) {
@@ -85,7 +89,10 @@ function startScanner() {
 
     Instascan.Camera.getCameras().then(function (cameras) {
         if (cameras.length > 0) {
-            scanner.start(cameras[0]);
+            // Try to use front camera first for better mirroring experience
+            const frontCamera = cameras.find(camera => camera.name.toLowerCase().includes('front') || camera.name.toLowerCase().includes('user'));
+            const selectedCamera = frontCamera || cameras[0];
+            scanner.start(selectedCamera);
         } else {
             console.error("No cameras found.");
             alert("No cameras found. Please connect a camera and try again.");

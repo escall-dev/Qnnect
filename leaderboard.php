@@ -9,18 +9,28 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
-// Get the top students with most attendance records
+// Get user's school_id and user_id from session
+$school_id = $_SESSION['school_id'] ?? 1;
+$user_id = $_SESSION['user_id'] ?? 1;
+
+// Get the top students with most attendance records (filtered by school and user)
 try {
     $query = "
         SELECT s.student_name, s.course_section, s.tbl_student_id, COUNT(a.tbl_attendance_id) as attendance_count 
         FROM tbl_student s
-        LEFT JOIN tbl_attendance a ON s.tbl_student_id = a.tbl_student_id
+        LEFT JOIN tbl_attendance a ON s.tbl_student_id = a.tbl_student_id 
+            AND a.school_id = ? AND a.user_id = ?
+        WHERE s.school_id = ?
         GROUP BY s.tbl_student_id
         ORDER BY attendance_count DESC
         LIMIT 50
     ";
     
-    $result = $conn_qr->query($query);
+    $stmt = $conn_qr->prepare($query);
+    $stmt->bind_param("iii", $school_id, $user_id, $school_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
     $students = [];
     $rank = 1;
     
@@ -32,13 +42,17 @@ try {
     $error = "Error fetching leaderboard data: " . $e->getMessage();
 }
 
-// Get total attendance days this semester
+// Get total attendance days this semester (filtered by school and user)
 $query = "
     SELECT COUNT(DISTINCT DATE(time_in)) as total_days 
     FROM tbl_attendance 
-    WHERE time_in >= CURDATE() - INTERVAL 6 MONTH
+    WHERE time_in >= CURDATE() - INTERVAL 6 MONTH 
+        AND school_id = ? AND user_id = ?
 ";
-$total_days_result = $conn_qr->query($query);
+$stmt = $conn_qr->prepare($query);
+$stmt->bind_param("ii", $school_id, $user_id);
+$stmt->execute();
+$total_days_result = $stmt->get_result();
 $total_days = $total_days_result->fetch_assoc()['total_days'];
 ?>
 

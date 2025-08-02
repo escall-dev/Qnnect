@@ -16,6 +16,14 @@ if (!isset($_SESSION['email'])) {
     exit();
 }
 
+// Add session check for user isolation
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('User session expired or not logged in. Please log in again.'); window.location.href = 'login.php';</script>";
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'] ?? 1;
+
 // Set timezone
 date_default_timezone_set('Asia/Manila');
 
@@ -28,7 +36,7 @@ $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 $selected_course_section = isset($_GET['course_section']) ? $_GET['course_section'] : '';
 $selected_day = isset($_GET['selected_day']) ? $_GET['selected_day'] : '';
 
-// Prepare the SQL statement with filtering
+// Prepare the SQL statement with filtering (filtered by user)
 $sql = "
     SELECT 
         tbl_student.student_name,
@@ -42,40 +50,70 @@ $sql = "
         END AS status
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id 
-    WHERE time_in IS NOT NULL
+    WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? AND time_in IS NOT NULL
 ";
 
 // Add date range filter
 if (!empty($start_date) && !empty($end_date)) {
-    $sql .= " AND DATE(time_in) BETWEEN :start_date AND :end_date";
+    $sql .= " AND DATE(time_in) BETWEEN ? AND ?";
 }
 
 // Add course section filter
 if (!empty($selected_course_section)) {
-    $sql .= " AND tbl_student.course_section = :course_section";
+    $sql .= " AND tbl_student.course_section = ?";
 }
 
 // Add day of week filter
 if (!empty($selected_day)) {
-    $sql .= " AND DATE_FORMAT(time_in, '%W') = :selected_day";
+    $sql .= " AND DATE_FORMAT(time_in, '%W') = ?";
 }
 
 $sql .= " ORDER BY time_in DESC";
 
 $stmt = $conn->prepare($sql);
 
-// Bind parameters
+// Bind parameters for user filtering
+$bindParams = [$school_id, $user_id];
+$bindTypes = "ii";
+
+// Add date range parameters
 if (!empty($start_date) && !empty($end_date)) {
-    $stmt->bindParam(':start_date', $start_date);
-    $stmt->bindParam(':end_date', $end_date);
+    $bindParams[] = $start_date;
+    $bindParams[] = $end_date;
+    $bindTypes .= "ss";
 }
 
+// Add course section parameter
 if (!empty($selected_course_section)) {
-    $stmt->bindParam(':course_section', $selected_course_section);
+    $bindParams[] = $selected_course_section;
+    $bindTypes .= "s";
 }
 
+// Add day parameter
 if (!empty($selected_day)) {
-    $stmt->bindParam(':selected_day', $selected_day);
+    $bindParams[] = $selected_day;
+    $bindTypes .= "s";
+}
+
+// Bind parameters using PDO style
+$paramIndex = 1;
+$stmt->bindParam($paramIndex++, $school_id, PDO::PARAM_INT);
+$stmt->bindParam($paramIndex++, $user_id, PDO::PARAM_INT);
+
+// Add date range parameters
+if (!empty($start_date) && !empty($end_date)) {
+    $stmt->bindParam($paramIndex++, $start_date, PDO::PARAM_STR);
+    $stmt->bindParam($paramIndex++, $end_date, PDO::PARAM_STR);
+}
+
+// Add course section parameter
+if (!empty($selected_course_section)) {
+    $stmt->bindParam($paramIndex++, $selected_course_section, PDO::PARAM_STR);
+}
+
+// Add day parameter
+if (!empty($selected_day)) {
+    $stmt->bindParam($paramIndex++, $selected_day, PDO::PARAM_STR);
 }
 
 $stmt->execute();

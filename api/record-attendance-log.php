@@ -1,6 +1,13 @@
 <?php
 // Start session to access instructor data
 session_start();
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Session expired or not logged in.']);
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+$school_id = $_SESSION['school_id'];
 
 // Include database connection and helper functions
 include('../conn/db_connect.php');
@@ -142,7 +149,7 @@ try {
     }
     
     // Record attendance
-    $result = recordAttendance($pdo, $sessionData['id'], $studentId, $currentTime);
+    $result = recordAttendance($pdo, $sessionData['id'], $studentId, $currentTime, $school_id);
     
     if ($result) {
         // Calculate and update attendance grade

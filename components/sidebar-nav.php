@@ -43,7 +43,7 @@ if (!empty($email)) {
 error_log("Session data in sidebar-nav: " . print_r($_SESSION, true));
 ?>
 <!DOCTYPE html>
-<!-- Coding by JV Codes | www.jvcodes.com -->
+
 <html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8">

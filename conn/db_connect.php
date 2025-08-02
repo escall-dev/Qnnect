@@ -29,7 +29,9 @@ $create_table_query = "CREATE TABLE IF NOT EXISTS tbl_face_verification_logs (
     status VARCHAR(20),
     verification_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     ip_address VARCHAR(45),
-    notes TEXT
+    notes TEXT,
+    school_id INT DEFAULT 1,
+    user_id INT DEFAULT 1
 )";
 
 if (!mysqli_query($conn_qr, $create_table_query)) {

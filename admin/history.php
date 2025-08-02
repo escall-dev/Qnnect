@@ -22,33 +22,40 @@ $sidebarConn = $conn;
 if (isset($_SESSION['username'])) {
     $current_username = $_SESSION['username'];
     
-    // Step 1: Check if user has any active sessions
+    // Step 1: Check if user has any active sessions (filtered by user_id and school_id)
+    $current_user_id = $_SESSION['user_id'] ?? 0;
+    $current_school_id = $_SESSION['school_id'] ?? 0;
+    
     $active_check = "SELECT COUNT(*) as active_count FROM tbl_user_logs 
-                     WHERE username = ? AND log_out_time IS NULL";
+                     WHERE username = ? AND log_out_time IS NULL AND user_id = ? AND school_id = ?";
     $stmt = mysqli_prepare($conn, $active_check);
-    mysqli_stmt_bind_param($stmt, "s", $current_username);
+    mysqli_stmt_bind_param($stmt, "sii", $current_username, $current_user_id, $current_school_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $active_count = mysqli_fetch_assoc($result)['active_count'];
     
     // Step 2: If user has MORE than 1 active session, clean up automatically
     if ($active_count > 1) {
-        // Close all but the most recent active session
+        // Close all but the most recent active session (filtered by user_id and school_id)
         $cleanup_query = "UPDATE tbl_user_logs 
                          SET log_out_time = NOW() 
                          WHERE username = ? 
                          AND log_out_time IS NULL 
+                         AND user_id = ? 
+                         AND school_id = ? 
                          AND log_id NOT IN (
                              SELECT max_id FROM (
                                  SELECT MAX(log_id) as max_id 
                                  FROM tbl_user_logs 
                                  WHERE username = ? 
-                                 AND log_out_time IS NULL
+                                 AND log_out_time IS NULL 
+                                 AND user_id = ? 
+                                 AND school_id = ?
                              ) as latest
                          )";
         
         $cleanup_stmt = mysqli_prepare($conn, $cleanup_query);
-        mysqli_stmt_bind_param($cleanup_stmt, "ss", $current_username, $current_username);
+        mysqli_stmt_bind_param($cleanup_stmt, "siisii", $current_username, $current_user_id, $current_school_id, $current_username, $current_user_id, $current_school_id);
         mysqli_stmt_execute($cleanup_stmt);
         
         error_log("Auto-cleaned duplicate sessions for user: $current_username");
@@ -78,16 +85,25 @@ if (mysqli_num_rows($check_table) == 0) {
         user_type VARCHAR(20) DEFAULT 'User',
         log_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
         log_out_time DATETIME NULL,
-        ip_address VARCHAR(45)
+        ip_address VARCHAR(45),
+        user_id INT NOT NULL,
+        school_id INT NOT NULL
     )";
     mysqli_query($conn, $create_table);
 }
 
 // Get history logs
 try {
-    // Get distinct users for filter
-    $users_query = "SELECT DISTINCT username FROM tbl_user_logs ORDER BY username";
-    $users_result = mysqli_query($conn, $users_query);
+    // Get session variables for filtering
+    $current_user_id = $_SESSION['user_id'] ?? 0;
+    $current_school_id = $_SESSION['school_id'] ?? 0;
+    
+    // Get distinct users for filter (filtered by school_id and user_id)
+    $users_query = "SELECT DISTINCT username FROM tbl_user_logs WHERE school_id = ? AND user_id = ? ORDER BY username";
+    $users_stmt = mysqli_prepare($conn, $users_query);
+    mysqli_stmt_bind_param($users_stmt, "ii", $current_school_id, $current_user_id);
+    mysqli_stmt_execute($users_stmt);
+    $users_result = mysqli_stmt_get_result($users_stmt);
     
     if (!$users_result) {
         throw new Exception("Error fetching users: " . mysqli_error($conn));
@@ -98,9 +114,12 @@ try {
         $users[] = $row['username'];
     }
 
-    // Get all logs - MAKE SURE TO USE FRESH DATA
-    $logs_query = "SELECT * FROM tbl_user_logs ORDER BY log_in_time DESC";
-    $logs_result = mysqli_query($conn, $logs_query);
+    // Get all logs - MAKE SURE TO USE FRESH DATA (filtered by school_id and user_id)
+    $logs_query = "SELECT * FROM tbl_user_logs WHERE school_id = ? AND user_id = ? ORDER BY log_in_time DESC";
+    $logs_stmt = mysqli_prepare($conn, $logs_query);
+    mysqli_stmt_bind_param($logs_stmt, "ii", $current_school_id, $current_user_id);
+    mysqli_stmt_execute($logs_stmt);
+    $logs_result = mysqli_stmt_get_result($logs_stmt);
     
     if (!$logs_result) {
         throw new Exception("Error fetching logs: " . mysqli_error($conn));
@@ -124,21 +143,27 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Test query
-$test_query = "SELECT COUNT(*) as count FROM tbl_user_logs";
-$test_result = mysqli_query($conn, $test_query);
+// Test query (filtered by school_id and user_id)
+$test_query = "SELECT COUNT(*) as count FROM tbl_user_logs WHERE school_id = ? AND user_id = ?";
+$test_stmt = mysqli_prepare($conn, $test_query);
+mysqli_stmt_bind_param($test_stmt, "ii", $current_school_id, $current_user_id);
+mysqli_stmt_execute($test_stmt);
+$test_result = mysqli_stmt_get_result($test_stmt);
 if ($test_result) {
     $row = mysqli_fetch_assoc($test_result);
-    error_log("Number of records: " . $row['count']);
+    error_log("Number of records for user_id=$current_user_id, school_id=$current_school_id: " . $row['count']);
 } else {
     error_log("Query failed: " . mysqli_error($conn));
 }
 
 // Add this after your database connection check
 echo "<!-- Debug info: -->";
-$check_logs = mysqli_query($conn, "SELECT COUNT(*) as count FROM tbl_user_logs");
-$logs_count = mysqli_fetch_assoc($check_logs)['count'];
-echo "<!-- Logs count: " . $logs_count . " -->";
+$check_logs = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM tbl_user_logs WHERE school_id = ? AND user_id = ?");
+mysqli_stmt_bind_param($check_logs, "ii", $current_school_id, $current_user_id);
+mysqli_stmt_execute($check_logs);
+$check_logs_result = mysqli_stmt_get_result($check_logs);
+$logs_count = mysqli_fetch_assoc($check_logs_result)['count'];
+echo "<!-- Logs count for user_id=$current_user_id, school_id=$current_school_id: " . $logs_count . " -->";
 
 $check_users = mysqli_query($conn, "SELECT COUNT(*) as count FROM users");
 $users_count = mysqli_fetch_assoc($check_users)['count'];

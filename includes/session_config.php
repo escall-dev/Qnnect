@@ -11,8 +11,22 @@ if (session_status() === PHP_SESSION_NONE) {
     // Set session name
     session_name('QR_ATTENDANCE_SESSION');
     
+    // Set session cookie path to root of project - use simpler approach
+    // Use root path to ensure sessions work across all subdirectories
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    
     // Start the session
     session_start();
+    
+    // Debug: Log session start
+    error_log('Session started. Session ID: ' . session_id());
     
     // Regenerate session ID periodically for security
     if (!isset($_SESSION['last_regeneration'])) {
@@ -23,7 +37,9 @@ if (session_status() === PHP_SESSION_NONE) {
     }
 }
 
-// Session timeout (30 minutes of inactivity)
+// TEMPORARILY DISABLE SESSION TIMEOUT FOR DEBUGGING
+// Comment out the timeout check for now
+/*
 $timeout_duration = 1800;
 
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
@@ -33,6 +49,10 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
     session_start();
     $_SESSION['session_expired'] = true;
 }
+*/
 
 $_SESSION['last_activity'] = time();
+
+// Debug: Log session contents
+error_log('Session config loaded. Session contents: ' . print_r($_SESSION, true));
 ?>
