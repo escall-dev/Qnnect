@@ -1,12 +1,19 @@
 <?php
-// Use consistent session handling
+require_once 'includes/asset_helper.php';
 require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php'; // Data isolation functions
 
 // Check if user is logged in
 if (!isset($_SESSION['email'])) {
     header("Location: admin/login.php");
     exit;
 }
+
+// Include database connections
+include('./conn/db_connect.php');
+
+// Get user context for data isolation
+$context = getCurrentUserContext();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -499,7 +506,267 @@ if (!isset($_SESSION['email'])) {
 
     <!-- Custom Alert Box -->
     <div id="customAlert" class="custom-alert"></div>
-
+    
+    <!-- Success Modal -->
+    <?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
+    <div id="successModal" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    ">
+        <div style="
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            position: relative;
+        ">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #4CAF50, #45a049);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15px;
+                animation: pulse 1.5s infinite;
+            ">
+                <i class="fas fa-check" style="color: white; font-size: 30px;"></i>
+            </div>
+            
+            <h3 style="
+                color: #333;
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            ">Student Added Successfully!</h3>
+            
+            <p style="
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 15px;
+                line-height: 1.4;
+            "><?php echo htmlspecialchars($_GET['student_name'] ?? 'Student'); ?> has been added to the system.</p>
+            
+            <div style="
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 12px;
+                margin: 15px 0;
+                border-left: 3px solid #4CAF50;
+                font-size: 12px;
+            ">
+                <p style="color: #666; margin: 3px 0;"><strong>Course:</strong> <?php echo htmlspecialchars($_GET['course_section'] ?? 'N/A'); ?></p>
+                <p style="color: #666; margin: 3px 0;"><strong>Status:</strong> ✓ Ready for attendance</p>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+    
+    <script>
+        // Auto-close modal after 1.5 seconds
+        setTimeout(function() {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    modal.remove();
+                    // Clean up URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 300);
+            }
+        }, 2000);
+    </script>
+    <?php endif; ?>
+    
+    <!-- Update Success Modal -->
+    <?php if (isset($_GET['update_success']) && $_GET['update_success'] == '1'): ?>
+    <div id="updateSuccessModal" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    ">
+        <div style="
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            position: relative;
+        ">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #2196F3, #1976D2);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15px;
+                animation: pulse 1.5s infinite;
+            ">
+                <i class="fas fa-edit" style="color: white; font-size: 30px;"></i>
+            </div>
+            
+            <h3 style="
+                color: #333;
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            ">Student Updated Successfully!</h3>
+            
+            <p style="
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 15px;
+                line-height: 1.4;
+            "><?php echo htmlspecialchars($_GET['student_name'] ?? 'Student'); ?> has been updated in the system.</p>
+            
+            <div style="
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 12px;
+                margin: 15px 0;
+                border-left: 3px solid #2196F3;
+                font-size: 12px;
+            ">
+                <p style="color: #666; margin: 3px 0;"><strong>Course:</strong> <?php echo htmlspecialchars($_GET['course_section'] ?? 'N/A'); ?></p>
+                <p style="color: #666; margin: 3px 0;"><strong>Status:</strong> ✓ Updated successfully</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-close modal after 1.5 seconds
+        setTimeout(function() {
+            const modal = document.getElementById('updateSuccessModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    modal.remove();
+                    // Clean up URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 300);
+            }
+        }, 1500);
+        </script>
+    <?php endif; ?>
+    
+    <!-- Delete Success Modal -->
+    <?php if (isset($_GET['delete_success']) && $_GET['delete_success'] == '1'): ?>
+    <div id="deleteSuccessModal" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    ">
+        <div style="
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            position: relative;
+        ">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #F44336, #D32F2F);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15px;
+                animation: pulse 1.5s infinite;
+            ">
+                <i class="fas fa-trash" style="color: white; font-size: 30px;"></i>
+            </div>
+            
+            <h3 style="
+                color: #333;
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            ">Student Deleted Successfully!</h3>
+            
+            <p style="
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 15px;
+                line-height: 1.4;
+            "><?php echo htmlspecialchars($_GET['student_name'] ?? 'Student'); ?> has been removed from the system.</p>
+            
+            <div style="
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 12px;
+                margin: 15px 0;
+                border-left: 3px solid #F44336;
+                font-size: 12px;
+            ">
+                <p style="color: #666; margin: 3px 0;"><strong>Status:</strong> ✓ Removed from database</p>
+                <p style="color: #666; margin: 3px 0;"><strong>Action:</strong> Cannot be undone</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-close modal after 1.5 seconds
+        setTimeout(function() {
+            const modal = document.getElementById('deleteSuccessModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    modal.remove();
+                    // Clean up URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 300);
+            }
+        }, 1500);
+    </script>
+    <?php endif; ?>
+    
     <?php include('./components/sidebar-nav.php');?>
   
     <div class="main collapsed" id="main">
@@ -578,29 +845,50 @@ if (!isset($_SESSION['email'])) {
                         <?php 
 include ('./conn/conn.php');
 
-                        // Get all students for client-side search
-                        $allStudentsStmt = $conn->prepare("SELECT * FROM tbl_student ORDER BY tbl_student_id DESC");
+                        // Get all students for client-side search with data isolation
+                        $allStudentsStmt = $conn->prepare("SELECT * FROM tbl_student 
+                                                         WHERE school_id = :school_id 
+                                                         " . ($context['user_id'] ? "AND (user_id = :user_id OR user_id IS NULL)" : "") . "
+                                                         ORDER BY tbl_student_id DESC");
+                        $allStudentsStmt->bindParam(':school_id', $context['school_id'], PDO::PARAM_INT);
+                        if ($context['user_id']) {
+                            $allStudentsStmt->bindParam(':user_id', $context['user_id'], PDO::PARAM_INT);
+                        }
                         $allStudentsStmt->execute();
                         $allStudents = $allStudentsStmt->fetchAll(PDO::FETCH_ASSOC);
 
                         // Store all students in a hidden input for JavaScript
                         echo '<input type="hidden" id="allStudentsData" value="' . htmlspecialchars(json_encode($allStudents)) . '">';
 
-                        // Regular pagination for initial display
+                        // Regular pagination for initial display with data isolation
                         $limit = 10;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$offset = ($page - 1) * $limit;
+                        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                        $offset = ($page - 1) * $limit;
 
-$stmt = $conn->prepare("SELECT * FROM tbl_student ORDER BY tbl_student_id DESC LIMIT :limit OFFSET :offset");
-$stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-$stmt->execute();
-$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        $stmt = $conn->prepare("SELECT * FROM tbl_student 
+                                              WHERE school_id = :school_id 
+                                              " . ($context['user_id'] ? "AND (user_id = :user_id OR user_id IS NULL)" : "") . "
+                                              ORDER BY tbl_student_id DESC LIMIT :limit OFFSET :offset");
+                        $stmt->bindParam(':school_id', $context['school_id'], PDO::PARAM_INT);
+                        if ($context['user_id']) {
+                            $stmt->bindParam(':user_id', $context['user_id'], PDO::PARAM_INT);
+                        }
+                        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+                        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+                        $stmt->execute();
+                        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$totalStmt = $conn->prepare("SELECT COUNT(*) FROM tbl_student");
-$totalStmt->execute();
-$totalRecords = $totalStmt->fetchColumn();
-$totalPages = ceil($totalRecords / $limit);
+                        // Get total count with data isolation
+                        $totalStmt = $conn->prepare("SELECT COUNT(*) FROM tbl_student 
+                                                   WHERE school_id = :school_id 
+                                                   " . ($context['user_id'] ? "AND (user_id = :user_id OR user_id IS NULL)" : ""));
+                        $totalStmt->bindParam(':school_id', $context['school_id'], PDO::PARAM_INT);
+                        if ($context['user_id']) {
+                            $totalStmt->bindParam(':user_id', $context['user_id'], PDO::PARAM_INT);
+                        }
+                        $totalStmt->execute();
+                        $totalRecords = $totalStmt->fetchColumn();
+                        $totalPages = ceil($totalRecords / $limit);
 
 foreach ($result as $row) {
                             outputStudentRow($row);
@@ -701,6 +989,7 @@ foreach ($result as $row) {
                                 <option value="custom">Custom Course or Grade Level & Section</option>
                             </select>
                             <input type="text" class="form-control mt-2" id="customStudentCourse" name="custom_course_section" placeholder="Enter custom Course or Grade Level & Section" style="display: none;">
+                            <input type="hidden" id="finalCourseSection" name="final_course_section">
                         </div>
                         
                         <!-- Face Capture Section -->
@@ -798,6 +1087,7 @@ foreach ($result as $row) {
                                 <option value="custom">Custom Course & Section</option>
                             </select>
                             <input type="text" class="form-control mt-2" id="updateCustomStudentCourse" name="update_custom_course_section" placeholder="Enter custom Course or Grade Level & Section" style="display: none;">
+                            <input type="hidden" id="updateFinalCourseSection" name="final_course_section">
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -1303,7 +1593,13 @@ foreach ($result as $row) {
                         customCourseInput.focus();
                         return false;
                     }
-                    courseSelect.val(customValue);
+                    // Set the final course section value
+                    $('#finalCourseSection').val(customValue);
+                    // Also ensure the custom input is hidden to avoid confusion
+                    customCourseInput.hide();
+                } else {
+                    // Set the final course section value to the selected option
+                    $('#finalCourseSection').val(courseSelect.val());
                 }
 
                 // Validate QR code generation
@@ -1336,16 +1632,45 @@ foreach ($result as $row) {
             
             // Form submission for update student
             $('#updateStudentForm').on('submit', function(e) {
-                if ($('#updateStudentCourse').val() === 'custom') {
-                    // If custom option selected, set the course_section value to the custom input
-                    const customValue = $('#updateCustomStudentCourse').val();
-                    if (customValue) {
-                        $('#updateStudentCourse').val(customValue);
-                    } else {
-                        e.preventDefault();
-                        alert('Please enter a custom course & section');
-                    }
+                // Validate student name
+                const studentName = $('#updateStudentName').val().trim();
+                if (!studentName) {
+                    e.preventDefault();
+                    alert('Please enter a student name');
+                    $('#updateStudentName').focus();
+                    return false;
                 }
+
+                // Validate course section
+                const courseSelect = $('#updateStudentCourse');
+                const customCourseInput = $('#updateCustomStudentCourse');
+                
+                if (courseSelect.val() === '') {
+                    e.preventDefault();
+                    alert('Please select a course and section');
+                    courseSelect.focus();
+                    return false;
+                }
+
+                if (courseSelect.val() === 'custom') {
+                    const customValue = customCourseInput.val().trim();
+                    if (!customValue || customValue.length < 3) {
+                        e.preventDefault();
+                        alert('Please enter a valid custom course & section (minimum 3 characters)');
+                        customCourseInput.focus();
+                        return false;
+                    }
+                    // Set the final course section value
+                    $('#updateFinalCourseSection').val(customValue);
+                    // Also ensure the custom input is hidden to avoid confusion
+                    customCourseInput.hide();
+                } else {
+                    // Set the final course section value to the selected option
+                    $('#updateFinalCourseSection').val(courseSelect.val());
+                }
+
+                // If all validations pass, form will submit
+                return true;
             });
         });
     </script>

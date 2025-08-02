@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/asset_helper.php';
 require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php';
 include('./conn/db_connect.php');
 
 // Check if user is logged in
@@ -9,18 +10,34 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
+// Get user context for data isolation
+$context = getCurrentUserContext();
+
 // Get the top students with most attendance records
 try {
     $query = "
         SELECT s.student_name, s.course_section, s.tbl_student_id, COUNT(a.tbl_attendance_id) as attendance_count 
         FROM tbl_student s
         LEFT JOIN tbl_attendance a ON s.tbl_student_id = a.tbl_student_id
+        WHERE s.school_id = ? 
+        " . ($context['user_id'] ? "AND (s.user_id = ? OR s.user_id IS NULL)" : "") . "
+        AND (a.school_id = ? OR a.school_id IS NULL)
+        " . ($context['user_id'] ? "AND (a.user_id = ? OR a.user_id IS NULL)" : "") . "
         GROUP BY s.tbl_student_id
         ORDER BY attendance_count DESC
         LIMIT 50
     ";
     
-    $result = $conn_qr->query($query);
+    $stmt = $conn_qr->prepare($query);
+    
+    if ($context['user_id']) {
+        $stmt->bind_param("iiii", $context['school_id'], $context['user_id'], $context['school_id'], $context['user_id']);
+    } else {
+        $stmt->bind_param("ii", $context['school_id'], $context['school_id']);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
     $students = [];
     $rank = 1;
     
@@ -37,8 +54,18 @@ $query = "
     SELECT COUNT(DISTINCT DATE(time_in)) as total_days 
     FROM tbl_attendance 
     WHERE time_in >= CURDATE() - INTERVAL 6 MONTH
-";
-$total_days_result = $conn_qr->query($query);
+    AND school_id = ?
+    " . ($context['user_id'] ? "AND (user_id = ? OR user_id IS NULL)" : "");
+$stmt = $conn_qr->prepare($query);
+
+if ($context['user_id']) {
+    $stmt->bind_param("ii", $context['school_id'], $context['user_id']);
+} else {
+    $stmt->bind_param("i", $context['school_id']);
+}
+
+$stmt->execute();
+$total_days_result = $stmt->get_result();
 $total_days = $total_days_result->fetch_assoc()['total_days'];
 ?>
 

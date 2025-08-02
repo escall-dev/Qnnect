@@ -6,6 +6,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['qr_code'])) {
         $qrCode = trim($_POST['qr_code']); // Trim input to remove extra spaces
         
+        // Get user context for data isolation
+        $school_id = isset($_SESSION['school_id']) ? (int)$_SESSION['school_id'] : 1;
+        $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+        
         // Use the formatted class start time if available (has seconds appended)
         $class_start_time = isset($_SESSION['class_start_time_formatted']) 
             ? $_SESSION['class_start_time_formatted'] 
@@ -25,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate QR code input
         if (empty($qrCode)) {
             echo "<script>
-                window.location.href = 'http://localhost/qr-code-attendance-system/index.php?error=empty_qr';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?error=empty_qr';    
             </script>";
             exit();
         }
@@ -39,9 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log('Class start time from form: ' . $class_start_time);
 
         try {
-            // Step 1: Verify student by QR code
-            $selectStmt = $conn->prepare("SELECT tbl_student_id, student_name FROM tbl_student WHERE generated_code = :generated_code");
+            // Step 1: Verify student by QR code with school isolation
+            $selectStmt = $conn->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
+                                        WHERE generated_code = :generated_code 
+                                        AND school_id = :school_id");
             $selectStmt->bindParam(":generated_code", $qrCode, PDO::PARAM_STR);
+            $selectStmt->bindParam(":school_id", $school_id, PDO::PARAM_INT);
             $selectStmt->execute();
             $result = $selectStmt->fetch();
 
@@ -49,16 +56,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $studentID = $result["tbl_student_id"];
                 $studentName = $result["student_name"];
 
-                // Step 2: Check if the student already has an attendance record today for this specific instructor and subject
+                // Step 2: Check if the student already has an attendance record today for this specific instructor and subject with isolation
                 $checkStmt = $conn->prepare("SELECT * FROM tbl_attendance 
                     WHERE tbl_student_id = :tbl_student_id 
                     AND DATE(time_in) = CURDATE() 
                     AND instructor_id = :instructor_id 
                     AND subject_id = :subject_id 
+                    AND school_id = :school_id
                     LIMIT 1");
                 $checkStmt->bindParam(":tbl_student_id", $studentID, PDO::PARAM_INT);
                 $checkStmt->bindParam(":instructor_id", $currentInstructorId, PDO::PARAM_INT);
                 $checkStmt->bindParam(":subject_id", $currentSubjectId, PDO::PARAM_INT);
+                $checkStmt->bindParam(":school_id", $school_id, PDO::PARAM_INT);
                 $checkStmt->execute();
                 $attendanceRecord = $checkStmt->fetch();
 
@@ -105,18 +114,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               ', Time in: ' . $time_in_datetime->format('Y-m-d H:i:s') . 
                               ', Status: ' . $status);
                     
-                    // Store the status in the database along with instructor and subject IDs
-                    $stmt = $conn->prepare("INSERT INTO tbl_attendance (tbl_student_id, time_in, status, instructor_id, subject_id) 
-                        VALUES (:tbl_student_id, :time_in, :status, :instructor_id, :subject_id)");
+                    // Store the status in the database along with instructor and subject IDs, plus isolation data
+                    $stmt = $conn->prepare("INSERT INTO tbl_attendance (tbl_student_id, time_in, status, instructor_id, subject_id, school_id, user_id) 
+                        VALUES (:tbl_student_id, :time_in, :status, :instructor_id, :subject_id, :school_id, :user_id)");
                     $stmt->bindParam(":tbl_student_id", $studentID, PDO::PARAM_INT);
                     $stmt->bindParam(":time_in", $timeIn, PDO::PARAM_STR);
                     $stmt->bindParam(":status", $status, PDO::PARAM_STR);
                     $stmt->bindParam(":instructor_id", $currentInstructorId, PDO::PARAM_INT);
                     $stmt->bindParam(":subject_id", $currentSubjectId, PDO::PARAM_INT);
+                    $stmt->bindParam(":school_id", $school_id, PDO::PARAM_INT);
+                    $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
                     $stmt->execute();
                     
                     // Redirect after successful operation
-                    header("Location: http://localhost/qr-code-attendance-system/index.php?success=attendance_added");
+                    header("Location: http://localhost/personal-proj/Qnnect/index.php?success=attendance_added");
                     exit();
                 } else {
                     // Student already has attendance record today for this instructor/subject
@@ -134,25 +145,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             instructorName: '".addslashes($currentInstructorName)."',
                             subjectName: '".addslashes($currentSubjectName)."'
                         }));
-                        window.location.href = 'http://localhost/qr-code-attendance-system/index.php?error=duplicate_scan';
+                        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?error=duplicate_scan';
                     </script>";
                     exit();
                 }
             } else {
                 echo "<script>
-                    window.location.href = 'http://localhost/qr-code-attendance-system/index.php?error=invalid_qr';
+                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?error=invalid_qr';
                 </script>";
                 exit();
             }
         } catch (PDOException $e) {
             echo "<script>
-                window.location.href = 'http://localhost/qr-code-attendance-system/index.php?error=db_error';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?error=db_error';
             </script>";
             exit();
         }
     } else {
         echo "<script>
-            window.location.href = 'http://localhost/qr-code-attendance-system/index.php?error=missing_qr';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?error=missing_qr';
         </script>";
         exit();
     }

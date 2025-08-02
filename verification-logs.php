@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/asset_helper.php';
 require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php'; // Data isolation functions
 require_once './conn/db_connect.php';
 
 // Check if user is logged in
@@ -8,6 +9,9 @@ if (!isset($_SESSION['email'])) {
     header("Location: admin/login.php");
     exit;
 }
+
+// Get user context for data isolation
+$context = getCurrentUserContext();
 
 // Store the login database connection for the sidebar
 $sidebarConn = $conn_login;
@@ -20,14 +24,19 @@ if (!$conn_qr) {
 // Debug connection
 error_log("Attempting to connect to database with username: $dbUser and database: $qrDb");
 
-// Get verification logs
+// Get verification logs with data isolation
 try {
     // Debug query execution
     error_log("Executing query for students filter");
     
-    // Get distinct students for filter
-    $students_query = "SELECT DISTINCT student_name FROM tbl_face_verification_logs ORDER BY student_name";
-    $students_result = mysqli_query($conn_qr, $students_query);
+    // Get distinct students for filter with data isolation
+    $students_query = "SELECT DISTINCT student_name FROM tbl_face_verification_logs 
+                      WHERE school_id = ? 
+                      ORDER BY student_name";
+    $students_stmt = mysqli_prepare($conn_qr, $students_query);
+    mysqli_stmt_bind_param($students_stmt, "i", $context['school_id']);
+    mysqli_stmt_execute($students_stmt);
+    $students_result = mysqli_stmt_get_result($students_stmt);
     
     if (!$students_result) {
         error_log("Students query failed: " . mysqli_error($conn_qr));
@@ -43,9 +52,14 @@ try {
     // Debug logs query
     error_log("Executing query for all logs");
     
-    // Get all logs
-    $logs_query = "SELECT * FROM tbl_face_verification_logs ORDER BY verification_time DESC";
-    $logs_result = mysqli_query($conn_qr, $logs_query);
+    // Get all logs with data isolation
+    $logs_query = "SELECT * FROM tbl_face_verification_logs 
+                   WHERE school_id = ? 
+                   ORDER BY verification_time DESC";
+    $logs_stmt = mysqli_prepare($conn_qr, $logs_query);
+    mysqli_stmt_bind_param($logs_stmt, "i", $context['school_id']);
+    mysqli_stmt_execute($logs_stmt);
+    $logs_result = mysqli_stmt_get_result($logs_stmt);
     
     if (!$logs_result) {
         error_log("Logs query failed: " . mysqli_error($conn_qr));
@@ -64,9 +78,12 @@ try {
     $students = [];
 }
 
-// Test query
-$test_query = "SELECT COUNT(*) as count FROM tbl_face_verification_logs";
-$test_result = mysqli_query($conn_qr, $test_query);
+// Test query with data isolation
+$test_query = "SELECT COUNT(*) as count FROM tbl_face_verification_logs WHERE school_id = ?";
+$test_stmt = mysqli_prepare($conn_qr, $test_query);
+mysqli_stmt_bind_param($test_stmt, "i", $context['school_id']);
+mysqli_stmt_execute($test_stmt);
+$test_result = mysqli_stmt_get_result($test_stmt);
 if ($test_result) {
     $row = mysqli_fetch_assoc($test_result);
     error_log("Number of records: " . $row['count']);

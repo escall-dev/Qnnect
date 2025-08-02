@@ -1,6 +1,16 @@
 <?php
 require_once 'includes/asset_helper.php';
-session_start();
+require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php'; // Data isolation functions
+
+// Check if user is logged in
+if (!isset($_SESSION['email'])) {
+    header("Location: admin/login.php");
+    exit;
+}
+
+// Get user context for data isolation
+$context = getCurrentUserContext();
 
 // Clear any existing verification status when starting fresh
 unset($_SESSION['face_verified']);
@@ -447,7 +457,14 @@ unset($_SESSION['error_message']);
                                             <?php
                                             include('./conn/conn.php');
                                             try {
-                                                $stmt = $conn->prepare("SELECT tbl_student_id, student_name FROM tbl_student ORDER BY student_name");
+                                                $stmt = $conn->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
+                                                                       WHERE school_id = :school_id 
+                                                                       " . ($context['user_id'] ? "AND (user_id = :user_id OR user_id IS NULL)" : "") . "
+                                                                       ORDER BY student_name");
+                                                $stmt->bindParam(':school_id', $context['school_id'], PDO::PARAM_INT);
+                                                if ($context['user_id']) {
+                                                    $stmt->bindParam(':user_id', $context['user_id'], PDO::PARAM_INT);
+                                                }
                                                 $stmt->execute();
                                                 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 

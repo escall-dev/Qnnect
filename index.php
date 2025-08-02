@@ -3,6 +3,7 @@ require_once 'includes/asset_helper.php';
 require_once 'includes/session_config.php'; // Handle session configuration
 require_once 'includes/schedule_helper.php'; // Has getScheduleDropdownData
 require_once 'includes/schedule_data_helper.php'; // Has getFilteredScheduleData
+require_once 'includes/data_isolation_helper.php'; // Data isolation functions
 
 // Set timezone to Philippines
 date_default_timezone_set('Asia/Manila');
@@ -129,48 +130,82 @@ if (isset($_GET['attendance'])) {
     $attendance = $_GET['attendance'];
 
     try {
-        // Get attendance details before deletion for logging
-        $get_attendance_query = "SELECT * FROM tbl_attendance WHERE tbl_attendance_id = ?";
+        // Get user context for data isolation
+        $context = getCurrentUserContext();
+        
+        // Get attendance details before deletion for logging with isolation
+        $get_attendance_query = "SELECT * FROM tbl_attendance 
+                                WHERE tbl_attendance_id = ? 
+                                AND school_id = ? 
+                                " . ($context['user_id'] ? "AND (user_id = ? OR user_id IS NULL)" : "");
+        
         $get_stmt = $conn_qr->prepare($get_attendance_query);
-        $get_stmt->bind_param("i", $attendance);
+        
+        if ($context['user_id']) {
+            $get_stmt->bind_param("iii", $attendance, $context['school_id'], $context['user_id']);
+        } else {
+            $get_stmt->bind_param("ii", $attendance, $context['school_id']);
+        }
+        
         $get_stmt->execute();
         $attendance_details = $get_stmt->get_result()->fetch_assoc();
 
-        $query = "DELETE FROM tbl_attendance WHERE tbl_attendance_id = ?";
-        $stmt = $conn_qr->prepare($query);
-        $stmt->bind_param("i", $attendance);
-        $query_execute = $stmt->execute();
+        // Only proceed if the record exists and belongs to the user's context
+        if ($attendance_details) {
+            $query = "DELETE FROM tbl_attendance 
+                     WHERE tbl_attendance_id = ? 
+                     AND school_id = ? 
+                     " . ($context['user_id'] ? "AND (user_id = ? OR user_id IS NULL)" : "");
+            
+            $stmt = $conn_qr->prepare($query);
+            
+            if ($context['user_id']) {
+                $stmt->bind_param("iii", $attendance, $context['school_id'], $context['user_id']);
+            } else {
+                $stmt->bind_param("ii", $attendance, $context['school_id']);
+            }
+            
+            $query_execute = $stmt->execute();
 
-        if ($query_execute) {
-            // Log the successful deletion
-            logActivity(
-                'delete',
-                "Deleted attendance record #$attendance",
-                'tbl_attendance',
-                $attendance,
-                $attendance_details
-            );
+            if ($query_execute) {
+                // Log the successful deletion
+                logActivity(
+                    'delete',
+                    "Deleted attendance record #$attendance",
+                    'tbl_attendance',
+                    $attendance,
+                    $attendance_details
+                );
 
-            echo "<script>
-                showCustomAlert('Attendance deleted successfully!', 'success');
-                setTimeout(function() {
-                    window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
-                }, 3000);
-            </script>";
+                echo "<script>
+                    showCustomAlert('Attendance deleted successfully!', 'success');
+                    setTimeout(function() {
+                        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
+                    }, 3000);
+                </script>";
+            } else {
+                // Log the failed deletion attempt
+                logActivity(
+                    'delete_failed',
+                    "Failed to delete attendance record #$attendance",
+                    'tbl_attendance',
+                    $attendance,
+                    ['error' => $conn_qr->error]
+                );
+
+                echo "<script>
+                    showCustomAlert('Failed to delete attendance!', 'error');
+                    setTimeout(function() {
+                        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
+                    }, 3000);
+                </script>";
+            }
         } else {
-            // Log the failed deletion attempt
-            logActivity(
-                'delete_failed',
-                "Failed to delete attendance record #$attendance",
-                'tbl_attendance',
-                $attendance,
-                ['error' => $conn_qr->error]
-            );
-
+            // Record doesn't exist or doesn't belong to user
             echo "<script>
-                showCustomAlert('Failed to delete attendance!', 'error');
+                showCustomAlert('Attendance record not found or access denied!', 'error');
                 setTimeout(function() {
-                    window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
                 }, 3000);
             </script>";
         }
@@ -916,11 +951,16 @@ $filteredSchedules = getFilteredSchedules(
                                     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
                                     $offset = ($page - 1) * $limit;
 
+                                    // Get user context for data isolation
+                                    $context = getCurrentUserContext();
+                                    
                                     $query = "
                                         SELECT a.*, s.student_name, s.course_section 
                                         FROM tbl_attendance a
                                         LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id 
                                         WHERE a.time_in IS NOT NULL
+                                        AND a.school_id = {$context['school_id']}
+                                        " . ($context['user_id'] ? "AND (a.user_id = {$context['user_id']} OR a.user_id IS NULL)" : "") . "
                                         ORDER BY a.time_in DESC 
                                         LIMIT ?, ?
                                     ";
@@ -930,8 +970,10 @@ $filteredSchedules = getFilteredSchedules(
                                     $stmt->execute();
                                     $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-                                    // Get total records for pagination
-                                    $totalQuery = "SELECT COUNT(*) as total FROM tbl_attendance";
+                                    // Get total records for pagination with isolation
+                                    $totalQuery = "SELECT COUNT(*) as total FROM tbl_attendance 
+                                                  WHERE school_id = {$context['school_id']}
+                                                  " . ($context['user_id'] ? "AND (user_id = {$context['user_id']} OR user_id IS NULL)" : "");
                                     $totalStmt = $conn_qr->query($totalQuery);
                                     $totalRow = $totalStmt->fetch_assoc();
                                     $totalRecords = $totalRow['total'];

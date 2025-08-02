@@ -1,13 +1,27 @@
 <?php
 // Include database connection
 include('../conn/conn.php');
+include('../includes/data_isolation_helper.php');
+
+// Start session to get user context
+session_start();
 
 // Set the response content type to JSON
 header('Content-Type: application/json');
 
 try {
-    // Fetch all students from the database
-    $stmt = $conn->prepare("SELECT * FROM tbl_student ORDER BY tbl_student_id DESC");
+    // Get user context for data isolation
+    $context = getCurrentUserContext();
+    
+    // Fetch students with data isolation
+    $stmt = $conn->prepare("SELECT * FROM tbl_student 
+                           WHERE school_id = :school_id 
+                           " . ($context['user_id'] ? "AND (user_id = :user_id OR user_id IS NULL)" : "") . "
+                           ORDER BY tbl_student_id DESC");
+    $stmt->bindParam(':school_id', $context['school_id'], PDO::PARAM_INT);
+    if ($context['user_id']) {
+        $stmt->bindParam(':user_id', $context['user_id'], PDO::PARAM_INT);
+    }
     $stmt->execute();
     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

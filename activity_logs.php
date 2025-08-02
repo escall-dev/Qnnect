@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/asset_helper.php';
-session_start();
+require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php'; // Data isolation functions
 include('conn/db_connect.php');
 require_once('includes/ActivityLogger.php');
 
@@ -9,6 +10,9 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+
+// Get user context for data isolation
+$context = getCurrentUserContext();
 
 $activity_logger = new ActivityLogger($conn_qr, $_SESSION['user_id']);
 
@@ -47,10 +51,21 @@ $end_date = $_GET['end_date'] ?? null;
 $action_type = $_GET['action_type'] ?? null;
 $user_id = $_GET['user_id'] ?? null;
 
-// Build query
+// Build query with data isolation
 $where_conditions = [];
 $params = [];
 $types = "";
+
+// Add data isolation filters
+$where_conditions[] = "al.school_id = ?";
+$params[] = $context['school_id'];
+$types .= "i";
+
+if ($context['user_id']) {
+    $where_conditions[] = "(al.user_id = ? OR al.user_id IS NULL)";
+    $params[] = $context['user_id'];
+    $types .= "i";
+}
 
 if ($start_date && $end_date) {
     $where_conditions[] = "al.created_at BETWEEN ? AND ?";
@@ -73,7 +88,7 @@ if ($user_id) {
 
 $where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
 
-// Get activity logs
+// Get activity logs with data isolation
 $sql = "SELECT 
     al.*, 
     u.email as user_email,
@@ -93,9 +108,18 @@ $stmt->execute();
 $result = $stmt->get_result();
 $logs = $result->fetch_all(MYSQLI_ASSOC);
 
-// Get unique action types for filter
-$action_types_sql = "SELECT DISTINCT action_type FROM activity_logs ORDER BY action_type";
-$action_types_result = $conn_qr->query($action_types_sql);
+// Get unique action types for filter with data isolation
+$action_types_sql = "SELECT DISTINCT action_type FROM activity_logs 
+                     WHERE school_id = ? 
+                     " . ($context['user_id'] ? "AND (user_id = ? OR user_id IS NULL)" : "") . "
+                     ORDER BY action_type";
+$action_types_stmt = $conn_qr->prepare($action_types_sql);
+$action_types_stmt->bind_param("i", $context['school_id']);
+if ($context['user_id']) {
+    $action_types_stmt->bind_param("i", $context['user_id']);
+}
+$action_types_stmt->execute();
+$action_types_result = $action_types_stmt->get_result();
 $action_types = $action_types_result->fetch_all(MYSQLI_ASSOC);
 
 // Get users for filter

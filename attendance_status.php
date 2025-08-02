@@ -2,6 +2,7 @@
 // Use consistent session handling
 require_once 'includes/session_config.php';
 require_once 'includes/asset_helper.php';
+require_once 'includes/data_isolation_helper.php';
 include('./conn/db_connect.php');
 
 // Check if user is logged in
@@ -9,6 +10,9 @@ if (!isset($_SESSION['email'])) {
     header("Location: admin/login.php");
     exit;
 }
+
+// Get user context for data isolation
+$context = getCurrentUserContext();
 
 // Get selected status filter (if any)
 $selected_status = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
@@ -42,9 +46,19 @@ if ($selected_date_range == 'today') {
 }
 
 try {
-    // Get all courses for filter dropdown
-    $coursesQuery = "SELECT DISTINCT course_section FROM tbl_student ORDER BY course_section";
+    // Get all courses for filter dropdown with data isolation
+    $coursesQuery = "SELECT DISTINCT course_section FROM tbl_student 
+                     WHERE school_id = ? 
+                     " . ($context['user_id'] ? "AND (user_id = ? OR user_id IS NULL)" : "") . "
+                     ORDER BY course_section";
     $coursesStmt = $conn_qr->prepare($coursesQuery);
+    
+    if ($context['user_id']) {
+        $coursesStmt->bind_param("ii", $context['school_id'], $context['user_id']);
+    } else {
+        $coursesStmt->bind_param("i", $context['school_id']);
+    }
+    
     $coursesStmt->execute();
     $coursesResult = $coursesStmt->get_result();
     $courses = [];
@@ -53,7 +67,7 @@ try {
         $courses[] = $row['course_section'];
     }
     
-    // Get attendance status records with filtering
+    // Get attendance status records with filtering and data isolation
     $statusQuery = "SELECT 
         tbl_student.student_name,
         tbl_student.course_section,
@@ -66,10 +80,27 @@ try {
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id
     LEFT JOIN tbl_subjects ON tbl_attendance.subject_id = tbl_subjects.subject_id
     LEFT JOIN tbl_instructors ON tbl_attendance.instructor_id = tbl_instructors.instructor_id
-    WHERE DATE(tbl_attendance.time_in) BETWEEN ? AND ?";
+    WHERE DATE(tbl_attendance.time_in) BETWEEN ? AND ?
+    AND tbl_student.school_id = ? 
+    " . ($context['user_id'] ? "AND (tbl_student.user_id = ? OR tbl_student.user_id IS NULL)" : "") . "
+    AND (tbl_attendance.school_id = ? OR tbl_attendance.school_id IS NULL)
+    " . ($context['user_id'] ? "AND (tbl_attendance.user_id = ? OR tbl_attendance.user_id IS NULL)" : "");
     
-    $params = [$start_date, $end_date];
-    $types = "ss";
+    $params = [$start_date, $end_date, $context['school_id']];
+    $types = "ssi";
+    
+    if ($context['user_id']) {
+        $params[] = $context['user_id'];
+        $types .= "i";
+    }
+    
+    $params[] = $context['school_id'];
+    $types .= "i";
+    
+    if ($context['user_id']) {
+        $params[] = $context['user_id'];
+        $types .= "i";
+    }
     
     // Add status filter if selected
     if (!empty($selected_status)) {

@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/asset_helper.php';
 require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php';
 include('./conn/db_connect.php');
 
 // Check if user is logged in
@@ -9,12 +10,19 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
+// Get user context for data isolation
+$context = getCurrentUserContext();
+
 // Use mysqli prepared statement and get_result() instead of PDO
 $query = "SELECT 
     tbl_student.course_section,
     COUNT(*) as attendance_count 
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id 
+    WHERE tbl_student.school_id = ? 
+    " . ($context['user_id'] ? "AND (tbl_student.user_id = ? OR tbl_student.user_id IS NULL)" : "") . "
+    AND (tbl_attendance.school_id = ? OR tbl_attendance.school_id IS NULL)
+    " . ($context['user_id'] ? "AND (tbl_attendance.user_id = ? OR tbl_attendance.user_id IS NULL)" : "") . "
     GROUP BY tbl_student.course_section";
 
 try {
@@ -25,6 +33,13 @@ try {
     
     // Prepare and execute the query using mysqli
     $stmt = $conn_qr->prepare($query);
+    
+    if ($context['user_id']) {
+        $stmt->bind_param("iiii", $context['school_id'], $context['user_id'], $context['school_id'], $context['user_id']);
+    } else {
+        $stmt->bind_param("ii", $context['school_id'], $context['school_id']);
+    }
+    
     $stmt->execute();
     $result = $stmt->get_result();
     

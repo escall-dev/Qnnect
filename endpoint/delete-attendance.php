@@ -8,7 +8,7 @@ if (isset($_GET['attendance'])) {
     if (!is_numeric($attendance)) {
         echo "<script>
             alert('Invalid attendance ID!');
-            window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
         </script>";
         exit;
     }
@@ -23,7 +23,7 @@ if (isset($_GET['attendance'])) {
         if (!$result) {
             echo "<script>
                 alert('Attendance record not found!');
-                window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
             </script>";
             exit;
         }
@@ -36,30 +36,30 @@ if (isset($_GET['attendance'])) {
         if ($query_execute && $stmt->rowCount() > 0) {
             echo "<script>
                 alert('Attendance deleted successfully!');
-                window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
             </script>";
         } else {
             echo "<script>
                 alert('Failed to delete attendance! No rows were affected.');
-                window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
             </script>";
         }
 
     } catch (PDOException $e) {
         echo "<script>
             alert('Database Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
         </script>";
     } catch (Exception $e) {
         echo "<script>
             alert('Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
         </script>";
     }
 } else {
     echo "<script>
         alert('No attendance ID provided!');
-        window.location.href = 'http://localhost/qr-code-attendance-system/index.php';
+            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
     </script>";
 }
 ?>

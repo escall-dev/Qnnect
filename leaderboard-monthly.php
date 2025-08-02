@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/asset_helper.php';
 require_once 'includes/session_config.php';
+require_once 'includes/data_isolation_helper.php';
 include('./conn/db_connect.php');
 
 // Check if user is logged in
@@ -8,6 +9,9 @@ if (!isset($_SESSION['email'])) {
     header("Location: admin/login.php");
     exit;
 }
+
+// Get user context for data isolation
+$context = getCurrentUserContext();
 
 // Get the current month or selected month
 $month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
@@ -27,13 +31,23 @@ try {
         FROM tbl_student s
         LEFT JOIN tbl_attendance a ON s.tbl_student_id = a.tbl_student_id
         WHERE MONTH(a.time_in) = ? AND YEAR(a.time_in) = ?
+        AND s.school_id = ? 
+        " . ($context['user_id'] ? "AND (s.user_id = ? OR s.user_id IS NULL)" : "") . "
+        AND (a.school_id = ? OR a.school_id IS NULL)
+        " . ($context['user_id'] ? "AND (a.user_id = ? OR a.user_id IS NULL)" : "") . "
         GROUP BY s.tbl_student_id
         ORDER BY attendance_count DESC
         LIMIT 50
     ";
     
     $stmt = $conn_qr->prepare($query);
-    $stmt->bind_param("ii", $month, $year);
+    
+    if ($context['user_id']) {
+        $stmt->bind_param("iiiiii", $month, $year, $context['school_id'], $context['user_id'], $context['school_id'], $context['user_id']);
+    } else {
+        $stmt->bind_param("iiii", $month, $year, $context['school_id'], $context['school_id']);
+    }
+    
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -53,9 +67,16 @@ $query = "
     SELECT COUNT(DISTINCT DATE(time_in)) as total_days 
     FROM tbl_attendance 
     WHERE MONTH(time_in) = ? AND YEAR(time_in) = ?
-";
+    AND school_id = ?
+    " . ($context['user_id'] ? "AND (user_id = ? OR user_id IS NULL)" : "");
 $stmt = $conn_qr->prepare($query);
-$stmt->bind_param("ii", $month, $year);
+
+if ($context['user_id']) {
+    $stmt->bind_param("iiii", $month, $year, $context['school_id'], $context['user_id']);
+} else {
+    $stmt->bind_param("iii", $month, $year, $context['school_id']);
+}
+
 $stmt->execute();
 $total_days_result = $stmt->get_result();
 $total_days = $total_days_result->fetch_assoc()['total_days'];
