@@ -2056,6 +2056,7 @@ $filteredSchedules = getFilteredSchedules(
     <!-- instascan Js -->
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <script src="./functions/pagination.js"></script>
+    <script src="./js/modal-helpers.js"></script>
 
     <!--sidebar-toggle-->
     <script>
@@ -4291,16 +4292,25 @@ $filteredSchedules = getFilteredSchedules(
             
             // Function to check attendance
             function checkAttendance(qr_code) {
-                // AJAX call to check attendance
+                console.log('Processing QR code:', qr_code);
+                
+                // Show diagnostic info to help debug
+                $("#scanning-indicator").show();
+                $("#scanning-indicator").html('<div class="spinner-border text-primary" role="status"></div> Processing QR: ' + qr_code);
+                
+                // AJAX call to check attendance with better error handling
                 $.ajax({
                     url: 'api/check-attendance.php',
                     type: 'POST',
                     data: {
-                        qr_code: qr_code
+                        qr_code: qr_code,
+                        instructor_id: <?php echo $user_id; ?> // Explicitly pass user_id as instructor_id
                     },
                     dataType: 'json',
+                    timeout: 10000, // 10 second timeout
                     success: function(response) {
                         $("#scanning-indicator").hide();
+                        console.log('API response:', response);
                         
                         if (response.success) {
                             showAlert('Attendance recorded successfully!', 'success');
@@ -4321,16 +4331,38 @@ $filteredSchedules = getFilteredSchedules(
                                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
                             }, 3000);
                         } else {
-                            showAlert(response.message || 'Failed to record attendance. Please try again.', 'danger');
+                            // Enhanced error message with debug info if available
+                            let errorMsg = response.message || 'Failed to record attendance. Please try again.';
+                            if (response.debug) {
+                                console.error('Debug info:', response.debug);
+                                errorMsg += ' (Error details in console)';
+                            }
+                            showAlert(errorMsg, 'danger');
+                            
                             // Restart scanner
                             setTimeout(function() {
                                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
                             }, 3000);
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
                         $("#scanning-indicator").hide();
-                        showAlert('Network error. Please try again.', 'danger');
+                        console.error('AJAX error:', status, error);
+                        console.error('Response:', xhr.responseText);
+                        
+                        // Try to parse response if it's JSON
+                        let errorMessage = 'Network error. Please try again.';
+                        try {
+                            const jsonResponse = JSON.parse(xhr.responseText);
+                            if (jsonResponse && jsonResponse.message) {
+                                errorMessage = jsonResponse.message;
+                            }
+                        } catch (e) {
+                            // Use default message if parsing fails
+                        }
+                        
+                        showAlert(errorMessage, 'danger');
+                        
                         // Restart scanner
                         setTimeout(function() {
                             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
@@ -4840,38 +4872,7 @@ $filteredSchedules = getFilteredSchedules(
             }
             
             // Function to show error attendance modal
-            function showErrorAttendanceModal(title, message, details) {
-                console.log('showErrorAttendanceModal called with:', { title, message, details });
-                
-                const modal = $('#errorAttendanceModal');
-                console.log('Modal element found:', modal.length > 0);
-                
-                const titleElement = modal.find('.error-title');
-                const messageElement = modal.find('.error-message');
-                const detailsElement = modal.find('.error-details');
-                
-                console.log('Modal elements found:', {
-                    title: titleElement.length > 0,
-                    message: messageElement.length > 0,
-                    details: detailsElement.length > 0
-                });
-                
-                // Update modal content
-                titleElement.text(title || 'QR Code Error');
-                messageElement.text(message || 'Invalid QR Code');
-                
-                if (details) {
-                    detailsElement.text(details);
-                    detailsElement.show();
-                } else {
-                    detailsElement.hide();
-                }
-                
-                // Show modal with animation
-                modal.show();
-                modal.removeClass('fade-out');
-                
-                console.log('Modal should be visible now');
+            // Implementation moved to modal-helpers.js
                 
                 // Play error sound
                 playErrorSound();
@@ -5045,6 +5046,7 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
         <div class="error-details">
             <span id="errorMessage">QR code not found in your records.</span>
         </div>
+        <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="closeErrorAttendanceModal()">Close</button>
     </div>
 </div>
 

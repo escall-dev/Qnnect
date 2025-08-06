@@ -8,18 +8,40 @@ $hostName = "localhost";
 $dbUser = "root";
 $dbPassword = "";
 
+// Error handling function
+function handleDbConnectionError($db_name, $error) {
+    error_log("Connection failed to $db_name: " . $error);
+    
+    // Check if this is an API call or regular page load
+    $is_api = (strpos($_SERVER['REQUEST_URI'], '/api/') !== false);
+    
+    if ($is_api) {
+        // For API endpoints, return JSON error
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => "Database connection error: Could not connect to $db_name",
+            'error' => $error
+        ]);
+        exit;
+    } else {
+        // For regular pages, show error message
+        die("Connection failed to $db_name: " . $error);
+    }
+}
+
 // First database connection (login_register)
 $loginDb = "login_register";
 $conn_login = mysqli_connect($hostName, $dbUser, $dbPassword, $loginDb);
 if (!$conn_login) {
-    die("Connection failed to login_register: " . mysqli_connect_error());
+    handleDbConnectionError($loginDb, mysqli_connect_error());
 }
 
 // Second database connection (qr_attendance_db)
 $qrDb = "qr_attendance_db";
 $conn_qr = mysqli_connect($hostName, $dbUser, $dbPassword, $qrDb);
 if (!$conn_qr) {
-    die("Connection failed to qr_attendance_db: " . mysqli_connect_error());
+    handleDbConnectionError($qrDb, mysqli_connect_error());
 }
 
 // Create the face verification logs table if it doesn't exist

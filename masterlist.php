@@ -1234,13 +1234,16 @@ foreach ($result as $row) {
             const instructor_id = $("#instructor_id").val() || "1";
             const studentName = $("#studentName").val() || "";
             
-            // Generate unique QR code for this specific student
-            const timestamp = Date.now();
+            // Get session values from PHP
+            const user_id = <?php echo $_SESSION['user_id'] ?? 1; ?>;
+            const school_id = <?php echo $_SESSION['school_id'] ?? 1; ?>;
+            
+            // Generate components for unique code
             const randomString = Math.random().toString(36).substring(2, 18);
             const studentHash = btoa(studentName + course_code + section).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
             
-            // Create unique QR code format: STU-{timestamp}-{hash}-{random}
-            const qrText = `STU-${timestamp}-${studentHash}-${randomString}`;
+            // Create code in format matching backend: STU-{user_id}-{school_id}-{hash}-{random}
+            const qrText = `STU-${user_id}-${school_id}-${studentHash}-${randomString}`;
             $("#generatedCode").val(qrText);
             
             if (qrText === "") {
@@ -1377,6 +1380,15 @@ foreach ($result as $row) {
                 if (!generatedCode) {
                     e.preventDefault();
                     alert('Please generate a QR code before submitting');
+                    return false;
+                }
+                
+                // Verify QR code format matches the expected pattern (STU-user_id-school_id-hash-random)
+                const qrPattern = new RegExp(`^STU-\\d+-\\d+-[a-zA-Z0-9]+-[a-zA-Z0-9]+$`);
+                if (!qrPattern.test(generatedCode)) {
+                    e.preventDefault();
+                    alert('QR code format is invalid. Please regenerate the QR code.');
+                    console.error('Invalid QR format:', generatedCode);
                     return false;
                 }
 

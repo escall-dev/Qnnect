@@ -2,6 +2,26 @@
 require_once("../conn/db_connect.php");
 require_once("../includes/session_config.php");
 
+// Ensure database connections are available
+if (!isset($conn_qr)) {
+    // Try to establish connection manually if not available
+    $hostName = "localhost";
+    $dbUser = "root";
+    $dbPassword = "";
+    $qrDb = "qr_attendance_db";
+    
+    $conn_qr = mysqli_connect($hostName, $dbUser, $dbPassword, $qrDb);
+    if (!$conn_qr) {
+        // Try to create database if it doesn't exist
+        $temp_conn = mysqli_connect($hostName, $dbUser, $dbPassword);
+        if ($temp_conn) {
+            mysqli_query($temp_conn, "CREATE DATABASE IF NOT EXISTS $qrDb");
+            mysqli_close($temp_conn);
+            $conn_qr = mysqli_connect($hostName, $dbUser, $dbPassword, $qrDb);
+        }
+    }
+}
+
 // Enhanced session validation with better error handling
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
     // Return JSON response instead of HTML for AJAX requests
@@ -55,7 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $class_start_time = $_SESSION['class_start_time_formatted'];
             error_log('USING SESSION CLASS TIME: ' . $class_start_time);
         } elseif (isset($_SESSION['class_start_time'])) {
-            $class_start_time = $_SESSION['class_start_time'] . ':00';
+            $class_start_time = $_SESSION['class_start_time'];
+            // Only append :00 if the time doesn't already have seconds
+            if (strlen($class_start_time) == 5) {
+                $class_start_time .= ':00';
+            }
             error_log('USING SESSION CLASS TIME (formatted): ' . $class_start_time);
         } else {
             // Fallback to database if session not available
@@ -115,12 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($attendanceMode === 'room_subject') {
             $currentInstructorName = $_SESSION['current_instructor_name'] ?? 'Schedule Instructor';
             $currentSubjectName = $_SESSION['current_subject_name'] ?? 'Schedule Subject';
-            $currentInstructorId = $_SESSION['current_instructor_id'] ?? null;
-            $currentSubjectId = $_SESSION['current_subject_id'] ?? null;
+            $currentInstructorId = $_SESSION['current_instructor_id'] ?? 1;
+            $currentSubjectId = $_SESSION['current_subject_id'] ?? 1;
         } else {
-            $currentInstructorId = $_SESSION['current_instructor_id'] ?? null;
+            $currentInstructorId = $_SESSION['current_instructor_id'] ?? 1;
             $currentInstructorName = $_SESSION['current_instructor_name'] ?? 'Not Set';
-            $currentSubjectId = $_SESSION['current_subject_id'] ?? null;
+            $currentSubjectId = $_SESSION['current_subject_id'] ?? 1;
             $currentSubjectName = $_SESSION['current_subject_name'] ?? 'Not Set';
         }
 
@@ -150,22 +174,155 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log('Class start time: ' . $class_start_time);
         error_log('School ID: ' . $school_id);
         error_log('User ID: ' . $user_id);
+        error_log('Current Instructor ID: ' . $currentInstructorId);
+        error_log('Current Subject ID: ' . $currentSubjectId);
 
         try {
-            // Step 1: Verify student by QR code with strict multi-tenant filtering
+            // Step 1: Parse QR code format - support both old and new formats
+            $qr_parts = explode('|', $qrCode);
+            
+            // Check if it's the new format: course|section|instructor_id
+            if (count($qr_parts) === 3) {
+                $course_code = $qr_parts[0];
+                $section = $qr_parts[1];
+                $qr_instructor_id = $qr_parts[2];
+            } 
+            // Check if it's the old format: STU-user_id-school_id-hash-random
+            elseif (strpos($qrCode, 'STU-') === 0) {
+                $stu_parts = explode('-', $qrCode);
+                if (count($stu_parts) >= 5) {
+                    // This is the old format, we need to look up the student by generated_code
+                    $selectStmt = $conn_qr->prepare("SELECT tbl_student_id, student_name, course_section FROM tbl_student 
+                                                WHERE generated_code = ? 
+                                                AND user_id = ? 
+                                                AND school_id = ?
+                                                LIMIT 1");
+                    $selectStmt->bind_param("sii", $qrCode, $user_id, $school_id);
+                    $selectStmt->execute();
+                    $result = $selectStmt->get_result();
+                    $studentData = $result->fetch_assoc();
+                    
+                    if ($studentData !== null) {
+                        // Found student with old QR format, proceed with attendance recording
+                        $studentID = $studentData["tbl_student_id"];
+                        $studentName = $studentData["student_name"];
+                        
+                        // Use default instructor_id for old format
+                        $currentInstructorId = $_SESSION['current_instructor_id'] ?? 1;
+                        
+                        // Skip to attendance recording
+                        goto record_attendance;
+                    } else {
+                        $errorParams = http_build_query([
+                            'error' => 'invalid_qr',
+                            'message' => 'QR code not found',
+                            'details' => 'This QR code is not registered in the system.',
+                            'mode' => $attendanceMode,
+                            'timestamp' => time()
+                        ]);
+                        echo "<script>
+                            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                        </script>";
+                        exit();
+                    }
+                } else {
+                    $errorParams = http_build_query([
+                        'error' => 'invalid_qr_format',
+                        'message' => 'Invalid QR code format',
+                        'details' => 'Expected format: course|section|instructor_id or STU-user_id-school_id-hash-random',
+                        'mode' => $attendanceMode,
+                        'timestamp' => time()
+                    ]);
+                    echo "<script>
+                        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                    </script>";
+                    exit();
+                }
+            } else {
+                $errorParams = http_build_query([
+                    'error' => 'invalid_qr_format',
+                    'message' => 'Invalid QR code format',
+                    'details' => 'Expected format: course|section|instructor_id or STU-user_id-school_id-hash-random',
+                    'mode' => $attendanceMode,
+                    'timestamp' => time()
+                ]);
+                echo "<script>
+                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                </script>";
+                exit();
+            }
+            
+            $course_code = $qr_parts[0];
+            $section = $qr_parts[1];
+            $qr_instructor_id = $qr_parts[2];
+            
+            // Use instructor_id from QR code if available, otherwise use session
+            if (!empty($qr_instructor_id)) {
+                $currentInstructorId = intval($qr_instructor_id);
+                error_log('Using instructor_id from QR code: ' . $currentInstructorId);
+            }
+            
+            // Step 1: Verify student by course and section with strict multi-tenant filtering
+            // Try multiple approaches to find the student based on QR code format
+            
+            // Approach 1: Look for exact course_section match (e.g., "BSIT-1A")
+            $course_section_match = $course_code . '-' . $section;
             $selectStmt = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
-                                        WHERE generated_code = ? 
+                                        WHERE course_section = ? 
                                         AND user_id = ? 
-                                        AND school_id = ?");
-            $selectStmt->bind_param("sii", $qrCode, $user_id, $school_id);
+                                        AND school_id = ?
+                                        LIMIT 1");
+            $selectStmt->bind_param("sii", $course_section_match, $user_id, $school_id);
             $selectStmt->execute();
             $result = $selectStmt->get_result();
             $studentData = $result->fetch_assoc();
+            
+            // Approach 2: If no exact match, try with space format (e.g., "BSIT 1A")
+            if ($studentData === null) {
+                $course_section_space = $course_code . ' ' . $section;
+                $selectStmt = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
+                                            WHERE course_section = ? 
+                                            AND user_id = ? 
+                                            AND school_id = ?
+                                            LIMIT 1");
+                $selectStmt->bind_param("sii", $course_section_space, $user_id, $school_id);
+                $selectStmt->execute();
+                $result = $selectStmt->get_result();
+                $studentData = $result->fetch_assoc();
+            }
+            
+            // Approach 3: If still no match, try looking for section only (for database-driven entries)
+            if ($studentData === null) {
+                $selectStmt = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
+                                            WHERE course_section = ? 
+                                            AND user_id = ? 
+                                            AND school_id = ?
+                                            LIMIT 1");
+                $selectStmt->bind_param("sii", $section, $user_id, $school_id);
+                $selectStmt->execute();
+                $result = $selectStmt->get_result();
+                $studentData = $result->fetch_assoc();
+            }
+            
+            // Approach 4: If still no match, try looking for course_code only
+            if ($studentData === null) {
+                $selectStmt = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student 
+                                            WHERE course_section LIKE ? 
+                                            AND user_id = ? 
+                                            AND school_id = ?
+                                            LIMIT 1");
+                $course_pattern = $course_code . '%';
+                $selectStmt->bind_param("sii", $course_pattern, $user_id, $school_id);
+                $selectStmt->execute();
+                $result = $selectStmt->get_result();
+                $studentData = $result->fetch_assoc();
+            }
 
             if ($studentData !== null) {
                 $studentID = $studentData["tbl_student_id"];
                 $studentName = $studentData["student_name"];
 
+                record_attendance:
                 // Step 2: Enhanced duplicate check with compound key validation
                 $checkStmt = $conn_qr->prepare("SELECT * FROM tbl_attendance 
                     WHERE tbl_student_id = ? 
@@ -248,10 +405,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log("User ID: $user_id");
                     error_log("School ID: $school_id");
                     error_log("Attendance Mode: $attendanceMode");
+                    error_log("Database connection status: " . ($conn_qr ? 'Connected' : 'Not connected'));
                     
                     $result = $stmt->execute();
                     
                     // Enhanced success/failure logging
+                    if ($result) {
+                        error_log("SUCCESS: INSERT executed successfully");
+                    } else {
+                        error_log("FAILED: INSERT error: " . $stmt->error);
+                        error_log("FAILED: MySQL error: " . $conn_qr->error);
+                    }
+                    
                     if ($result) {
                         $inserted_id = $conn_qr->insert_id;
                         error_log("SUCCESS: Inserted attendance ID: $inserted_id");
@@ -315,10 +480,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Database Exception in add-attendance: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
             
+            // Check if it's a database connection error
+            $errorMessage = 'Database connection error';
+            $errorDetails = 'Unable to connect to the database. Please try again.';
+            
+            if (strpos($e->getMessage(), 'Unknown database') !== false) {
+                $errorMessage = 'Database not found';
+                $errorDetails = 'The required database does not exist. Please run the database setup script.';
+            } elseif (strpos($e->getMessage(), 'Access denied') !== false) {
+                $errorMessage = 'Database access denied';
+                $errorDetails = 'Unable to access the database. Please check database credentials.';
+            } elseif (strpos($e->getMessage(), 'Connection refused') !== false) {
+                $errorMessage = 'Database connection refused';
+                $errorDetails = 'Unable to connect to MySQL. Please check if XAMPP is running.';
+            }
+            
             $errorParams = http_build_query([
                 'error' => 'db_error',
-                'message' => 'Database connection error',
-                'details' => 'Unable to connect to the database. Please try again.',
+                'message' => $errorMessage,
+                'details' => $errorDetails,
                 'mode' => $attendanceMode
             ]);
             echo "<script>

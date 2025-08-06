@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Get QR code from POST data (the scanned QR code contains the student information)
 $qr_code = isset($_POST['qr_code']) ? $_POST['qr_code'] : '';
 
-// Also get instructor_id from POST for attendance recording
-$instructor_id = isset($_POST['instructor_id']) ? intval($_POST['instructor_id']) : 0;
+// Use the current user_id as instructor_id (overrides any POST data for instructor_id)
+// This ensures the instructor_id is always a valid ID from the users table
+$instructor_id = $user_id;
 
 // Check if this is a manual entry
 $is_manual_entry = isset($_POST['manual_entry']) && $_POST['manual_entry'] === 'true';
@@ -61,7 +62,18 @@ if ($is_manual_entry && (empty($course_code) || empty($section))) {
 }
 
 try {
-    // Debug logging
+    // Check database connection first
+    if (!$conn_qr || $conn_qr->connect_error) {
+        error_log("Database connection error in check-attendance.php: " . ($conn_qr ? $conn_qr->connect_error : "Connection is null"));
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database connection error',
+            'debug' => $conn_qr ? $conn_qr->connect_error : "Connection failed"
+        ]);
+        exit;
+    }
+    
+    // Enhanced debug logging
     error_log("=== QR CODE SCANNING DEBUG ===");
     error_log("POST data: " . json_encode($_POST));
     error_log("Session data: " . json_encode($_SESSION));
@@ -83,27 +95,53 @@ try {
         $stmt = $conn_qr->prepare($query);
         $stmt->bind_param("sii", $section, $user_id, $school_id);
     } else {
-        // For QR code scanning, find student by QR code
+        // For QR code scanning, find student by QR code with proper data isolation
         $query = "SELECT tbl_student_id, student_name, course_section, user_id, school_id 
                   FROM tbl_student 
-                  WHERE generated_code = ?";
+                  WHERE generated_code = ? AND school_id = ? AND user_id = ?";
         $stmt = $conn_qr->prepare($query);
-        $stmt->bind_param("s", $qr_code);
+        $stmt->bind_param("sii", $qr_code, $school_id, $user_id);
     }
     
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        error_log("SQL Error: " . $stmt->error);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database query failed',
+            'debug' => $stmt->error
+        ]);
+        exit;
+    }
+    
     $result = $stmt->get_result();
+    error_log("QR lookup result rows: " . $result->num_rows);
     
     if ($result->num_rows === 0) {
+        error_log("No matching student found in database");
         if ($is_manual_entry) {
             echo json_encode([
                 'success' => false,
                 'message' => 'No student found for the specified course and section.'
             ]);
         } else {
+            // Log the actual query for debugging
+            error_log("Query: $query with params: QR=$qr_code, SchoolID=$school_id, UserID=$user_id");
+            
+            // Alternative lookup to debug if there's any matching QR code at all
+            $debug_stmt = $conn_qr->prepare("SELECT tbl_student_id, generated_code, school_id, user_id FROM tbl_student WHERE generated_code = ?");
+            $debug_stmt->bind_param("s", $qr_code);
+            $debug_stmt->execute();
+            $debug_result = $debug_stmt->get_result();
+            error_log("Alternative lookup (ignoring school/user): found " . $debug_result->num_rows . " matches");
+            
             echo json_encode([
                 'success' => false,
-                'message' => 'Invalid QR code. Student not found.'
+                'message' => 'Invalid QR code. Student not found.',
+                'debug' => [
+                    'qr_code' => $qr_code,
+                    'school_id' => $school_id,
+                    'user_id' => $user_id
+                ]
             ]);
         }
         exit;
@@ -194,23 +232,50 @@ try {
     ];
     error_log('Attendance time debug info: ' . json_encode($debug_info));
     
-    // Record attendance
+    // Verify database connection before proceeding
+    if (!$conn_qr || mysqli_connect_errno()) {
+        error_log("Database connection error before INSERT: " . mysqli_connect_error());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database connection error: ' . mysqli_connect_error()
+        ]);
+        exit;
+    }
+    
+    // Record attendance with robust error handling
     $query = "INSERT INTO tbl_attendance 
              (tbl_student_id, time_in, status, instructor_id, subject_id, user_id, school_id) 
              VALUES (?, ?, ?, ?, ?, ?, ?)";
+    
+    // Enhanced error reporting before prepare
+    error_log("About to prepare INSERT query: " . $query);
+    
     $stmt = $conn_qr->prepare($query);
+    if (!$stmt) {
+        error_log("Prepare failed: " . $conn_qr->error);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to prepare statement: ' . $conn_qr->error
+        ]);
+        exit;
+    }
     
-    // Get subject_id from session or POST data
-    $subject_id = isset($_SESSION['current_subject_id']) ? $_SESSION['current_subject_id'] : 0;
+    // Get subject_id from session or POST data (with default value)
+    $subject_id = isset($_SESSION['current_subject_id']) ? intval($_SESSION['current_subject_id']) : 1;
+    if ($subject_id <= 0) $subject_id = 1; // Ensure valid integer
     
-    // Get current user's user_id and school_id from session
-    $current_user_id = $_SESSION['user_id'] ?? 1;
-    $current_school_id = $_SESSION['school_id'] ?? 1;
+    // Use safe values for user_id and school_id
+    $current_user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 1;
+    $current_school_id = isset($_SESSION['school_id']) ? intval($_SESSION['school_id']) : 1;
+    
+    // Always use the current user_id as the instructor_id
+    // This ensures we always have a valid instructor_id that exists in the users table
+    $instructor_id = $current_user_id;
     
     // Debug logging
     error_log("Attendance recording - User ID: $current_user_id, School ID: $current_school_id");
     error_log("Session variables: " . json_encode($_SESSION));
-    error_log("Student ID: $student_id, Time: $currentTime, Status: $status");
+    error_log("Student ID: $student_id, Time: $currentTime, Status: $status, Instructor: $instructor_id, Subject: $subject_id");
     
     $stmt->bind_param("issiiii", $student_id, $currentTime, $status, $instructor_id, $subject_id, $current_user_id, $current_school_id);
     $result = $stmt->execute();
