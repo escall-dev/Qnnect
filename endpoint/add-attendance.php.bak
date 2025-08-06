@@ -132,14 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $currentInstructorId = $_SESSION['current_instructor_id'] ?? 1;
         $currentInstructorName = $_SESSION['current_instructor_name'] ?? 'Not Set';
         $currentSubjectId = $_SESSION['current_subject_id'] ?? 1;
-        $currentSubjectName = $_SESSION['current_subject_name'] ?? 'Not Set';
-
-        // Validate QR code input
-        if (empty($qrCode)) {
-            $errorParams = http_build_query([
-                'error' => 'empty_qr',
-                'message' => 'No QR code detected',
-                'details' => 'Please scan a valid QR code to mark attendance.',
+        $currentSubjectName = $_SESSION['current_subject_name'] ?? 'Not Set';                       'details' => 'Please scan a valid QR code to mark attendance.',
                 'timestamp' => time()
             ]);
             echo "<script>
@@ -153,6 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Enhanced debug logging
         error_log('=== ATTENDANCE CONTEXT ===');
+        error_log('Attendance Mode: ' . $attendanceMode);
         error_log('Current timezone: ' . date_default_timezone_get());
         error_log('Current server time: ' . date('Y-m-d H:i:s'));
         error_log('Class start time: ' . $class_start_time);
@@ -166,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $qr_parts = explode('|', $qrCode);
             
             // Check if it's the new format: course|section|instructor_id
-            if (count($qr_parts) >= 3) {
+        // Attendance Mode logging removed
                 $course_code = $qr_parts[0];
                 $section = $qr_parts[1];
                 $qr_instructor_id = $qr_parts[2];
@@ -201,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'error' => 'invalid_qr',
                             'message' => 'QR code not found',
                             'details' => 'This QR code is not registered in the system.',
+                            'mode' => $attendanceMode,
                             'timestamp' => time()
                         ]);
                         echo "<script>
@@ -213,6 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'error' => 'invalid_qr_format',
                         'message' => 'Invalid QR code format',
                         'details' => 'Expected format: course|section|instructor_id or STU-user_id-school_id-hash-random',
+                        'mode' => $attendanceMode,
                         'timestamp' => time()
                     ]);
                     echo "<script>
@@ -225,6 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'error' => 'invalid_qr_format',
                     'message' => 'Invalid QR code format',
                     'details' => 'Expected format: course|section|instructor_id or STU-user_id-school_id-hash-random',
+                    'mode' => $attendanceMode,
                     'timestamp' => time()
                 ]);
                 echo "<script>
@@ -385,7 +382,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log("Subject ID: $currentSubjectId");
                     error_log("User ID: $user_id");
                     error_log("School ID: $school_id");
-                    error_log("Attendance processing");
+                    error_log("Attendance Mode: $attendanceMode");
+                    error_log("Attendance processing");onn_qr ? 'Connected' : 'Not connected'));
                     
                     $result = $stmt->execute();
                     
@@ -406,6 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'success' => 'attendance_added',
                             'student' => $studentName,
                             'status' => $status,
+                            'mode' => $attendanceMode,
                             'id' => $inserted_id
                         ]);
                         header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
@@ -431,7 +430,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errorParams = http_build_query([
                         'error' => 'duplicate_scan',
                         'message' => 'Attendance already recorded',
-                        'details' => "Student $studentName already marked $attendanceStatus on $attendanceDate at $attendanceTime for $currentSubjectName."
+                        'details' => "Student $studentName already marked $attendanceStatus on $attendanceDate at $attendanceTime for $currentSubjectName.",
+                        'mode' => $attendanceMode
                     ]);
                     echo "<script>
                         window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';

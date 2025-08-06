@@ -67,7 +67,25 @@ function updateStudent(id) {
 
     $("#updateStudentId").val(updateStudentId);
     $("#updateStudentName").val(updateStudentName);
-    $("#updateStudentCourse").val(updateStudentCourse);
+    
+    // Check if the course exists in dropdown options
+    let courseExists = false;
+    $("#updateStudentCourse option").each(function() {
+        if ($(this).val() === updateStudentCourse) {
+            courseExists = true;
+            return false; // Break the loop
+        }
+    });
+    
+    if (courseExists) {
+        $("#updateStudentCourse").val(updateStudentCourse);
+        $("#updateCustomStudentCourse").hide();
+    } else if (updateStudentCourse) {
+        // If not in dropdown, use custom option
+        $("#updateStudentCourse").val("custom");
+        $("#updateCustomStudentCourse").show().val(updateStudentCourse);
+        $("#updateFinalCourseSection").val(updateStudentCourse);
+    }
 }
 
 function deleteStudent(id) {
@@ -113,44 +131,12 @@ function deleteStudent(id) {
 
 function confirmDelete(id) {
     window.location = "./endpoint/delete-student.php?student=" + id;
-    showSuccessMessage();
+    // The success message will now be shown via the modal after redirect
 }
 
+// This function is now replaced by the Bootstrap modal
 function showSuccessMessage() {
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.6)";
-    overlay.style.zIndex = "9998";
-    overlay.style.display = "none";
-    document.body.appendChild(overlay);
-
-    const successPopup = document.createElement("div");
-    successPopup.style.position = "fixed";
-    successPopup.style.top = "50%";
-    successPopup.style.left = "50%";
-    successPopup.style.transform = "translate(-50%, -50%)";
-    successPopup.style.backgroundColor = "#4CAF50";
-    successPopup.style.color = "#fff";
-    successPopup.style.borderRadius = "12px";
-    successPopup.style.padding = "20px";
-    successPopup.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
-    successPopup.style.width = "300px";
-    successPopup.style.textAlign = "center";
-    successPopup.style.zIndex = "9999";
-    successPopup.style.display = "none";
-    document.body.appendChild(successPopup);
-
-    overlay.style.display = "block";
-    successPopup.style.display = "block";
-
-    setTimeout(() => {
-        successPopup.remove();
-        overlay.remove();
-    }, 3000);
+    // The success message is now handled by the Bootstrap modal in masterlist.php
 }
 
 function closePopup() {

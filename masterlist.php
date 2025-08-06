@@ -717,6 +717,48 @@ foreach ($result as $row) {
             </div>
     </div>
 
+    <!-- Check if course and section tables exist, if not create them -->
+    <?php
+    // Check if both tbl_courses and tbl_sections tables exist
+    $check_courses_table_query = "SHOW TABLES LIKE 'tbl_courses'";
+    $courses_table_result = $conn_qr->query($check_courses_table_query);
+    
+    $check_sections_table_query = "SHOW TABLES LIKE 'tbl_sections'";
+    $sections_table_result = $conn_qr->query($check_sections_table_query);
+    
+    if ($courses_table_result->num_rows == 0 || $sections_table_result->num_rows == 0) {
+        // Include the setup file to create the tables
+        include('./db_setup/create_course_section_tables.php');
+        // Also update section-course relationships if needed
+        include('./update_section_courses.php');
+    }
+    
+    // Get all courses from database - filter by user_id and school_id
+    $courses_query = "SELECT DISTINCT c.course_id, c.course_name, c.user_id, c.school_id FROM tbl_courses c 
+                    WHERE (c.user_id = :user_id AND c.school_id = :school_id) OR c.user_id = 1
+                    ORDER BY c.course_name";
+    $courses_stmt = $conn->prepare($courses_query);
+    $courses_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $courses_stmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+    $courses_stmt->execute();
+    $courses = $courses_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get all sections from database with their associated courses - filter by user_id and school_id
+    $sections_query = "SELECT s.section_id, s.section_name, s.course_id, c.course_name, s.user_id, s.school_id
+                      FROM tbl_sections s 
+                      LEFT JOIN tbl_courses c ON s.course_id = c.course_id
+                      WHERE ((s.user_id = :user_id AND s.school_id = :school_id) OR s.user_id = 1)
+                      ORDER BY c.course_name, s.section_name";
+    $sections_stmt = $conn->prepare($sections_query);
+    $sections_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $sections_stmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+    $sections_stmt->execute();
+    $sections = $sections_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // For debugging purposes
+    error_log("Sections data: " . print_r($sections, true));
+    ?>
+
     <!-- Add Modal -->
     <div class="modal fade" id="addStudentModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="addStudent" aria-hidden="true">
         <div class="modal-dialog">
@@ -729,25 +771,336 @@ foreach ($result as $row) {
                 </div>
                 <div class="modal-body">
                     <form action="./endpoint/add-student.php" method="POST" id="addStudentForm">
+
                         <div class="form-group">
                             <label for="studentName"><i class="fas fa-user"></i> Full Name:</label>
                             <input type="text" class="form-control" id="studentName" name="student_name" required>
                         </div>
                         <div class="form-group">
-                            <label for="studentCourse"><i class="fas fa-book"></i> Course & Section</label>
-                            <select class="form-control" id="studentCourse" name="course_section" required>
-                                <option value="" disabled selected>Select Course and Section</option>
-                                <option value="BSIS-301">BSIS-301</option>
-                                <option value="BSIS-302">BSIS-302</option>
-                                <option value="BSIT-301">BSIT-301</option>
-                                <option value="BSIT-302">BSIT-302</option>
-                                <option value="BSIT-401">BSIT-401</option>
-                                <option value="BSIT-402">BSIT-402</option>
-        
-                                <option value="custom">Custom Course or Grade Level & Section</option>
-                            </select>
-                            <input type="text" class="form-control mt-2" id="customStudentCourse" name="custom_course_section" placeholder="Enter custom Course or Grade Level & Section" style="display: none;">
-                            <input type="hidden" id="finalCourseSection" name="final_course_section">
+                            <label for="studentCourse"><i class="fas fa-book"></i> Course</label>
+                            <div class="input-group">
+                                <select class="form-control" id="studentCourse" name="course" onchange="updateSections(); toggleCustomCourse();">
+                                    <option value="" disabled selected>Select Course</option>
+                                    <?php 
+                                    // List all available courses
+                                    foreach ($courses as $course) {
+                                        echo "<option value=\"{$course['course_name']}\">{$course['course_name']}</option>";
+                                    }
+                                    ?>
+                                    <option value="custom">+ Add Custom Course</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Custom Course Input (initially hidden) -->
+                        <div class="form-group" id="customCourseGroup" style="display: none;">
+                            <label for="customCourse"><i class="fas fa-edit"></i> Custom Course Name</label>
+                            <input type="text" class="form-control" id="customCourse" name="custom_course" 
+                                placeholder="Enter custom course/grade level (min 3 characters)" 
+                                minlength="3" 
+                                pattern=".{3,}"
+                                title="Custom course must be at least 3 characters">
+                            <small class="form-text text-muted">Must be at least 3 characters long</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="studentSection"><i class="fas fa-users"></i> Section</label>
+                            <div class="input-group">
+                                <select class="form-control" id="studentSection" name="section" onchange="toggleCustomSection();">
+                                    <option value="" disabled selected>Select a course first</option>
+                                    <option value="custom" style="display: none;" id="customSectionOption">+ Add Custom Section</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Custom Section Input (initially hidden) -->
+                        <div class="form-group" id="customSectionGroup" style="display: none;">
+                            <label for="customSection"><i class="fas fa-edit"></i> Custom Section Name</label>
+                            <input type="text" class="form-control" id="customSection" name="custom_section" 
+                                placeholder="Enter custom section (min 3 characters)" 
+                                minlength="3"
+                                pattern=".{3,}"
+                                title="Custom section must be at least 3 characters">
+                            <small class="form-text text-muted">Must be at least 3 characters long</small>
+                        </div>
+                        
+                        <!-- Complete Custom Course & Section input -->
+                        <div class="form-group">
+                            <label for="completeCourseSection"><i class="fas fa-graduation-cap"></i> Custom Course or Grade Level & Section</label>
+                            <input type="text" class="form-control" id="completeCourseSection" name="complete_course_section" 
+                                placeholder="Enter Course-Section directly (e.g. 11 - ICT LAPU)"
+                                minlength="3">
+                            <small class="form-text text-muted">Format for custom: Course-Section (e.g. BSCS-101)</small>
+                        </div>
+                        
+                        <!-- Hidden field to store the combined course-section value -->
+                        <input type="hidden" id="courseSectionCombined" name="course_section" value="">
+                        
+                        <!-- Add JavaScript for course-section relationship -->
+                        <script>
+                        // JavaScript to handle dynamic section loading based on course selection
+                        function updateSections() {
+                            // Get the selected course
+                            const courseSelect = document.getElementById('studentCourse');
+                            const sectionSelect = document.getElementById('studentSection');
+                            const courseValue = courseSelect.value;
+                            const customSectionOption = document.getElementById('customSectionOption');
+                            
+                            // Clear current section options but keep the custom option
+                            sectionSelect.innerHTML = '';
+                            
+                            // If no course is selected, show default option
+                            if (!courseValue) {
+                                const defaultOption = document.createElement('option');
+                                defaultOption.value = '';
+                                defaultOption.disabled = true;
+                                defaultOption.selected = true;
+                                defaultOption.textContent = 'Select a course first';
+                                sectionSelect.appendChild(defaultOption);
+                                
+                                // Add the custom section option (hidden initially)
+                                const customOption = document.createElement('option');
+                                customOption.value = 'custom';
+                                customOption.textContent = '+ Add Custom Section';
+                                customOption.id = 'customSectionOption';
+                                customOption.style.display = 'none';
+                                sectionSelect.appendChild(customOption);
+                                return;
+                            }
+                            
+                            // If "custom" course is selected, only show custom section option
+                            if (courseValue === 'custom') {
+                                const defaultOption = document.createElement('option');
+                                defaultOption.value = '';
+                                defaultOption.disabled = true;
+                                defaultOption.textContent = 'Select Section or Add Custom';
+                                sectionSelect.appendChild(defaultOption);
+                                
+                                // Show custom section option
+                                const customOption = document.createElement('option');
+                                customOption.value = 'custom';
+                                customOption.textContent = '+ Add Custom Section';
+                                customOption.id = 'customSectionOption';
+                                customOption.selected = true;
+                                sectionSelect.appendChild(customOption);
+                                
+                                // Trigger the custom section display
+                                toggleCustomSection();
+                                return;
+                            }
+                            
+                            // For regular courses, get sections from PHP-provided data
+                            const sections = <?php echo json_encode($sections); ?>;
+                            
+                            // Find sections associated with the selected course
+                            const filteredSections = sections.filter(section => {
+                                console.log("Checking section:", section, "looking for course:", courseValue);
+                                return section.course_name === courseValue;
+                            });
+                            
+                            console.log("All sections:", sections);
+                            console.log("Filtered sections for " + courseValue + ":", filteredSections);
+                            
+                            // Add default option
+                            const defaultOption = document.createElement('option');
+                            defaultOption.value = '';
+                            defaultOption.disabled = true;
+                            defaultOption.selected = true;
+                            defaultOption.textContent = filteredSections.length === 0 ? 'No sections available - select custom' : 'Select Section';
+                            sectionSelect.appendChild(defaultOption);
+                            
+                            // Add sections to dropdown if there are any
+                            if (filteredSections.length > 0) {
+                                filteredSections.forEach(section => {
+                                    const option = document.createElement('option');
+                                    option.value = section.section_name;
+                                    option.textContent = section.section_name;
+                                    sectionSelect.appendChild(option);
+                                });
+                            }
+                            
+                            // Always add custom section option
+                            const customOption = document.createElement('option');
+                            customOption.value = 'custom';
+                            customOption.textContent = '+ Add Custom Section';
+                            customOption.id = 'customSectionOption';
+                            sectionSelect.appendChild(customOption);
+                            
+                            // Update the hidden combined field
+                            updateCombinedField();
+                        }
+                        
+                        // Toggle custom course input visibility
+                        function toggleCustomCourse() {
+                            const courseSelect = document.getElementById('studentCourse');
+                            const customCourseGroup = document.getElementById('customCourseGroup');
+                            const customCourseInput = document.getElementById('customCourse');
+                            
+                            if (courseSelect.value === 'custom') {
+                                customCourseGroup.style.display = 'block';
+                                customCourseInput.required = true;
+                                customCourseInput.focus();
+                            } else {
+                                customCourseGroup.style.display = 'none';
+                                customCourseInput.required = false;
+                            }
+                            
+                            updateCombinedField();
+                        }
+                        
+                        // Toggle custom section input visibility
+                        function toggleCustomSection() {
+                            const sectionSelect = document.getElementById('studentSection');
+                            const customSectionGroup = document.getElementById('customSectionGroup');
+                            const customSectionInput = document.getElementById('customSection');
+                            
+                            if (sectionSelect.value === 'custom') {
+                                customSectionGroup.style.display = 'block';
+                                customSectionInput.required = true;
+                                customSectionInput.focus();
+                            } else {
+                                customSectionGroup.style.display = 'none';
+                                customSectionInput.required = false;
+                            }
+                            
+                            updateCombinedField();
+                        }
+
+                        // Update the hidden field with combined course-section value
+                        function updateCombinedField() {
+                            const courseSelect = document.getElementById('studentCourse');
+                            const sectionSelect = document.getElementById('studentSection');
+                            const customCourseInput = document.getElementById('customCourse');
+                            const customSectionInput = document.getElementById('customSection');
+                            const completeCourseSection = document.getElementById('completeCourseSection');
+                            const combinedField = document.getElementById('courseSectionCombined');
+                            
+                            // First check if we have a direct entry in the complete course section field
+                            if (completeCourseSection && completeCourseSection.value.trim()) {
+                                const completeValue = completeCourseSection.value.trim();
+                                if (completeValue.length >= 3 && completeValue.includes('-')) {
+                                    combinedField.value = completeValue;
+                                    
+                                    // Disable individual field validations since we're using the combined field
+                                    if (customCourseInput) customCourseInput.setCustomValidity("");
+                                    if (customSectionInput) customSectionInput.setCustomValidity("");
+                                    
+                                    // Mark as valid
+                                    completeCourseSection.setCustomValidity("");
+                                    completeCourseSection.classList.remove('is-invalid');
+                                    completeCourseSection.classList.add('is-valid');
+                                    
+                                    return;
+                                } else if (completeValue.length < 3) {
+                                    completeCourseSection.setCustomValidity("Course-section must be at least 3 characters");
+                                    completeCourseSection.classList.add('is-invalid');
+                                    completeCourseSection.classList.remove('is-valid');
+                                } else if (!completeValue.includes('-')) {
+                                    completeCourseSection.setCustomValidity("Format must be Course-Section (e.g. BSCS-101)");
+                                    completeCourseSection.classList.add('is-invalid');
+                                    completeCourseSection.classList.remove('is-valid');
+                                }
+                            }
+                            
+                            // If no valid complete value, proceed with individual fields
+                            // Determine course value (dropdown or custom input)
+                            let courseValue = courseSelect.value;
+                            if (courseValue === 'custom' && customCourseInput.value) {
+                                // Validate minimum length for custom course
+                                if (customCourseInput.value.trim().length < 3) {
+                                    customCourseInput.setCustomValidity("Custom course must be at least 3 characters");
+                                    customCourseInput.classList.add('is-invalid');
+                                    customCourseInput.classList.remove('is-valid');
+                                } else {
+                                    customCourseInput.setCustomValidity("");
+                                    customCourseInput.classList.remove('is-invalid');
+                                    customCourseInput.classList.add('is-valid');
+                                    courseValue = customCourseInput.value.trim();
+                                }
+                            }
+                            
+                            // Determine section value (dropdown or custom input)
+                            let sectionValue = sectionSelect.value;
+                            if (sectionValue === 'custom' && customSectionInput.value) {
+                                // Validate minimum length for custom section
+                                if (customSectionInput.value.trim().length < 3) {
+                                    customSectionInput.setCustomValidity("Custom section must be at least 3 characters");
+                                    customSectionInput.classList.add('is-invalid');
+                                    customSectionInput.classList.remove('is-valid');
+                                } else {
+                                    customSectionInput.setCustomValidity("");
+                                    customSectionInput.classList.remove('is-invalid');
+                                    customSectionInput.classList.add('is-valid');
+                                    sectionValue = customSectionInput.value.trim();
+                                }
+                            }
+                            
+                            // Only set combined value if both are valid
+                            if (courseValue && courseValue !== 'custom' && 
+                                sectionValue && sectionValue !== 'custom') {
+                                combinedField.value = courseValue + '-' + sectionValue;
+                            } else {
+                                combinedField.value = '';
+                            }
+                        }
+                        
+                        // Add event listeners for real-time validation
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const customCourseInput = document.getElementById('customCourse');
+                            const customSectionInput = document.getElementById('customSection');
+                            const completeCourseSection = document.getElementById('completeCourseSection');
+                            
+                            customCourseInput.addEventListener('input', function() {
+                                // Clear the direct entry field when using individual fields
+                                if (completeCourseSection && this.value.trim()) {
+                                    completeCourseSection.value = '';
+                                }
+                                updateCombinedField();
+                            });
+                            
+                            customSectionInput.addEventListener('input', function() {
+                                // Clear the direct entry field when using individual fields
+                                if (completeCourseSection && this.value.trim()) {
+                                    completeCourseSection.value = '';
+                                }
+                                updateCombinedField();
+                            });
+                            
+                            // Add event listener for complete course section field
+                            if (completeCourseSection) {
+                                completeCourseSection.addEventListener('input', function() {
+                                    // Clear the individual fields when using direct entry
+                                    if (this.value.trim()) {
+                                        if (customCourseInput) customCourseInput.value = '';
+                                        if (customSectionInput) customSectionInput.value = '';
+                                    }
+                                    updateCombinedField();
+                                });
+                            }
+                        });
+
+                        // Add event listeners
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const courseSelect = document.getElementById('studentCourse');
+                            const sectionSelect = document.getElementById('studentSection');
+                            const customCourseInput = document.getElementById('customCourse');
+                            const customSectionInput = document.getElementById('customSection');
+                            
+                            // Course and section select events
+                            courseSelect.addEventListener('change', updateSections);
+                            sectionSelect.addEventListener('change', updateCombinedField);
+                            sectionSelect.addEventListener('change', toggleCustomSection);
+                            
+                            // Custom input fields events
+                            customCourseInput.addEventListener('input', updateCombinedField);
+                            customSectionInput.addEventListener('input', updateCombinedField);
+                            
+                            // Initialize the sections dropdown
+                            updateSections();
+                            toggleCustomCourse();
+                        });
+                        </script>
+                                
                         </div>
                         
                         <!-- Face Capture Section -->
@@ -836,15 +1189,27 @@ foreach ($result as $row) {
                             <label for="updateStudentCourse"><i class="fas fa-book"></i> Course & Section:</label>
                             <select class="form-control" id="updateStudentCourse" name="course_section" required>
                                 <option value="" disabled selected>Select Course and Section</option>
-                                <option value="BSIS-301">BSIS-301</option>
-                                <option value="BSIS-302">BSIS-302</option>
-                                <option value="BSIT-301">BSIT-301</option>
-                                <option value="BSIT-302">BSIT-302</option>
-                                <option value="BSIT-401">BSIT-401</option>
-                                <option value="BSIT-402">BSIT-402</option>
-                                <option value="custom">Custom Course & Section</option>
+                                <?php 
+                                // Dynamic course-section combinations for update form
+                                // Track unique course-section combinations to avoid duplicates
+                                $seen = array();
+                                
+                                foreach ($courses as $course) {
+                                    foreach ($sections as $section) {
+                                        if ($section['course_id'] == $course['course_id']) {
+                                            $combo = $course['course_name'] . '-' . $section['section_name'];
+                                            if (!in_array($combo, $seen)) {
+                                                $seen[] = $combo;
+                                                echo "<option value=\"{$combo}\">{$combo}</option>";
+                                            }
+                                        }
+                                    }
+                                }
+                                ?>
+                                <option value="custom">+ Add Custom Course & Section</option>
                             </select>
-                            <input type="text" class="form-control mt-2" id="updateCustomStudentCourse" name="update_custom_course_section" placeholder="Enter custom Course or Grade Level & Section" style="display: none;">
+                            <input type="text" class="form-control mt-2" id="updateCustomStudentCourse" name="update_custom_course_section" placeholder="Enter custom Course-Section (e.g. BSCS-101)" style="display: none;">
+                            <small class="form-text text-muted">Format for custom: Course-Section (e.g. BSCS-101)</small>
                             <input type="hidden" id="updateFinalCourseSection" name="update_final_course_section">
                         </div>
                         <div class="modal-footer">
@@ -1325,16 +1690,36 @@ foreach ($result as $row) {
                     $('#customStudentCourse').show().focus(); // Focus on the custom input
                 } else {
                     $('#customStudentCourse').hide();
+                    // Set the selected value to the hidden field for regular selections
+                    $('#finalCourseSection').val($(this).val());
                 }
             });
             
             // Handle custom course & section in update form
             $('#updateStudentCourse').on('change', function() {
                 if ($(this).val() === 'custom') {
-                    $('#updateCustomStudentCourse').show();
+                    $('#updateCustomStudentCourse').show().focus();
                 } else {
                     $('#updateCustomStudentCourse').hide();
+                    // Set the selected value to the hidden field for regular selections
+                    $('#updateFinalCourseSection').val($(this).val());
                 }
+            });
+            
+            // Clean up modals on hide to prevent stale data
+            $('#updateStudentModal').on('hidden.bs.modal', function() {
+                $('#updateStudentForm')[0].reset();
+                $('#updateCustomStudentCourse').hide();
+            });
+            
+            // Handle custom input field changes in add form
+            $('#customStudentCourse').on('input', function() {
+                $('#finalCourseSection').val($(this).val());
+            });
+            
+            // Handle custom input field changes in update form
+            $('#updateCustomStudentCourse').on('input', function() {
+                $('#updateFinalCourseSection').val($(this).val());
             });
             
             // Form submission for add student
@@ -1350,29 +1735,75 @@ foreach ($result as $row) {
 
                 // Validate course section
                 const courseSelect = $('#studentCourse');
-                const customCourseInput = $('#customStudentCourse');
+                const sectionSelect = $('#studentSection');
+                const customCourseInput = $('#customCourse');
+                const customSectionInput = $('#customSection');
+                const combinedField = $('#courseSectionCombined');
                 
-                if (courseSelect.val() === '') {
-                    e.preventDefault();
-                    alert('Please select a course and section');
-                    courseSelect.focus();
-                    return false;
-                }
-
-                if (courseSelect.val() === 'custom') {
-                    const customValue = customCourseInput.val().trim();
-                    if (!customValue || customValue.length < 3) {
+                // Check if complete course-section direct entry is filled
+                const completeCourseSection = $('#completeCourseSection').val().trim();
+                
+                if (completeCourseSection) {
+                    // If direct entry is used, validate its format
+                    if (completeCourseSection.length < 3) {
                         e.preventDefault();
-                        alert('Please enter a valid custom course & section (minimum 3 characters)');
-                        customCourseInput.focus();
+                        alert('Course-section must be at least 3 characters');
+                        $('#completeCourseSection').focus();
                         return false;
                     }
-                    // Set the custom value to both the select field and the hidden field
-                    courseSelect.val(customValue);
-                    $('#finalCourseSection').val(customValue);
+                    
+                    // Set the combined field directly
+                    combinedField.val(completeCourseSection);
                 } else {
-                    // For predefined options, set the value to the hidden field as well
-                    $('#finalCourseSection').val(courseSelect.val());
+                    // If direct entry is not used, validate the individual fields
+                    
+                    // Validate course selection
+                    if (courseSelect.val() === '') {
+                        e.preventDefault();
+                        alert('Please select a course or enter a complete course-section value');
+                        courseSelect.focus();
+                        return false;
+                    }
+    
+                    // Validate course if custom selected
+                    if (courseSelect.val() === 'custom') {
+                        const customCourseValue = customCourseInput.val().trim();
+                        if (!customCourseValue || customCourseValue.length < 3) {
+                            e.preventDefault();
+                            alert('Custom course must be at least 3 characters');
+                            customCourseInput.focus();
+                            return false;
+                        }
+                    }
+                    
+                    // Validate section selection
+                    if (sectionSelect.val() === '') {
+                        e.preventDefault();
+                        alert('Please select a section or enter a complete course-section value');
+                        sectionSelect.focus();
+                        return false;
+                    }
+                    
+                    // Validate section if custom selected
+                    if (sectionSelect.val() === 'custom') {
+                        const customSectionValue = customSectionInput.val().trim();
+                        if (!customSectionValue || customSectionValue.length < 3) {
+                            e.preventDefault();
+                            alert('Custom section must be at least 3 characters');
+                            customSectionInput.focus();
+                            return false;
+                        }
+                    }
+                }
+                
+                // Update combined field one last time
+                updateCombinedField();
+                
+                // Check if we have a valid combined course-section value
+                if (!combinedField.val()) {
+                    e.preventDefault();
+                    alert('Please select or enter both a valid course and section');
+                    return false;
                 }
 
                 // Validate QR code generation
@@ -1673,6 +2104,404 @@ foreach ($result as $row) {
             printWindow.document.close();
         }
     </script>
+
+    <!-- Student Delete Success Modal -->
+    <div class="modal fade" id="deleteSuccessModal" tabindex="-1" role="dialog" aria-labelledby="deleteSuccessLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #098744; color: white;">
+                    <h5 class="modal-title" id="deleteSuccessLabel"><i class="fas fa-trash-alt"></i> Student Deleted</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="trash-animation">
+                        <div class="trash-lid"></div>
+                        <div class="trash-container"></div>
+                        <div class="trash-paper"></div>
+                    </div>
+                    <p class="mt-4" id="deleteSuccessMessage" style="font-size: 18px;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-dismiss="modal" style="background-color: #098744; color: white;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #dc3545; color: white;">
+                    <h5 class="modal-title" id="errorModalLabel"><i class="fas fa-exclamation-triangle"></i> Error</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="error-animation">
+                        <div class="error-circle">
+                            <div class="error-line1"></div>
+                            <div class="error-line2"></div>
+                        </div>
+                    </div>
+                    <p class="mt-4" id="errorMessage" style="font-size: 18px;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Error animation styles */
+        .error-animation {
+            margin: 20px auto;
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+        .error-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #dc3545;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: error-circle-animation 0.5s ease-out;
+        }
+        .error-line1, .error-line2 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 4px;
+            background-color: #dc3545;
+            transform: translate(-50%, -50%) rotate(45deg);
+            animation: error-line-animation 0.5s ease-out 0.2s both;
+        }
+        .error-line2 {
+            transform: translate(-50%, -50%) rotate(-45deg);
+            animation-delay: 0.3s;
+        }
+        
+        @keyframes error-circle-animation {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes error-line-animation {
+            0% { width: 0; opacity: 0; }
+            100% { width: 40px; opacity: 1; }
+        }
+    </style>
+
+    <style>
+        /* Trash Can Animation Styles */
+        .trash-animation {
+            margin: 20px auto;
+            width: 100px;
+            height: 120px;
+            position: relative;
+        }
+
+        .trash-container {
+            width: 70px;
+            height: 80px;
+            background-color: #098744;
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            animation: container-animation 0.5s ease-in-out 0.4s forwards;
+        }
+
+        .trash-lid {
+            width: 80px;
+            height: 12px;
+            background-color: #098744;
+            position: absolute;
+            left: 50%;
+            top: 10px;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            animation: lid-animation 0.8s ease-in-out;
+        }
+
+        .trash-lid:before {
+            content: '';
+            width: 15px;
+            height: 10px;
+            background-color: #098744;
+            position: absolute;
+            left: 50%;
+            top: -10px;
+            transform: translateX(-50%);
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+
+        .trash-paper {
+            width: 12px;
+            height: 20px;
+            background-color: white;
+            position: absolute;
+            left: 50%;
+            top: 15%;
+            transform: translateX(-50%) rotate(-15deg);
+            animation: paper-animation 1s ease-in-out;
+        }
+
+        @keyframes lid-animation {
+            0% { top: 10px; transform: translateX(-50%) rotate(0); }
+            40% { top: -20px; transform: translateX(-50%) rotate(-5deg); }
+            60% { top: -20px; transform: translateX(-50%) rotate(5deg); }
+            80% { top: -20px; transform: translateX(-50%) rotate(-5deg); }
+            100% { top: 10px; transform: translateX(-50%) rotate(0); }
+        }
+
+        @keyframes paper-animation {
+            0% { top: 15%; transform: translateX(-50%) rotate(-15deg); opacity: 1; }
+            30% { top: 15%; transform: translateX(-50%) rotate(15deg); opacity: 1; }
+            60% { top: 75%; transform: translateX(-50%) rotate(-15deg); opacity: 0.7; }
+            100% { top: 90%; transform: translateX(-50%) rotate(0deg); opacity: 0; }
+        }
+
+        @keyframes container-animation {
+            0% { transform: translateX(-50%) scale(1); }
+            30% { transform: translateX(-50%) scale(1.05); }
+            60% { transform: translateX(-50%) scale(0.95); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+    </style>
+
+    <!-- Student Add Success Modal -->
+    <div class="modal fade" id="addSuccessModal" tabindex="-1" role="dialog" aria-labelledby="addSuccessLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #098744; color: white;">
+                    <h5 class="modal-title" id="addSuccessLabel"><i class="fas fa-user-plus"></i> Student Added</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center" style="padding-top: 20px; padding-bottom: 20px;">
+                    <div id="successAnimation" class="success-checkmark">
+                        <div class="check-icon">
+                            <span class="icon-line line-tip"></span>
+                            <span class="icon-line line-long"></span>
+                            <div class="icon-circle"></div>
+                            <div class="icon-fix"></div>
+                        </div>
+                    </div>
+                    <div style="height: 20px; clear: both;"></div>
+                    <p class="mt-5" id="addSuccessMessage" style="font-size: 18px; margin-top: 30px !important;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-dismiss="modal" style="background-color: #098744; color: white;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Success Checkmark Animation - Proven, Reliable Animation */
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .success-checkmark .check-icon {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            border-radius: 50%;
+            box-sizing: content-box;
+            border: 4px solid #098744;
+        }
+        
+        .success-checkmark .check-icon::before {
+            top: 3px;
+            left: -2px;
+            width: 30px;
+            transform-origin: 100% 50%;
+            border-radius: 100px 0 0 100px;
+        }
+        
+        .success-checkmark .check-icon::after {
+            top: 0;
+            left: 30px;
+            width: 60px;
+            transform-origin: 0 50%;
+            border-radius: 0 100px 100px 0;
+            animation: rotate-circle 4.25s ease-in;
+        }
+        
+        .success-checkmark .check-icon::before,
+        .success-checkmark .check-icon::after {
+            content: '';
+            height: 100px;
+            position: absolute;
+            background: #FFFFFF;
+            transform: rotate(-45deg);
+        }
+        
+        .success-checkmark .check-icon .icon-line {
+            height: 5px;
+            background-color: #098744;
+            display: block;
+            border-radius: 2px;
+            position: absolute;
+            z-index: 10;
+        }
+        
+        .success-checkmark .check-icon .icon-line.line-tip {
+            top: 46px;
+            left: 14px;
+            width: 25px;
+            transform: rotate(45deg);
+            animation: icon-line-tip 0.75s;
+        }
+        
+        .success-checkmark .check-icon .icon-line.line-long {
+            top: 38px;
+            right: 8px;
+            width: 47px;
+            transform: rotate(-45deg);
+            animation: icon-line-long 0.75s;
+        }
+        
+        .success-checkmark .check-icon .icon-circle {
+            top: -4px;
+            left: -4px;
+            z-index: 10;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            position: absolute;
+            box-sizing: content-box;
+            border: 4px solid #098744;
+            animation: icon-circle-scale 0.3s;
+        }
+        
+        .success-checkmark .check-icon .icon-fix {
+            top: 8px;
+            width: 5px;
+            left: 26px;
+            z-index: 1;
+            height: 85px;
+            position: absolute;
+            transform: rotate(-45deg);
+            background-color: #FFFFFF;
+        }
+        
+        @keyframes icon-line-tip {
+            0% {
+                width: 0;
+                left: 1px;
+                top: 19px;
+            }
+            54% {
+                width: 0;
+                left: 1px;
+                top: 19px;
+            }
+            70% {
+                width: 50px;
+                left: -8px;
+                top: 37px;
+            }
+            84% {
+                width: 17px;
+                left: 21px;
+                top: 48px;
+            }
+            100% {
+                width: 25px;
+                left: 14px;
+                top: 45px;
+            }
+        }
+        
+        @keyframes icon-line-long {
+            0% {
+                width: 0;
+                right: 46px;
+                top: 54px;
+            }
+            65% {
+                width: 0;
+                right: 46px;
+                top: 54px;
+            }
+            84% {
+                width: 55px;
+                right: 0px;
+                top: 35px;
+            }
+            100% {
+                width: 47px;
+                right: 8px;
+                top: 38px;
+            }
+        }
+        
+        @keyframes icon-circle-scale {
+            0% {
+                transform: scale(0);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+
+    <script>
+        // Check for URL parameters on page load and show modals
+        $(document).ready(function() {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Check for delete success
+            if (urlParams.get('delete_success') === '1') {
+                const studentName = urlParams.get('student_name');
+                $('#deleteSuccessMessage').text('Student "' + studentName + '" deleted successfully!');
+                $('#deleteSuccessModal').modal('show');
+                
+                // Remove the parameters from the URL without reloading the page
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Check for add success
+            if (urlParams.get('add_success') === '1') {
+                const studentName = urlParams.get('student_name');
+                const studentId = urlParams.get('student_id');
+                $('#addSuccessMessage').text('Student "' + studentName + '" added successfully!');
+                $('#addSuccessModal').modal('show');
+                
+                // Remove the parameters from the URL without reloading the page
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Check for error (both delete and add errors)
+            if (urlParams.get('delete_error') === '1' || urlParams.get('add_error') === '1') {
+                const errorMsg = urlParams.get('message');
+                $('#errorMessage').text(errorMsg);
+                $('#errorModal').modal('show');
+                
+                // Remove the parameters from the URL without reloading the page
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
 </body>
 </html>
-

@@ -50,10 +50,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log("All required fields present");
         
         $studentName = $_POST['student_name'];
-        // Use final_course_section if available, otherwise fall back to course_section
-        $studentCourse = isset($_POST['final_course_section']) && !empty($_POST['final_course_section']) 
-            ? $_POST['final_course_section'] 
-            : $_POST['course_section'];
+        
+        // Process custom course and section first if they exist
+        $courseName = '';
+        $sectionName = '';
+        $studentCourse = '';
+        
+        // Check if a complete course-section value was provided directly
+        if (isset($_POST['complete_course_section']) && !empty($_POST['complete_course_section'])) {
+            $completeCourseSection = trim($_POST['complete_course_section']);
+            
+            // Validate minimum length for complete course-section
+            if (strlen($completeCourseSection) < 3) {
+                error_log("Complete course-section too short: $completeCourseSection");
+                header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Course-section must be at least 3 characters!"));
+                exit();
+            }
+            
+            // Use the direct entry as the course-section value
+            $studentCourse = $completeCourseSection;
+            error_log("Using complete course-section: $studentCourse");
+            
+            // Try to extract course and section if it contains a hyphen
+            if (strpos($completeCourseSection, '-') !== false) {
+                $parts = explode('-', $completeCourseSection, 2);
+                $courseName = trim($parts[0]);
+                $sectionName = trim($parts[1]);
+                error_log("Extracted from complete field - Course: $courseName, Section: $sectionName");
+            } else {
+                // If no hyphen, we'll still use it but warn about format
+                error_log("Complete course-section missing hyphen separator: $completeCourseSection");
+                // Set both to the same value so we have something for the database
+                $courseName = $completeCourseSection;
+                $sectionName = 'DEFAULT';
+            }
+        } else {
+            // Process course (regular dropdown or custom)
+            if (isset($_POST['course']) && $_POST['course'] === 'custom' && !empty($_POST['custom_course'])) {
+                // Use the custom course name
+                $courseName = trim($_POST['custom_course']);
+                
+                // Validate minimum length for custom course
+                if (strlen($courseName) < 3) {
+                    error_log("Custom course name too short: $courseName");
+                    header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom course must be at least 3 characters!"));
+                    exit();
+                }
+                
+                error_log("Using custom course: $courseName");
+            } elseif (isset($_POST['course']) && !empty($_POST['course']) && $_POST['course'] !== 'custom') {
+                // Use the selected course name
+                $courseName = trim($_POST['course']);
+                error_log("Using selected course: $courseName");
+            }
+            
+            // Process section (regular dropdown or custom)
+            if (isset($_POST['section']) && $_POST['section'] === 'custom' && !empty($_POST['custom_section'])) {
+                // Use the custom section name
+                $sectionName = trim($_POST['custom_section']);
+                
+                // Validate minimum length for custom section
+                if (strlen($sectionName) < 3) {
+                    error_log("Custom section name too short: $sectionName");
+                    header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom section must be at least 3 characters!"));
+                    exit();
+                }
+                
+                error_log("Using custom section: $sectionName");
+            } elseif (isset($_POST['section']) && !empty($_POST['section']) && $_POST['section'] !== 'custom') {
+                // Use the selected section name
+                $sectionName = trim($_POST['section']);
+                error_log("Using selected section: $sectionName");
+            }
+        }
+        
+        // If we haven't set studentCourse yet and have both course and section, create the course-section string
+        if (empty($studentCourse) && !empty($courseName) && !empty($sectionName)) {
+            $studentCourse = $courseName . '-' . $sectionName;
+            error_log("Created course-section: $studentCourse");
+        } else if (empty($studentCourse)) {
+            // Fall back to the course_section field if available
+            $studentCourse = isset($_POST['course_section']) && !empty($_POST['course_section']) 
+                ? $_POST['course_section'] 
+                : '';
+            error_log("Using fallback course-section: $studentCourse");
+            
+            // Parse the input to extract course and section if not already set
+            if (!empty($studentCourse) && (empty($courseName) || empty($sectionName))) {
+                $parts = explode('-', $studentCourse);
+                if (count($parts) === 2) {
+                    $courseName = empty($courseName) ? trim($parts[0]) : $courseName;
+                    $sectionName = empty($sectionName) ? trim($parts[1]) : $sectionName;
+                    error_log("Parsed from course_section: course=$courseName, section=$sectionName");
+                }
+            }
+        }
+        
+        // Process the course and section if we have both
+        if (!empty($courseName) && !empty($sectionName)) {
+                
+                error_log("Parsed course name: $courseName, section name: $sectionName");
+                
+                try {
+                    // Save course if it doesn't exist - ALWAYS tie custom entries to the current user and school
+                    $courseCheck = $conn->prepare("SELECT course_id FROM tbl_courses WHERE course_name = :course_name AND ((user_id = :user_id AND school_id = :school_id) OR user_id = 1)");
+                    $courseCheck->bindParam(':course_name', $courseName);
+                    $courseCheck->bindParam(':user_id', $user_id);
+                    $courseCheck->bindParam(':school_id', $school_id);
+                    $courseCheck->execute();
+                    
+                    $courseId = 0;
+                    
+                    if ($courseCheck->rowCount() === 0) {
+                        error_log("Course not found, inserting custom course: $courseName for user: $user_id, school: $school_id");
+                        $insertCourse = $conn->prepare("INSERT INTO tbl_courses (course_name, user_id, school_id) VALUES (:course_name, :user_id, :school_id)");
+                        $insertCourse->bindParam(':course_name', $courseName);
+                        $insertCourse->bindParam(':user_id', $user_id);
+                        $insertCourse->bindParam(':school_id', $school_id);
+                        $insertCourse->execute();
+                        $courseId = $conn->lastInsertId();
+                        error_log("New custom course saved: $courseName with ID: " . $courseId);
+                    } else {
+                        $courseId = $courseCheck->fetchColumn();
+                        error_log("Course already exists: $courseName with ID: $courseId");
+                    }
+                    
+                    // If we have a valid course ID, let's handle the section
+                    if ($courseId > 0) {
+                        error_log("Found/created course ID: $courseId for course: $courseName");
+                        
+                        // Look for an existing section with this name tied to THIS USER and SCHOOL specifically
+                        // This ensures custom sections are isolated to the user who created them
+                        $sectionCheck = $conn->prepare("SELECT section_id FROM tbl_sections 
+                                                      WHERE section_name = :section_name 
+                                                      AND ((user_id = :user_id AND school_id = :school_id) OR user_id = 1)");
+                        $sectionCheck->bindParam(':section_name', $sectionName);
+                        $sectionCheck->bindParam(':user_id', $user_id);
+                        $sectionCheck->bindParam(':school_id', $school_id);
+                        $sectionCheck->execute();
+                        
+                        if ($sectionCheck->rowCount() === 0) {
+                            error_log("Section not found, inserting custom section: $sectionName with course ID: $courseId");
+                            $insertSection = $conn->prepare("INSERT INTO tbl_sections (section_name, user_id, school_id, course_id) VALUES (:section_name, :user_id, :school_id, :course_id)");
+                            $insertSection->bindParam(':section_name', $sectionName);
+                            $insertSection->bindParam(':user_id', $user_id);
+                            $insertSection->bindParam(':school_id', $school_id);
+                            $insertSection->bindParam(':course_id', $courseId);
+                            $insertSection->execute();
+                            error_log("New custom section saved: $sectionName with ID: " . $conn->lastInsertId());
+                        } else {
+                            // Update the section to have the correct course_id
+                            $sectionId = $sectionCheck->fetchColumn();
+                            $updateSection = $conn->prepare("UPDATE tbl_sections SET course_id = :course_id WHERE section_id = :section_id");
+                            $updateSection->bindParam(':course_id', $courseId);
+                            $updateSection->bindParam(':section_id', $sectionId);
+                            $updateSection->execute();
+                            error_log("Updated existing section: $sectionName (ID: $sectionId) with course ID: $courseId");
+                        }
+                    } else {
+                        error_log("Error: Could not find or create course ID for course: $courseName");
+                    }
+                } catch (Exception $e) {
+                    error_log("Error saving course/section: " . $e->getMessage());
+                }
+        }
+        
         $generatedCode = $_POST['generated_code'];
         $faceVerified = $_POST['face_verified'];
         $faceImageData = $_POST['face_image_data'];
@@ -69,12 +230,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Check if face verification was completed
         if ($faceVerified !== '1') {
             error_log("Face verification failed");
-            echo "
-                <script>
-                    alert('Face verification is required!');
-                    window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-                </script>
-            ";
+            // Redirect with error parameters
+            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Face verification is required!"));
             exit();
         }
         
@@ -134,22 +291,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $inserted_id = $conn->lastInsertId();
             error_log("Student inserted successfully with ID: $inserted_id");
 
-            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php");
+            // Redirect with success parameters for the add success modal
+            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_success=1&student_name=" . urlencode($studentName) . "&student_id=" . $inserted_id);
             exit();
             
         } catch (Exception $e) {
             error_log("Error in student insertion: " . $e->getMessage());
-            echo "Error: " . $e->getMessage();
+            // Redirect with error parameters
+            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Error: " . $e->getMessage()));
+            exit();
         }
 
     } else {
         error_log("Missing required fields in POST data");
-        echo "
-            <script>
-                alert('Please fill in all fields and complete face verification!');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-            </script>
-        ";
+        // Redirect with error parameters
+        header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Please fill in all fields and complete face verification!"));
+        exit();
     }
 } else {
     error_log("Not a POST request");

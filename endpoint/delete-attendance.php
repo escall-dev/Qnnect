@@ -34,32 +34,48 @@ if (isset($_GET['attendance'])) {
         $query_execute = $stmt->execute([$attendance]);
 
         if ($query_execute && $stmt->rowCount() > 0) {
-            echo "<script>
-                alert('Attendance deleted successfully!');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-            </script>";
+            // Use the success params to trigger our enhanced modal
+            $successParams = http_build_query([
+                'success' => 'attendance_deleted',
+                'student' => $result['student_name'] ?? 'Student',
+                'id' => $attendance
+            ]);
+            header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
+            exit();
         } else {
-            echo "<script>
-                alert('Failed to delete attendance! No rows were affected.');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-            </script>";
+            $errorParams = http_build_query([
+                'error' => 'delete_failed',
+                'message' => 'Failed to delete attendance! No rows were affected.',
+                'details' => 'Database reported successful execution but no rows were modified.'
+            ]);
+            header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+            exit();
         }
 
     } catch (PDOException $e) {
-        echo "<script>
-            alert('Database Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-        </script>";
+        $errorParams = http_build_query([
+            'error' => 'db_error',
+            'message' => 'Database Error',
+            'details' => $e->getMessage()
+        ]);
+        header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+        exit();
     } catch (Exception $e) {
-        echo "<script>
-            alert('Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-        </script>";
+        $errorParams = http_build_query([
+            'error' => 'general_error',
+            'message' => 'Error during deletion',
+            'details' => $e->getMessage()
+        ]);
+        header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+        exit();
     }
 } else {
-    echo "<script>
-        alert('No attendance ID provided!');
-        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-    </script>";
+    $errorParams = http_build_query([
+        'error' => 'missing_id',
+        'message' => 'No attendance ID provided!',
+        'details' => 'The attendance ID parameter was missing from the request.'
+    ]);
+    header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+    exit();
 }
 ?>

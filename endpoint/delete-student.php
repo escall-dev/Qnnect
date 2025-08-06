@@ -6,11 +6,9 @@ if (isset($_GET['student'])) {
 
     // Validate that the student ID is a number
     if (!is_numeric($student)) {
-        echo "<script>
-            alert('Invalid student ID!');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-        </script>";
-        exit;
+        // Redirect with parameters for error modal
+        header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("Invalid student ID!"));
+        exit();
     }
 
     try {
@@ -21,11 +19,9 @@ if (isset($_GET['student'])) {
         $result = $checkStmt->fetch();
         
         if (!$result) {
-            echo "<script>
-                alert('Student record not found!');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-            </script>";
-            exit;
+            // Redirect with parameters for error modal
+            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("Student record not found!"));
+            exit();
         }
 
         // Get student info for the success message
@@ -37,32 +33,27 @@ if (isset($_GET['student'])) {
         $query_execute = $stmt->execute([$student]);
 
         if ($query_execute && $stmt->rowCount() > 0) {
-            echo "<script>
-                alert('Student \"" . addslashes($studentName) . "\" deleted successfully!');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-            </script>";
+            // Redirect with parameters for the success modal
+            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_success=1&student_name=" . urlencode($studentName));
+            exit();
         } else {
-            echo "<script>
-                alert('Failed to delete student! No rows were affected.');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-            </script>";
+            // Redirect with parameters for error modal
+            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("Failed to delete student! No rows were affected."));
+            exit();
         }
 
     } catch (PDOException $e) {
-        echo "<script>
-            alert('Database Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-        </script>";
+        // Redirect with parameters for database error modal
+        header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("Database Error: " . $e->getMessage()));
+        exit();
     } catch (Exception $e) {
-        echo "<script>
-            alert('Error: " . addslashes($e->getMessage()) . "');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-        </script>";
+        // Redirect with parameters for general error modal
+        header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("Error: " . $e->getMessage()));
+        exit();
     }
 } else {
-    echo "<script>
-        alert('No student ID provided!');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
-    </script>";
+    // Redirect with parameters for error modal
+    header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("No student ID provided!"));
+    exit();
 }
 ?>

@@ -10,8 +10,11 @@ if (!isset($conn_qr)) {
     $dbPassword = "";
     $qrDb = "qr_attendance_db";
     
-    $conn_qr = mysqli_connect($hostName, $dbUser, $dbPassword, $qrDb);
-    if (!$conn_qr) {
+    $conn_qr = mysqli_connect($hostName, $dbUser, $dbPassword, $qrDb                        $errorParams = http_build_query([
+                            'error' => 'database_error',
+                            'message' => 'Failed to save attendance',
+                            'details' => 'Unable to save attendance record to database. Please try again.'
+                        ]);  if (!$conn_qr) {
         // Try to create database if it doesn't exist
         $temp_conn = mysqli_connect($hostName, $dbUser, $dbPassword);
         if ($temp_conn) {

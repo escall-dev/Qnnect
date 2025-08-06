@@ -192,12 +192,14 @@ if (isset($_GET['attendance'])) {
                 $attendance_details
             );
 
-            echo "<script>
-                showCustomAlert('Attendance deleted successfully!', 'success');
-                setTimeout(function() {
-                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-                }, 3000);
-            </script>";
+            // Redirect with success parameters instead of inline JavaScript
+            $successParams = http_build_query([
+                'success' => 'attendance_deleted',
+                'student' => $attendance_details['student_name'] ?? 'Student',
+                'id' => $attendance
+            ]);
+            header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
+            exit();
         } else {
             // Log the failed deletion attempt
             logActivity(
@@ -208,12 +210,14 @@ if (isset($_GET['attendance'])) {
                 ['error' => $conn_qr->error]
             );
 
-            echo "<script>
-                showCustomAlert('Failed to delete attendance!', 'error');
-                setTimeout(function() {
-                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
-                }, 3000);
-            </script>";
+            // Redirect with error parameters
+            $errorParams = http_build_query([
+                'error' => 'delete_failed',
+                'message' => 'Failed to delete attendance record',
+                'details' => $conn_qr->error
+            ]);
+            header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+            exit();
         }
     } catch (Exception $e) {
         // Log the exception
@@ -1031,19 +1035,7 @@ $filteredSchedules = getFilteredSchedules(
             justify-content: center;
         }
         
-        /* Compact Attendance Mode Styling */
-        .attendance-mode-section .card-header h6 {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        
-        .attendance-mode-section .form-control-sm {
-            font-size: 0.875rem;
-        }
-        
-        .attendance-mode-section .alert {
-            line-height: 1.3;
-        }
+        /* Removed Attendance Mode Styling */
         
         /* Responsive adjustments for compact mode */
         @media (max-width: 768px) {
@@ -1227,11 +1219,199 @@ $filteredSchedules = getFilteredSchedules(
         .main {
             overflow-x: auto;
         }
+        
+        /* QR Feedback Modal Styles */
+        .qr-feedback-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .qr-modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            animation: modalFadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .qr-modal-header {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .qr-modal-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .qr-modal-close:hover {
+            color: #333;
+        }
+        
+        .qr-modal-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .qr-icon-container {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        
+        .qr-success-icon {
+            color: #28a745;
+        }
+        
+        .qr-warning-icon {
+            color: #ffc107;
+        }
+        
+        .qr-error-icon {
+            color: #dc3545;
+        }
+        
+        .qr-info-icon {
+            color: #17a2b8;
+        }
+        
+        .qr-message-container {
+            text-align: center;
+        }
+        
+        /* Success and Error modal variants */
+        .qr-feedback-modal-success #qrFeedbackModalIcon {
+            color: #28a745;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .qr-feedback-modal-error #qrFeedbackModalIcon {
+            color: #dc3545;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        /* More visible modal styling */
+        .qr-feedback-modal-success .qr-modal-content {
+            border-left: 5px solid #28a745;
+            box-shadow: 0 0 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .qr-feedback-modal-error .qr-modal-content {
+            border-left: 5px solid #dc3545;
+            box-shadow: 0 0 20px rgba(220, 53, 69, 0.3);
+        }
+        
+        /* Fade out animation */
+        .qr-feedback-modal.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .qr-feedback-modal.fade-out .qr-modal-content {
+            transform: translateY(-20px);
+            transition: transform 0.5s ease-out;
+        }
+        
+        .qr-message-container h4 {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .qr-message-container p {
+            margin-bottom: 5px;
+        }
+        
+        .success-icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #28a745;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .warning-icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #ffc107;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .error-icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .info-icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #17a2b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
     <!-- Custom Alert Box -->
     <div id="customAlert" class="custom-alert"></div>
+    
+    <!-- Enhanced QR Scan Feedback Modals -->
+    <div id="qrFeedbackModal" class="qr-feedback-modal">
+        <div class="qr-modal-content">
+            <div class="qr-modal-header">
+                <span class="qr-modal-close">&times;</span>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-icon-container">
+                    <i id="qrFeedbackModalIcon" class=""></i>
+                </div>
+                <div class="qr-message-container">
+                    <h4 id="qrFeedbackModalTitle"></h4>
+                    <p id="qrFeedbackModalMessage"></p>
+                    <small id="qrFeedbackModalDetails" class="text-muted"></small>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <?php include('./components/sidebar-nav.php'); ?>
 
@@ -1246,25 +1426,6 @@ $filteredSchedules = getFilteredSchedules(
                 <div class="unified-attendance-container">
                     <div class="qr-section">
                         <div class="qr-container" style="background-color: rgba(255, 255, 255, 0.95); border-radius: 15px 0 0 15px; padding: 15px; box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; height: 100%; border-right: 3px solid #098744;">
-                <!-- Attendance Mode Selection - Compact Version -->
-                <div class="attendance-mode-section mb-3">
-                    <div class="card border-primary">
-                        <div class="card-header bg-primary text-white py-2">
-                            <h6 class="mb-0"><i class="fas fa-toggle-on"></i> Attendance Mode</h6>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="form-group mb-2">
-                                <select class="form-control form-control-sm" id="attendanceMode" name="attendanceMode">
-                                    <option value="general">📋 General Attendance</option>
-                                    <option value="room_subject">📘 Room and Subject-based</option>
-                                </select>
-                            </div>
-                            <div class="alert alert-info mb-0 py-2" id="modeDescription" style="font-size: 0.85rem;">
-                                <strong>General Mode:</strong> Manual attendance tracking without schedule integration.
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <div class="scanner-con mb-3">
                     <h6 class="text-center mb-2">Scan QR Code for Attendance</h6>
@@ -1324,7 +1485,7 @@ $filteredSchedules = getFilteredSchedules(
                                         </div>
                                     </div>
                                     <small class="form-text text-muted">
-                                        <i class="fas fa-info-circle"></i> Works in all attendance modes
+                                        <i class="fas fa-info-circle"></i> Configure class time
                                     </small>
                                 </div>
                                 <div class="form-group">
@@ -2811,8 +2972,14 @@ $filteredSchedules = getFilteredSchedules(
             
             // Set up confirm and cancel buttons
             document.querySelector('.confirm-delete').onclick = function() {
-                // Redirect to delete the attendance
-                window.location.href = 'index.php?attendance=' + attendanceIdToDelete;
+                console.log('Confirm delete clicked for ID:', attendanceIdToDelete);
+                
+                // Hide overlay and popup immediately
+                overlay.style.display = 'none';
+                popup.style.display = 'none';
+                
+                // Use the endpoint/delete-attendance.php file instead of index.php
+                window.location.href = 'endpoint/delete-attendance.php?attendance=' + attendanceIdToDelete;
             };
             
             document.querySelector('.cancel-delete').onclick = function() {
@@ -4558,50 +4725,15 @@ $filteredSchedules = getFilteredSchedules(
         });
     </script>
 
-    <!-- Attendance Mode and Real-time Updates Script -->
+    <!-- Real-time Updates Script -->
     <script>
         $(document).ready(function() {
-            // Attendance Mode Management
-            $('#attendanceMode').on('change', function() {
-                const mode = $(this).val();
-                toggleAttendanceMode(mode);
-                updateModeDescription(mode);
-                
-                // Store preference in localStorage
-                localStorage.setItem('attendanceMode', mode);
-            });
+            // Display instructor section by default (attendance mode removed)
+            $('#instructorSection').show();
+            $('#scheduleSectionContainer').hide();
             
-            // Load saved preference or default to general
-            const savedMode = localStorage.getItem('attendanceMode') || 'general';
-            $('#attendanceMode').val(savedMode);
-            toggleAttendanceMode(savedMode);
-            updateModeDescription(savedMode);
-            
-            function toggleAttendanceMode(mode) {
-                if (mode === 'room_subject') {
-                    // Show schedule section, hide instructor section
-                    $('#scheduleSectionContainer').show();
-                    $('#instructorSection').hide();
-                    
-                    // Update QR form to use schedule data
-                    $('#class-start-time').attr('name', 'schedule_start_time');
-                } else {
-                    // Show instructor section, hide schedule section
-                    $('#instructorSection').show();
-                    $('#scheduleSectionContainer').hide();
-                    
-                    // Reset QR form to use manual class time
-                    $('#class-start-time').attr('name', 'class_start_time');
-                }
-            }
-            
-            function updateModeDescription(mode) {
-                const descriptions = {
-                    'general': '<strong>General Mode:</strong> Manual attendance tracking without schedule integration.',
-                    'room_subject': '<strong>Room & Subject Mode:</strong> Schedule-integrated attendance with automatic class time detection.'
-                };
-                $('#modeDescription').html(descriptions[mode]);
-            }
+            // Set class time name attribute
+            $('#class-start-time').attr('name', 'class_start_time');
             
             // Schedule Loading for Room & Subject Mode
             $('#loadScheduleBtn').on('click', function() {
@@ -4809,7 +4941,12 @@ $filteredSchedules = getFilteredSchedules(
             }
             
             // Function to play success sound using Web Audio API
+            // Legacy function maintained for backward compatibility
             function playSuccessSound() {
+                console.log('playSuccessSound is deprecated, use playSound("success") instead');
+                playSound('success');
+                
+                /* Original implementation - kept for reference
                 try {
                     // Create audio context
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -4817,6 +4954,7 @@ $filteredSchedules = getFilteredSchedules(
                     // Create success tone sequence
                     const playTone = (frequency, startTime, duration) => {
                         const oscillator = audioContext.createOscillator();
+                */
                         const gainNode = audioContext.createGain();
                         
                         oscillator.connect(gainNode);
@@ -4856,26 +4994,24 @@ $filteredSchedules = getFilteredSchedules(
             }
             
             // Check for success parameters in URL
+            // Legacy function maintained for backward compatibility
             function checkForSuccessMessage() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const success = urlParams.get('success');
-                const student = urlParams.get('student');
-                const status = urlParams.get('status');
-                
-                if (success === 'attendance_added') {
-                    showSuccessAttendanceModal(student, status);
-                    
-                    // Clean URL without reloading
-                    const cleanUrl = window.location.pathname;
-                    window.history.replaceState({}, document.title, cleanUrl);
-                }
+                console.log('checkForSuccessMessage is deprecated, use checkForErrorMessage instead');
+                // Just call the new function that handles both success and error
+                checkForErrorMessage();
             }
             
-            // Function to show error attendance modal
-            // Implementation moved to modal-helpers.js
+            // Legacy function maintained for backward compatibility
+            function showSuccessAttendanceModal(student, status) {
+                console.log('showSuccessAttendanceModal called, redirecting to new modal system');
+                showQRFeedbackModal('success', 'Attendance Recorded', `${student || 'Student'} marked as ${status?.toLowerCase() || 'present'}`);
+            }
                 
-                // Play error sound
-                playErrorSound();
+            // Legacy function maintained for backward compatibility
+            function playErrorSound() {
+                console.log('playErrorSound is deprecated, use playSound("error") instead');
+                playSound('error');
+            }
                 
                 // Auto-hide after 4 seconds
                 setTimeout(function() {
@@ -4887,11 +5023,17 @@ $filteredSchedules = getFilteredSchedules(
                 }, 4000);
             }
             
-            // Function to play error sound using Web Audio API
+            // Function to play error sound using Web Audio API - replaced by playSound
+            // Keeping original definition for backward compatibility
             function playErrorSound() {
+                console.log('playErrorSound is deprecated, use playSound("error") instead');
+                playSound('error');
+                
+                /* Original implementation - kept for reference
                 try {
                     // Create audio context
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                */
                     
                     // Create error tone sequence
                     const playTone = (frequency, startTime, duration) => {
@@ -4925,12 +5067,27 @@ $filteredSchedules = getFilteredSchedules(
             
             // Check for error parameters in URL
             function checkForErrorMessage() {
+                console.log('checkForErrorMessage function called');
+                
+                // Get all URL parameters for debugging
+                const allParams = {};
                 const urlParams = new URLSearchParams(window.location.search);
+                urlParams.forEach((value, key) => {
+                    allParams[key] = value;
+                });
+                console.log('All URL parameters:', allParams);
+                
                 const error = urlParams.get('error');
+                const success = urlParams.get('success');
                 const errorMsg = urlParams.get('message');
+                const successDetails = {
+                    student: urlParams.get('student'),
+                    status: urlParams.get('status'),
+                    id: urlParams.get('id')
+                };
                 const errorDetails = urlParams.get('details');
                 
-                console.log('Checking for errors:', { error, errorMsg, errorDetails });
+                console.log('Checking for feedback:', { error, success, errorMsg, successDetails, errorDetails });
                 
                 if (error) {
                     console.log('Error found, showing modal');
@@ -4963,21 +5120,173 @@ $filteredSchedules = getFilteredSchedules(
                         message = 'Failed to save attendance';
                     }
                     
-                    showErrorAttendanceModal(title, errorMsg || message, errorDetails);
+                    showQRFeedbackModal('error', title, errorMsg || message, errorDetails);
+                    playSound('error');
+                    
+                    // Clean URL without reloading
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                } else if (success) {
+                    console.log('Success found, showing modal');
+                    let title = 'Success';
+                    let message = 'Operation completed successfully';
+                    
+                    if (success === 'attendance_added') {
+                        title = 'Attendance Recorded';
+                        let studentName = successDetails.student || 'Student';
+                        let status = successDetails.status || 'Present';
+                        message = `${studentName} marked as ${status.toLowerCase()}`;
+                    } else if (success === 'attendance_deleted') {
+                        title = 'Attendance Deleted';
+                        let studentName = successDetails.student || 'Student';
+                        message = `${studentName}'s attendance record has been removed`;
+                    }
+                    
+                    showQRFeedbackModal('success', title, message);
+                    playSound('success');
                     
                     // Clean URL without reloading
                     const cleanUrl = window.location.pathname;
                     window.history.replaceState({}, document.title, cleanUrl);
                 } else {
-                    console.log('No error parameters found');
+                    console.log('No feedback parameters found');
                 }
             }
             
-            // Check for success message on page load
-            checkForSuccessMessage();
+            function showQRFeedbackModal(type, title, message, details = '') {
+                console.log('showQRFeedbackModal called with:', { type, title, message, details });
+                
+                // Get modal elements
+                const modal = document.getElementById('qrFeedbackModal');
+                const modalTitle = document.getElementById('qrFeedbackModalTitle');
+                const modalMessage = document.getElementById('qrFeedbackModalMessage');
+                const modalDetails = document.getElementById('qrFeedbackModalDetails');
+                const modalIcon = document.getElementById('qrFeedbackModalIcon');
+                const modalClose = document.querySelector('.qr-modal-close');
+                
+                // Debug element existence
+                console.log('Modal elements found:', { 
+                    modal: !!modal, 
+                    modalTitle: !!modalTitle, 
+                    modalMessage: !!modalMessage,
+                    modalDetails: !!modalDetails,
+                    modalIcon: !!modalIcon,
+                    modalClose: !!modalClose
+                });
+                
+                // Update modal content
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                modalDetails.textContent = details || '';
+                modalDetails.style.display = details ? 'block' : 'none';
+                
+                // Set modal type (success or error)
+                modal.className = 'qr-feedback-modal';
+                modal.classList.add(`qr-feedback-modal-${type}`);
+                
+                // Set the appropriate icon
+                modalIcon.className = '';
+                if (type === 'success') {
+                    modalIcon.classList.add('fas', 'fa-check-circle');
+                } else {
+                    modalIcon.classList.add('fas', 'fa-times-circle');
+                }
+                
+                // Add visual indicators for debugging
+                console.log('About to display modal:', type, title, message);
+                
+                // Show modal with more prominence
+                modal.style.display = 'flex';
+                modal.style.zIndex = '10000'; // Ensure it's on top
+                
+                // Set up close button
+                if (modalClose) {
+                    modalClose.onclick = () => {
+                        console.log('Close button clicked');
+                        closeQRFeedbackModal();
+                    };
+                }
+                
+                // Auto-hide after delay
+                setTimeout(() => {
+                    console.log('Auto-closing modal after timeout');
+                    closeQRFeedbackModal();
+                }, 2500); // Extended display duration for better visibility
+            }
             
-            // Check for error message on page load
-            checkForErrorMessage();
+            function closeQRFeedbackModal() {
+                console.log('Closing QR feedback modal');
+                const modal = document.getElementById('qrFeedbackModal');
+                
+                if (!modal) {
+                    console.error('Modal element not found!');
+                    return;
+                }
+                
+                modal.classList.add('fade-out');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    modal.classList.remove('fade-out');
+                    console.log('Modal hidden');
+                }, 500); // fade out animation time
+            }
+            
+            function playSound(type) {
+                try {
+                    let soundPath;
+                    if (type === 'success') {
+                        soundPath = 'assets/sounds/success.mp3';
+                    } else {
+                        soundPath = 'assets/sounds/error.mp3';
+                    }
+                    console.log('Playing sound:', soundPath);
+                    
+                    const sound = new Audio(soundPath);
+                    
+                    // Add event listeners to track sound loading/playing status
+                    sound.addEventListener('canplaythrough', () => {
+                        console.log('Sound can play through');
+                    });
+                    
+                    sound.addEventListener('error', (e) => {
+                        console.error('Sound error:', e);
+                    });
+                    
+                    sound.play()
+                        .then(() => console.log('Sound playing started'))
+                        .catch(e => console.error('Sound play error:', e));
+                } catch (e) {
+                    console.error('Sound system error:', e);
+                }
+            }
+            
+            // Legacy function kept for compatibility with existing code
+            function showErrorAttendanceModal(title, message, details) {
+                showQRFeedbackModal('error', title, message, details);
+            }
+            
+            // Document ready function to check for messages
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, checking for messages...');
+                console.log('Current URL:', window.location.href);
+                console.log('URL search params:', window.location.search);
+                
+                // This function has been replaced by the checkForErrorMessage function
+                // which now handles both success and error messages
+                // checkForSuccessMessage();
+                
+                // Check for error and success messages on page load
+                checkForErrorMessage();
+                
+                // Also attach directly to window object for immediate execution
+                window.checkAndShowMessages = function() {
+                    console.log('Manual check for messages triggered');
+                    checkForErrorMessage();
+                };
+                
+                // Run it immediately on load
+                window.checkAndShowMessages();
+            });
             
             // Enhanced QR code processing with better error handling
             window.originalOnScanSuccess = window.onScanSuccess;
