@@ -49,46 +49,72 @@ if ($date_range == 'today') {
     $end_date = $_GET['end_date'];
 }
 
-// Prepare the SQL statement with filtering
+// Determine current user (instructor) name
+$instructorName = 'Current User';
+$teacherUsername = '';
+try {
+    if (isset($_SESSION['user_id'])) {
+        $userId = (int) $_SESSION['user_id'];
+        $loginPdo = new PDO("mysql:host=localhost;dbname=login_register", 'root', '');
+        $loginPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $stmtUser = $loginPdo->prepare("SELECT full_name, username FROM users WHERE id = ?");
+        $stmtUser->execute([$userId]);
+        $ud = $stmtUser->fetch(PDO::FETCH_ASSOC);
+        if ($ud) {
+            $fullName = trim($ud['full_name'] ?? '');
+            $uname = trim($ud['username'] ?? '');
+            if ($fullName !== '') {
+                $instructorName = $fullName;
+            } elseif ($uname !== '') {
+                $instructorName = $uname;
+            }
+            $teacherUsername = $uname;
+        }
+    }
+} catch(Exception $e) {
+    // Fallback already set
+}
+
+// School/user for isolation (fallbacks)
+$school_id = $_SESSION['school_id'] ?? 1;
+$user_id = $_SESSION['user_id'] ?? 0;
+
+// Prepare the SQL statement with new subject/instructor logic
 $sql = "SELECT 
     tbl_student.student_name,
     tbl_student.course_section,
     DATE_FORMAT(tbl_attendance.time_in, '%Y-%m-%d') AS attendance_date,
     DATE_FORMAT(tbl_attendance.time_in, '%r') AS time_in,
     tbl_attendance.status,
-    tbl_subjects.subject_name,
-    tbl_instructors.instructor_name
+    COALESCE(ts.subjects, 'Not scheduled') AS subject_name,
+    :instructor_name AS instructor_name
 FROM tbl_attendance 
 LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id
-LEFT JOIN tbl_subjects ON tbl_attendance.subject_id = tbl_subjects.subject_id
-LEFT JOIN tbl_instructors ON tbl_attendance.instructor_id = tbl_instructors.instructor_id
-WHERE DATE(tbl_attendance.time_in) BETWEEN :start_date AND :end_date";
+LEFT JOIN (
+    SELECT section, GROUP_CONCAT(DISTINCT subject ORDER BY subject SEPARATOR ', ') AS subjects
+    FROM teacher_schedules
+    WHERE school_id = :ts_school AND user_id = :ts_user AND status = 'active' AND teacher_username = :teacher_username
+    GROUP BY section
+) ts ON ts.section = tbl_student.course_section
+WHERE tbl_attendance.school_id = :att_school AND tbl_attendance.user_id = :att_user AND DATE(tbl_attendance.time_in) BETWEEN :start_date AND :end_date";
 
 // Add status filter if selected
-if (!empty($status_filter)) {
-    $sql .= " AND tbl_attendance.status = :status";
-}
-
-// Add course filter if selected
-if (!empty($course_filter)) {
-    $sql .= " AND tbl_student.course_section = :course";
-}
+if (!empty($status_filter)) { $sql .= " AND tbl_attendance.status = :status"; }
+if (!empty($course_filter)) { $sql .= " AND tbl_student.course_section = :course"; }
 
 $sql .= " ORDER BY tbl_attendance.time_in DESC LIMIT 1000";
 
 $stmt = $conn->prepare($sql);
-
-// Bind parameters
+$stmt->bindParam(':instructor_name', $instructorName);
+$stmt->bindParam(':ts_school', $school_id, PDO::PARAM_INT);
+$stmt->bindParam(':ts_user', $user_id, PDO::PARAM_INT);
+$stmt->bindParam(':teacher_username', $teacherUsername);
+$stmt->bindParam(':att_school', $school_id, PDO::PARAM_INT);
+$stmt->bindParam(':att_user', $user_id, PDO::PARAM_INT);
 $stmt->bindParam(':start_date', $start_date);
 $stmt->bindParam(':end_date', $end_date);
-
-if (!empty($status_filter)) {
-    $stmt->bindParam(':status', $status_filter);
-}
-
-if (!empty($course_filter)) {
-    $stmt->bindParam(':course', $course_filter);
-}
+if (!empty($status_filter)) { $stmt->bindParam(':status', $status_filter); }
+if (!empty($course_filter)) { $stmt->bindParam(':course', $course_filter); }
 
 $stmt->execute();
 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);

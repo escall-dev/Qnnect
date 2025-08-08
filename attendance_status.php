@@ -59,31 +59,62 @@ try {
         $courses[] = $row['course_section'];
     }
     
-    // Get current user's name from the users table
+    // Get current user's name & username from the users table (login_register DB)
     $userNameQuery = "SELECT username, full_name FROM users WHERE id = ?";
     $userNameStmt = $conn_login->prepare($userNameQuery);
     $userNameStmt->bind_param("i", $user_id);
     $userNameStmt->execute();
     $userResult = $userNameStmt->get_result();
     $userData = $userResult->fetch_assoc();
-    $instructorName = $userData['full_name'] ?? $userData['username'] ?? 'Current User';
-    
-    // Get attendance status records with filtering (filtered by user)
+    $username = $userData['username'] ?? '';
+    $fullName = $userData['full_name'] ?? '';
+    // Pick the first non-empty value among full_name, username, else fallback
+    if (isset($fullName) && trim($fullName) !== '') {
+        $instructorName = trim($fullName);
+    } elseif (isset($username) && trim($username) !== '') {
+        $instructorName = trim($username);
+    } else {
+        $instructorName = 'Current User';
+    }
+
+    /*
+     * Updated logic:
+     *  - Subject must come from teacher_schedules table (per requirement)
+     *  - Instructor name is always the current logged-in user
+     *  - We aggregate subjects per section (in case multiple subjects exist) for the current teacher
+     *  - Filtering remains by school_id, user_id, and date range
+     */
     $statusQuery = "SELECT 
         tbl_student.student_name,
         tbl_student.course_section,
         DATE_FORMAT(tbl_attendance.time_in, '%Y-%m-%d') AS attendance_date,
         DATE_FORMAT(tbl_attendance.time_in, '%r') AS time_in,
         tbl_attendance.status,
-        tbl_subjects.subject_name,
+        COALESCE(ts.subjects, 'Not scheduled') AS subject_name,
         ? AS instructor_name
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id
-    LEFT JOIN tbl_subjects ON tbl_attendance.subject_id = tbl_subjects.subject_id
+    /* Aggregate subjects per section for this teacher from teacher_schedules */
+    LEFT JOIN (
+        SELECT section, GROUP_CONCAT(DISTINCT subject ORDER BY subject SEPARATOR ', ') AS subjects
+        FROM teacher_schedules
+        WHERE school_id = ? AND user_id = ? AND status = 'active' AND teacher_username = ?
+        GROUP BY section
+    ) ts ON ts.section = tbl_student.course_section
     WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? AND DATE(tbl_attendance.time_in) BETWEEN ? AND ?";
-    
-    $params = [$instructorName, $school_id, $user_id, $start_date, $end_date];
-    $types = "siiss";
+
+    // Parameter order must match placeholders in query
+    $params = [
+        $instructorName,      // ? AS instructor_name
+        $school_id,           // school_id in derived table
+        $user_id,             // user_id in derived table
+        $username,            // teacher_username in derived table
+        $school_id,           // tbl_attendance.school_id filter
+        $user_id,             // tbl_attendance.user_id filter
+        $start_date,          // date range start
+        $end_date             // date range end
+    ];
+    $types = "siisiiss"; // s (name), i, i, s (username), i, i, s, s
     
     // Add status filter if selected
     if (!empty($selected_status)) {

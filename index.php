@@ -5821,5 +5821,6 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
     });
 </script>
 
+<script src="scripts/force-responsive.js"></script>
 </body>
 </html>
