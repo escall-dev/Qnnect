@@ -1,5 +1,9 @@
 # Database files
-*.sql
+# NOTE: Previously all .sql files were ignored. Commented out to allow committing selected SQL schema/data.
+# If you only want to allow specific directories, you can keep the global ignore and add negation patterns.
+# Example (uncomment to revert and keep only admin/main_databases tracked):
+# *.sql
+# !admin/main_databases/*.sql
 *.db
 
 # Configuration files with sensitive data
