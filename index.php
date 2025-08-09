@@ -273,9 +273,10 @@ $filteredSchedules = getFilteredSchedules(
             padding: 20px;
             transition: all 0.3s ease;
             width: calc(100% - 260px);
-            display: flex;
-            justify-content: center; /* Center content horizontally */
-            align-items: center; /* Center content vertically */
+            /* Removed flex centering to prevent inconsistent vertical layout
+               across different laptop heights & zoom levels. Let content flow
+               from the top for consistent scroll position. */
+            display: block;
         }
         
         /* Attendance wrapper container - similar to student-container in masterlist.php */

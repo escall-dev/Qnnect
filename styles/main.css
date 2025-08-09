@@ -233,8 +233,10 @@ body {
     }
 }
 
-/* BELOW 1000PX: prioritize table width by collapsing QR extras */
-@media (max-width: 1000px), (max-height: 1000px) {
+/* BELOW 900PX (WIDTH ONLY): collapse layout. Lowering threshold from 1000px to
+    900px to prevent premature stacking on 1366px / 1280px wide laptops at
+    normal (100%) zoom. */
+@media (max-width: 900px) {
     /* Force ALL related wrappers to stack */
     .attendance-wrapper-container,
     .unified-attendance-container { display:flex; flex-direction:column !important; align-items:stretch; }
@@ -251,11 +253,13 @@ body {
     .attendance-wrapper-container .table-container,
     .unified-attendance-container .table-container { overflow-x:auto !important; }
     #attendanceTable { table-layout:auto !important; min-width:760px; }
+    #attendanceTable { width:100%; }
     #attendanceTable th, #attendanceTable td { padding:8px 6px !important; font-size:12px; }
 }
 
-/* HARD ENFORCE LAYOUT <=800PX: always single column like screenshot 2 */
-@media (max-width: 800px) {
+/* HARD ENFORCE LAYOUT <=760PX: (reduced from 800) ensure we keep side-by-side
+    as long as there is reasonable horizontal room */
+@media (max-width: 760px) {
     /* Use very specific selectors + !important where needed */
     body .attendance-container,
     body .attendance-wrapper-container,
@@ -279,6 +283,23 @@ body {
     body .attendance-wrapper-container .table-container,
     body .unified-attendance-container .table-container { overflow-x:auto !important; }
     body #attendanceTable { table-layout:auto !important; min-width:700px; }
+    body #attendanceTable { width:100%; }
+
+    /* NEW: use clamp-based sizing to keep proportional layout across zoom levels */
+    .unified-attendance-container .qr-section, .attendance-container .qr-container,
+    .attendance-wrapper-container .qr-container { flex:0 0 clamp(320px,32vw,400px); min-width:clamp(300px,32vw,420px); }
+
+    /* Allow shrink at smaller zoom without forcing horizontal scrollbar until necessary */
+    @media (max-width:1300px){
+        #attendanceTable { min-width:680px; }
+    }
+    @media (max-width:1100px){
+        #attendanceTable { min-width:640px; }
+    }
+
+    /* Stable grid-based layout (overrides earlier flex when supported) */
+    .unified-attendance-container { display:grid; grid-template-columns:minmax(300px, clamp(320px,30%,420px)) 1fr; gap:20px; align-items:start; }
+    @media (max-width:900px){ .unified-attendance-container { grid-template-columns:1fr; } }
     body #attendanceTable th, body #attendanceTable td { padding:8px 6px !important; font-size:12px !important; }
 }
 
