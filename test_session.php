@@ -9,7 +9,7 @@ echo "<h2>Session Test</h2>";
 $session_configs = [
     ['name' => 'QR_ATTENDANCE_SESSION', 'path' => '/'],
     ['name' => 'PHPSESSID', 'path' => '/'],
-    ['name' => 'QR_ATTENDANCE_SESSION', 'path' => '/personal-proj/Qnnect/'],
+    ['name' => 'QR_ATTENDANCE_SESSION', 'path' => '/Qnnect/'],
 ];
 
 foreach ($session_configs as $config) {

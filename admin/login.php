@@ -108,6 +108,9 @@ if (isset($_POST["login"])) {
                 session_start();
             }
             
+            // Clear any logout flags and ensure clean session state
+            unset($_SESSION['logging_out']);
+            
             // Set session variables
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = htmlspecialchars($user['email']);

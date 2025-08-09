@@ -57,7 +57,9 @@ if(isset($_POST["email"])) {
         $mail->Subject = "Password Reset";
         $mail->Body = <<<END
 
-                    Click <a href="reset-password.php?token=$token">Here</a> to reset your password.
+
+                    Click <a href="http://localhost/Qnnect/admin/reset-password.php?token=$token">Here</a> to reset your password.
+
                     
                     END;
 
