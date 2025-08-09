@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update existing schedule
         $schedule_id = sanitizeInput($_POST['schedule_id']);
         $subject = sanitizeInput($_POST['subject']);
-        $section = sanitizeInput($_POST['section']);
+        $section = sanitizeInput($_POST['course_section']);
         $day_of_week = sanitizeInput($_POST['day_of_week']);
         $start_time = sanitizeInput($_POST['start_time']);
         $end_time = sanitizeInput($_POST['end_time']);
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Add new schedule
         $subject = sanitizeInput($_POST['subject']);
-        $section = sanitizeInput($_POST['section']);
+        $section = sanitizeInput($_POST['course_section']);
         $day_of_week = sanitizeInput($_POST['day_of_week']);
         $start_time = sanitizeInput($_POST['start_time']);
         $end_time = sanitizeInput($_POST['end_time']);

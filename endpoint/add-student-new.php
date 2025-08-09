@@ -187,7 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($faceVerified !== '1') {
             error_log("Face verification failed");
             // Redirect with error parameters
+
             header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Face verification is required!"));
+
             exit();
         }
         
@@ -242,25 +244,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Student inserted successfully with ID: $inserted_id");
             
             // Redirect back to masterlist with success message
+
             header("Location: http://localhost/Qnnect/masterlist.php?add_success=1&student_id=$inserted_id");
+
             exit();
             
         } catch (Exception $e) {
             error_log("Error saving student data: " . $e->getMessage());
             // Redirect with error
+
             header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Error saving student: " . $e->getMessage()));
+
             exit();
         }
 
     } else {
         error_log("Missing required fields in POST data");
         // Redirect with error parameters
+
         header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Please fill in all fields and complete face verification!"));
+
         exit();
     }
 } else {
     error_log("Invalid request method");
     // Redirect with error
+
     header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Invalid request method!"));
+
     exit();
 }

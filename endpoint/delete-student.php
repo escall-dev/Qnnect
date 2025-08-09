@@ -45,6 +45,9 @@ if (isset($_GET['student'])) {
     } catch (PDOException $e) {
         // Redirect with parameters for database error modal
         header("Location: http://localhost/Qnnect/masterlist.php?delete_error=1&message=" . urlencode("Database Error: " . $e->getMessage()));
+
+       
+
         exit();
     } catch (Exception $e) {
         // Redirect with parameters for general error modal

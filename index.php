@@ -208,7 +208,9 @@ if (isset($_GET['attendance'])) {
                 'student' => $attendance_details['student_name'] ?? 'Student',
                 'id' => $attendance
             ]);
+
             header("Location: http://localhost/Qnnect/index.php?$successParams");
+           
             exit();
         } else {
             // Log the failed deletion attempt
@@ -225,8 +227,10 @@ if (isset($_GET['attendance'])) {
                 'error' => 'delete_failed',
                 'message' => 'Failed to delete attendance record',
                 'details' => $conn_qr->error
-            ]);
+
             header("Location: http://localhost/Qnnect/index.php?$errorParams");
+          
+
             exit();
         }
     } catch (Exception $e) {
@@ -283,9 +287,10 @@ $filteredSchedules = getFilteredSchedules(
             padding: 20px;
             transition: all 0.3s ease;
             width: calc(100% - 260px);
-            display: flex;
-            justify-content: center; /* Center content horizontally */
-            align-items: center; /* Center content vertically */
+            /* Removed flex centering to prevent inconsistent vertical layout
+               across different laptop heights & zoom levels. Let content flow
+               from the top for consistent scroll position. */
+            display: block;
         }
         
         /* Attendance wrapper container - similar to student-container in masterlist.php */
@@ -1139,24 +1144,24 @@ $filteredSchedules = getFilteredSchedules(
             }
         }
 
-        /* Unified Container Layout Styles */
+        /* Unified Container Layout Styles (overrides earlier fixed flex sizing) */
         .unified-attendance-container {
-            display: flex;
+            display: grid !important;
+            grid-template-columns: minmax(260px, clamp(280px, 28%, 360px)) 1fr;
             width: 100%;
             max-width: 100%;
             margin: 0;
             box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 6px;
             border-radius: 15px;
-            overflow: hidden;
             background: #f8f9fa;
             min-height: 600px;
             border: 1px solid rgba(9, 135, 68, 0.2);
+            align-items: start;
+            gap: 0; /* adjacent border look */
         }
 
         .qr-section {
-            flex: 0 0 400px;
-            min-width: 400px;
-            max-width: 400px;
+            width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             overflow-x: hidden;
@@ -1216,24 +1221,12 @@ $filteredSchedules = getFilteredSchedules(
 
         /* Responsive behavior */
         @media (max-width: 1200px) {
-            .attendance-wrapper-container {
-                width: 98%;
-                padding: 20px;
-            }
-            
-            .qr-section {
-                flex: 0 0 350px;
-                min-width: 350px;
-                max-width: 350px;
-            }
+            .attendance-wrapper-container { width: 100%; padding: 20px; }
+            .unified-attendance-container { grid-template-columns: minmax(240px, 300px) 1fr; }
         }
 
-        @media (max-width: 992px) {
-            .qr-section {
-                flex: 0 0 320px;
-                min-width: 320px;
-                max-width: 320px;
-            }
+        @media (max-width: 1024px) {
+            .unified-attendance-container { grid-template-columns: minmax(230px, 280px) 1fr; }
         }
 
         @media (max-width: 768px) {
@@ -1248,17 +1241,8 @@ $filteredSchedules = getFilteredSchedules(
                 margin-bottom: 15px;
             }
             
-            .unified-attendance-container {
-                flex-direction: column;
-                min-height: auto;
-            }
-            
-            .qr-section {
-                flex: none;
-                max-height: none;
-                min-width: 100%;
-                max-width: 100%;
-            }
+            .unified-attendance-container { grid-template-columns: 1fr; min-height: auto; }
+            .qr-section { max-height: none; width: 100%; }
             
             .qr-container {
                 border-right: none !important;
@@ -1271,11 +1255,7 @@ $filteredSchedules = getFilteredSchedules(
             }
         }
 
-        @media (max-width: 992px) {
-            .qr-section {
-                flex: 0 0 300px;
-            }
-        }
+    /* Earlier breakpoint removed; grid handles scaling. */
 
         /* Ensure proper layout in main container */
         .main .container-fluid {
