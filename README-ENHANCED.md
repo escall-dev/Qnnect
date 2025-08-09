@@ -46,7 +46,7 @@
 ### 1. **Database Setup**
 ```bash
 # Run the multi-tenant database setup
-http://localhost/personal-proj/Qnnect/setup-multi-tenant-db.php
+http://localhost/Qnnect/setup-multi-tenant-db.php
 ```
 
 ### 2. **File Structure**

@@ -198,7 +198,7 @@ if (isset($_GET['attendance'])) {
                 'student' => $attendance_details['student_name'] ?? 'Student',
                 'id' => $attendance
             ]);
-            header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
+            header("Location: index.php?$successParams");
             exit();
         } else {
             // Log the failed deletion attempt
@@ -216,7 +216,7 @@ if (isset($_GET['attendance'])) {
                 'message' => 'Failed to delete attendance record',
                 'details' => $conn_qr->error
             ]);
-            header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+            header("Location: index.php?$errorParams");
             exit();
         }
     } catch (Exception $e) {
