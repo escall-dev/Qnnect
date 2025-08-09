@@ -227,7 +227,7 @@ if (isset($_GET['attendance'])) {
                 'error' => 'delete_failed',
                 'message' => 'Failed to delete attendance record',
                 'details' => $conn_qr->error
-
+            ]);
             header("Location: http://localhost/Qnnect/index.php?$errorParams");
           
 
@@ -1448,6 +1448,54 @@ $filteredSchedules = getFilteredSchedules(
             justify-content: center;
             margin-bottom: 15px;
         }
+
+        /* ================= FORCE DESKTOP SIDE-BY-SIDE QR LAYOUT =================
+           Issue: QR scanner panel sometimes appears centered on top even on wide
+                  screens because JS adds body.responsive-collapse / portrait OR
+                  earlier breakpoint rules (max-width:950/900) fire unexpectedly
+                  due to zoom / DPR causing effective CSS px < threshold.
+           Fix:  Re-impose the intended grid (scanner left, table right) whenever
+                 the viewport is reasonably wide (>=800px). Also neutralize the
+                 collapsing helper classes above 900px so they don't override. */
+        @media (min-width: 800px){
+            body:not(.responsive-collapse):not(.responsive-portrait) .unified-attendance-container{
+                display:grid !important;
+                grid-template-columns:minmax(260px,clamp(280px,28%,360px)) 1fr !important;
+                align-items:start !important;
+            }
+            body:not(.responsive-collapse):not(.responsive-portrait) .qr-container{
+                margin:0 !important;
+                max-width:100% !important;
+                width:100% !important;
+                background:rgba(255,255,255,0.95) !important;
+                border-right:3px solid #098744 !important;
+                border-bottom:none !important;
+                padding:15px !important;
+            }
+        }
+        @media (min-width: 900px){
+            /* Override forced collapse classes on larger screens */
+            body.responsive-collapse .unified-attendance-container,
+            body.responsive-portrait .unified-attendance-container{
+                display:grid !important;
+                grid-template-columns:minmax(260px,clamp(280px,28%,360px)) 1fr !important;
+            }
+            body.responsive-collapse .qr-container,
+            body.responsive-portrait .qr-container{
+                margin:0 !important;
+                max-width:100% !important;
+                width:100% !important;
+                background:rgba(255,255,255,0.95) !important;
+                border-right:3px solid #098744 !important;
+                border-bottom:none !important;
+                padding:15px !important;
+            }
+            body.responsive-collapse .qr-container > *:not(.scanner-con),
+            body.responsive-portrait .qr-container > *:not(.scanner-con){
+                display:block !important;
+            }
+        }
+        /* ======================================================================= */
     </style>
 </head>
 <body>
@@ -1482,10 +1530,7 @@ $filteredSchedules = getFilteredSchedules(
             <!-- Header with Termination Button -->
             <div class="row mb-3">
                 <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0">
-                            <i class="fas fa-qrcode text-success"></i> QR Code Attendance System
-                        </h2>
+                    
                         <div class="d-flex align-items-center">
                             <!-- Active Session Indicator -->
                             <div id="activeSessionIndicator" class="mr-3" style="display: none;">
