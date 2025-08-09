@@ -803,7 +803,7 @@ foreach ($teacher_schedules as $schedule) {
                 <thead>
                     <tr>
                         <th>Subject</th>
-                        <th>Section</th>
+                        <th>Course & Section</th>
                         <th>Day</th>
                         <th>Time</th>
                         <th>Room</th>
@@ -851,8 +851,10 @@ foreach ($teacher_schedules as $schedule) {
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Section</label>
-                                    <input type="text" class="form-control" name="section" id="modal_section" required>
+                                    <label>Course & Section</label>
+                                    <input type="text" class="form-control" name="course_section" id="modal_course_section" 
+                                           placeholder="Enter Course-Section (e.g. BSCS-101, BSIT-2A)" required>
+                                    <small class="form-text text-muted">Format: Course-Section (e.g. BSCS-101, BSIT-2A)</small>
                                 </div>
                             </div>
                         </div>
@@ -1308,7 +1310,7 @@ function openScheduleModal(data) {
                     var schedule = JSON.parse(response).schedule;
                     $('#modal_schedule_id').val(schedule.id);
                     $('#modal_subject').val(schedule.subject);
-                    $('#modal_section').val(schedule.section);
+                    $('#modal_course_section').val(schedule.section);
                     $('#modal_week_number').val(1);
                     $('#modal_day_of_week').val(schedule.day_of_week);
                     $('#modal_start_time').val(convertTo24Hour(schedule.start_time));
@@ -1607,7 +1609,7 @@ function openScheduleModal(data) {
                     if (schedule.success) {
                         $('#modal_schedule_id').val(schedule.data.id);
                         $('#modal_subject').val(schedule.data.subject);
-                        $('#modal_section').val(schedule.data.section);
+                        $('#modal_course_section').val(schedule.data.section);
                         $('#modal_day_of_week').val(schedule.data.day_of_week);
                         $('#modal_start_time').val(convertTo24Hour(schedule.data.start_time));
                         $('#modal_end_time').val(convertTo24Hour(schedule.data.end_time));

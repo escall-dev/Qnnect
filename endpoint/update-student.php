@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt->execute();
 
-            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php");
+            header("Location: ../masterlist.php");
 
             exit();
         } catch (PDOException $e) {
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo "
             <script>
                 alert('Please fill in all fields!');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/masterlist.php';
+                window.location.href = '../masterlist.php';
             </script>
         ";
     }
