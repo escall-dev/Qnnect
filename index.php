@@ -42,6 +42,16 @@ $_SESSION['school_id'] = $school_id; // Store in session for other pages
 // Get user_id from session
 $user_id = $_SESSION['user_id'] ?? 1; // Default to user_id 1 if not set
 
+// Clear any invalid default class time values from session
+if (isset($_SESSION['class_start_time'])) {
+    $stored_time = $_SESSION['class_start_time'];
+    if ($stored_time === '00:00' || $stored_time === '12:00 AM' || $stored_time === '12am' || $stored_time === '0:00' || empty(trim($stored_time))) {
+        error_log("Clearing invalid default class time from session: " . $stored_time);
+        unset($_SESSION['class_start_time']);
+        unset($_SESSION['class_start_time_formatted']);
+    }
+}
+
 // Auto-fix attendance status for records that might be incorrect
 function autoFixAttendanceStatus($conn, $user_id, $school_id) {
     // Skip if no class time set
@@ -198,7 +208,7 @@ if (isset($_GET['attendance'])) {
                 'student' => $attendance_details['student_name'] ?? 'Student',
                 'id' => $attendance
             ]);
-            header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
+            header("Location: http://localhost/Qnnect/index.php?$successParams");
             exit();
         } else {
             // Log the failed deletion attempt
@@ -216,7 +226,7 @@ if (isset($_GET['attendance'])) {
                 'message' => 'Failed to delete attendance record',
                 'details' => $conn_qr->error
             ]);
-            header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+            header("Location: http://localhost/Qnnect/index.php?$errorParams");
             exit();
         }
     } catch (Exception $e) {
@@ -639,6 +649,76 @@ $filteredSchedules = getFilteredSchedules(
             transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
+        }
+        
+        /* Class time termination button styling */
+        #classTimeTerminateBtn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+            border: 2px solid #dc3545;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            animation: pulse-red 2s infinite;
+        }
+        
+        #classTimeTerminateBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4);
+            background-color: #c82333;
+            border-color: #c82333;
+            animation: none;
+        }
+        
+        #classTimeTerminateBtn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        }
+        
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+        
+        /* Header termination button styling */
+        #headerTerminateBtn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+            border: 2px solid #dc3545;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        #headerTerminateBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4);
+            background-color: #c82333;
+            border-color: #c82333;
+        }
+        
+        #headerTerminateBtn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        }
+        
+        /* Active session indicator styling */
+        #activeSessionIndicator .badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
         }
         
         #terminateClassSession:hover {
@@ -1419,6 +1499,29 @@ $filteredSchedules = getFilteredSchedules(
 
     <div class="main" id="main">
         <div class="container-fluid">
+            <!-- Header with Termination Button -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">
+                            <i class="fas fa-qrcode text-success"></i> QR Code Attendance System
+                        </h2>
+                        <div class="d-flex align-items-center">
+                            <!-- Active Session Indicator -->
+                            <div id="activeSessionIndicator" class="mr-3" style="display: none;">
+                                <span class="badge badge-success">
+                                    <i class="fas fa-clock"></i> Active Session
+                                </span>
+                            </div>
+                            <!-- Prominent Termination Button -->
+                            <button type="button" id="headerTerminateBtn" class="btn btn-danger btn-lg" style="display: none;" onclick="terminateClassSession()">
+                                <i class="fas fa-stop-circle"></i> Terminate & Set Inactive
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Outer wrapper container for QR and Attendance -->
             <div class="attendance-wrapper-container">
                
@@ -1436,7 +1539,7 @@ $filteredSchedules = getFilteredSchedules(
                     <form action="./endpoint/add-attendance.php" method="POST">
                         <h4 class="text-center">Student QR Detected!</h4>
                         <input type="hidden" id="detected-qr-code" name="qr_code">
-                        <input type="hidden" id="class-start-time" name="class_start_time" value="<?= isset($_SESSION['class_start_time']) ? $_SESSION['class_start_time'] : '08:00' ?>">
+                        <input type="hidden" id="class-start-time" name="class_start_time" value="<?= isset($_SESSION['class_start_time']) ? $_SESSION['class_start_time'] : '' ?>">
                         <button type="submit" class="btn btn-dark form-control">Submit Attendance</button>
                     </form>
                 </div>
@@ -1459,7 +1562,7 @@ $filteredSchedules = getFilteredSchedules(
                                             $time = DateTime::createFromFormat('H:i', $_SESSION['class_start_time']);
                                             echo $time ? $time->format('h:i A') : $_SESSION['class_start_time'];
                                         } else {
-                                            echo '08:00 AM';
+                                            echo 'No class time set';
                                         }
                                         ?>
                                         </span>
@@ -1471,13 +1574,23 @@ $filteredSchedules = getFilteredSchedules(
                                         </small>
                                     </div>
                                 </div>
+                                
+                                <!-- Termination Button - Only shown when class time is set -->
+                                <div id="terminationButtonContainer" class="mt-3" style="<?= isset($_SESSION['class_start_time']) ? '' : 'display:none;' ?>">
+                                    <button type="button" id="classTimeTerminateBtn" class="btn btn-danger btn-block" onclick="terminateClassSession()">
+                                        <i class="fas fa-stop-circle"></i> Terminate Class Session
+                                    </button>
+                                    <small class="text-muted mt-2 d-block text-center">
+                                        <i class="fas fa-info-circle"></i> Click to end the current class session and clear all settings
+                                    </small>
+                                </div>
                             </div>
                             
                             <form id="classTimeForm">
                                 <div class="form-group mb-3">
                                     <label for="classStartTime" class="form-label">Start Time:</label>
                                     <div class="input-group">
-                                        <input type="time" class="form-control" id="classStartTime" name="classStartTime" value="<?= $active_class_time ?: '08:00' ?>" required>
+                                        <input type="time" class="form-control" id="classStartTime" name="classStartTime" value="<?= $active_class_time ?: '' ?>" required>
                                         <div class="input-group-append">
                                             <button type="button" id="setClassTime" class="btn btn-success">
                                                 <i class="fas fa-save mr-1"></i> Set
@@ -1506,52 +1619,76 @@ $filteredSchedules = getFilteredSchedules(
                                     // Add cache busting for debugging
                                     error_log("Loading class time for school_id: " . $_SESSION['school_id']);
                                     if (isset($conn_qr)) {
-                                        $query = "SELECT start_time, updated_at FROM class_time_settings WHERE school_id = ? ORDER BY updated_at DESC LIMIT 1";
+                                        $query = "SELECT start_time, status, updated_at FROM class_time_settings WHERE school_id = ? ORDER BY updated_at DESC LIMIT 1";
                                         $stmt = $conn_qr->prepare($query);
                                         if ($stmt) {
                                             $stmt->bind_param("i", $_SESSION['school_id']);
                                             $stmt->execute();
                                             $result = $stmt->get_result();
                                             if ($row = $result->fetch_assoc()) {
-                                                $active_class_time = $row['start_time'];
-                                                $class_time_source = 'database (saved at ' . date('h:i A', strtotime($row['updated_at'])) . ')';
-                                                
-                                                // FIX: Set session variables when loading from database
-                                                $_SESSION['class_start_time'] = $row['start_time'];
-                                                $_SESSION['class_start_time_formatted'] = date('h:i A', strtotime($row['start_time']));
-                                                
-                                                error_log("Loaded class time from database: " . $active_class_time);
-                                                error_log("Set session class_start_time: " . $_SESSION['class_start_time']);
-                                                error_log("Set session class_start_time_formatted: " . $_SESSION['class_start_time_formatted']);
-                                                
-                                                // Also load teacher data if available
-                                                $teacher_query = "SELECT teacher_username, subject, section FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY updated_at DESC LIMIT 1";
-                                                $teacher_stmt = $conn_qr->prepare($teacher_query);
-                                                if ($teacher_stmt) {
-                                                    $teacher_stmt->bind_param("i", $_SESSION['school_id']);
-                                                    $teacher_stmt->execute();
-                                                    $teacher_result = $teacher_stmt->get_result();
-                                                    if ($teacher_row = $teacher_result->fetch_assoc()) {
-                                                        $_SESSION['current_instructor_id'] = $teacher_row['teacher_username'];
-                                                        $_SESSION['current_subject'] = $teacher_row['subject'];
-                                                        $_SESSION['current_section'] = $teacher_row['section'];
-                                                    }
-                                                    $teacher_stmt->close();
+                                                // Only set active_class_time if status is 'active' and start_time is not empty/null
+                                                if (!empty($row['start_time']) && isset($row['status']) && $row['status'] === 'active') {
+                                                    $active_class_time = $row['start_time'];
+                                                    $class_time_source = 'database (saved at ' . date('h:i A', strtotime($row['updated_at'])) . ')';
+                                                    // Set session variables when loading from database
+                                                    $_SESSION['class_start_time'] = $row['start_time'];
+                                                    $_SESSION['class_start_time_formatted'] = date('h:i A', strtotime($row['start_time']));
+                                                    error_log("Loaded ACTIVE class time from database: " . $active_class_time);
+                                                    error_log("Set session class_start_time: " . $_SESSION['class_start_time']);
+                                                    error_log("Set session class_start_time_formatted: " . $_SESSION['class_start_time_formatted']);
+                                                } else {
+                                                    // Status is not active or start_time is empty - clear session flags
+                                                    $active_class_time = null;
+                                                    unset($_SESSION['class_start_time']);
+                                                    unset($_SESSION['class_start_time_formatted']);
+                                                    error_log("No ACTIVE class time in DB (status: " . ($row['status'] ?? 'null') . ", start_time: " . ($row['start_time'] ?? 'null') . "); cleared session flags.");
                                                 }
+                                                
+                                                // Only load teacher data if we have an active class time
+                                                if ($active_class_time) {
+                                                    $teacher_query = "SELECT teacher_username, subject, section FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY updated_at DESC LIMIT 1";
+                                                    $teacher_stmt = $conn_qr->prepare($teacher_query);
+                                                    if ($teacher_stmt) {
+                                                        $teacher_stmt->bind_param("i", $_SESSION['school_id']);
+                                                        $teacher_stmt->execute();
+                                                        $teacher_result = $teacher_stmt->get_result();
+                                                        if ($teacher_row = $teacher_result->fetch_assoc()) {
+                                                            $_SESSION['current_instructor_id'] = $teacher_row['teacher_username'];
+                                                            $_SESSION['current_subject'] = $teacher_row['subject'];
+                                                            $_SESSION['current_section'] = $teacher_row['section'];
+                                                        } else {
+                                                            // No active teacher schedules - clear class time
+                                                            $active_class_time = null;
+                                                            unset($_SESSION['class_start_time']);
+                                                            unset($_SESSION['class_start_time_formatted']);
+                                                            error_log("No active teacher schedules found; cleared class time session.");
+                                                        }
+                                                        $teacher_stmt->close();
+                                                    }
+                                                }
+                                            } else {
+                                                // No records found - ensure session is cleared
+                                                unset($_SESSION['class_start_time']);
+                                                unset($_SESSION['class_start_time_formatted']);
+                                                error_log("No class time records found in database; cleared session flags.");
                                             }
                                             $stmt->close();
                                         }
                                     }
                                 } catch (Exception $e) {
-                                    // If database fails, fallback to session
-                                    error_log("Error reading class time from database: " . $e->getMessage());
+                                    // If database fails, clear session to avoid stale data
+                                    unset($_SESSION['class_start_time']);
+                                    unset($_SESSION['class_start_time_formatted']);
+                                    error_log("Error reading class time from database: " . $e->getMessage() . "; cleared session flags.");
                                 }
                             }
                             
-                            // Fallback to session if no database value
-                            if (!$active_class_time && isset($_SESSION['class_start_time'])) {
+                            // Only use session fallback if it's actually active
+                            if (!$active_class_time && isset($_SESSION['class_start_time']) && !empty($_SESSION['class_start_time'])) {
+                                // Verify that this session data is still valid by checking if it was recently set
                                 $active_class_time = $_SESSION['class_start_time'];
                                 $class_time_source = 'session';
+                                error_log("Using session fallback for class time: " . $active_class_time);
                             }
                             ?>
                             
@@ -1597,15 +1734,20 @@ $filteredSchedules = getFilteredSchedules(
                                         </div>
                                         <div class="row mt-3">
                                             <div class="col-12">
-                                                <button type="button" id="terminateClassSession" class="btn btn-danger btn-sm" onclick="if(typeof terminateClassSession === 'function') { terminateClassSession(); } else { console.error('terminateClassSession function not found'); alert('Function not available'); }">
-                                                    <i class="fas fa-stop-circle"></i> Terminate Session
+                                                <button type="button" id="terminateClassSession" class="btn btn-danger btn-block" onclick="if(typeof terminateClassSession === 'function') { terminateClassSession(); } else { console.error('terminateClassSession function not found'); alert('Function not available'); }">
+                                                    <i class="fas fa-stop-circle"></i> Terminate Session & Set Class Time Inactive
                                                 </button>
-                                                
+                                                <small class="text-muted mt-2 d-block">
+                                                    <i class="fas fa-info-circle"></i> This will end the current class session, clear all session data, and set class time settings to inactive
+                                                </small>
                                             </div>
                                         </div>
                                     </div>
                                 <?php else: ?>
-                                 
+                                    <div id="noActiveClassSessionAlert" class="alert alert-warning">
+                                        <h6><i class="fas fa-exclamation-triangle"></i> No Active Class Session</h6>
+                                        <p class="mb-0">Please set a class start time above to begin attendance tracking.</p>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                             
@@ -2633,6 +2775,24 @@ $filteredSchedules = getFilteredSchedules(
         
         // Function to set class time automatically
         function setClassTime(startTime, duration) {
+            // Validate that startTime is not empty
+            if (!startTime || startTime.trim() === '') {
+                alert('Please enter a valid class start time.');
+                return;
+            }
+            
+            // Immediately hide both "No Active Session" alerts when setting class time
+            const noActiveSessionAlert = document.getElementById('noActiveSessionAlert');
+            if (noActiveSessionAlert) {
+                noActiveSessionAlert.style.display = 'none';
+                console.log('Hidden "No Active Session" alert when setting class time');
+            }
+            
+            const noActiveClassSessionAlert = document.getElementById('noActiveClassSessionAlert');
+            if (noActiveClassSessionAlert) {
+                noActiveClassSessionAlert.style.display = 'none';
+                console.log('Hidden "No Active Class Session" alert when setting class time');
+            }
             // Calculate end time
             const start = new Date(`2024-01-01 ${startTime}`);
             const end = new Date(start.getTime() + (duration * 60000));
@@ -2664,6 +2824,15 @@ $filteredSchedules = getFilteredSchedules(
             if (currentTimeSettings) {
                 currentTimeSettings.style.display = 'block';
             }
+            
+            // Show termination button when class time is set
+            const terminationButtonContainer = document.getElementById('terminationButtonContainer');
+            if (terminationButtonContainer) {
+                terminationButtonContainer.style.display = 'block';
+            }
+            
+            // Store session state to match the logic from lines 1547-1565
+            storeSessionState(startTime, duration);
             
             // Update the hidden input field for attendance checks
             const classStartTimeInput = document.getElementById('class-start-time');
@@ -2725,6 +2894,14 @@ $filteredSchedules = getFilteredSchedules(
                 classTimeInfo.innerHTML = '<i class="fas fa-check-circle"></i> <strong>Class Time Set:</strong> ' + formattedTime;
                 classTimeInfo.style.display = 'block';
             }
+
+            // CRITICAL: Update class time status display to show terminate button immediately
+            updateClassTimeStatus({
+                class_start_time: startTime,
+                formatted_time: formattedTime,
+                instructor: 'Current User',
+                subject: 'Not set'
+            });
         }
         
         // Function to terminate active class session
@@ -2736,28 +2913,63 @@ $filteredSchedules = getFilteredSchedules(
                 return;
             }
             
-            // Show loading state
+            // Show loading state on all termination buttons
             const terminateBtn = document.getElementById('terminateClassSession');
-            const originalText = terminateBtn.innerHTML;
-            terminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Terminating...';
-            terminateBtn.disabled = true;
+            const headerTerminateBtn = document.getElementById('headerTerminateBtn');
+            const classTimeTerminateBtn = document.getElementById('classTimeTerminateBtn');
+            const originalText = terminateBtn ? terminateBtn.innerHTML : '';
+            const headerOriginalText = headerTerminateBtn ? headerTerminateBtn.innerHTML : '';
+            const classTimeOriginalText = classTimeTerminateBtn ? classTimeTerminateBtn.innerHTML : '';
             
-            // Make API call to terminate session
-            fetch('api/terminate-class-session.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            if (terminateBtn) {
+                terminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Terminating...';
+                terminateBtn.disabled = true;
+            }
+            
+            if (headerTerminateBtn) {
+                headerTerminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Terminating...';
+                headerTerminateBtn.disabled = true;
+            }
+            
+            if (classTimeTerminateBtn) {
+                classTimeTerminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Terminating...';
+                classTimeTerminateBtn.disabled = true;
+            }
+            
+            // Make API calls to terminate session and set class time inactive
+            Promise.all([
+                fetch('api/terminate-class-session.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }),
+                fetch('api/set-class-time-inactive.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+            ])
+            .then(responses => Promise.all(responses.map(response => response.json())))
+            .then(results => {
+                const [terminateResult, inactiveResult] = results;
+                
+                if (terminateResult.success && inactiveResult.success) {
                     // Show success message
                     if (typeof showInstructorAlert === 'function') {
                         showInstructorAlert('Class session terminated successfully', 'success');
                     } else {
                         alert('Class session terminated successfully');
                     }
+                    
+                    // Hide all termination buttons and indicators
+                    const headerTerminateBtn = document.getElementById('headerTerminateBtn');
+                    const activeSessionIndicator = document.getElementById('activeSessionIndicator');
+                    const terminationButtonContainer = document.getElementById('terminationButtonContainer');
+                    if (headerTerminateBtn) headerTerminateBtn.style.display = 'none';
+                    if (activeSessionIndicator) activeSessionIndicator.style.display = 'none';
+                    if (terminationButtonContainer) terminationButtonContainer.style.display = 'none';
                     
                     // Update the UI to show no active session
                     const classTimeStatus = document.getElementById('classTimeStatus');
@@ -2797,12 +3009,23 @@ $filteredSchedules = getFilteredSchedules(
                         localStorage.removeItem('classSessionState');
                     }
                     
-                    console.log('Session terminated:', data.data);
+                    // Clear session variables to match the database state
+                    clearSessionVariables();
+                    
+                    // Update the current time settings display
+                    updateCurrentTimeDisplay();
+                    
+                    console.log('Session terminated:', terminateResult.data);
+                    console.log('Class time set to inactive:', inactiveResult.data);
                 } else {
+                    const errorMessage = terminateResult.success ? 
+                        'Error setting class time to inactive: ' + inactiveResult.message :
+                        'Error terminating session: ' + terminateResult.message;
+                    
                     if (typeof showInstructorAlert === 'function') {
-                        showInstructorAlert('Error terminating session: ' + data.message, 'danger');
+                        showInstructorAlert(errorMessage, 'danger');
                     } else {
-                        alert('Error terminating session: ' + data.message);
+                        alert(errorMessage);
                     }
                 }
             })
@@ -2811,10 +3034,116 @@ $filteredSchedules = getFilteredSchedules(
                 showInstructorAlert('Error terminating session. Please try again.', 'danger');
             })
             .finally(() => {
-                // Restore button state
-                terminateBtn.innerHTML = originalText;
-                terminateBtn.disabled = false;
+                // Restore button states
+                if (terminateBtn) {
+                    terminateBtn.innerHTML = originalText;
+                    terminateBtn.disabled = false;
+                }
+                if (headerTerminateBtn) {
+                    headerTerminateBtn.innerHTML = headerOriginalText;
+                    headerTerminateBtn.disabled = false;
+                }
+                if (classTimeTerminateBtn) {
+                    classTimeTerminateBtn.innerHTML = classTimeOriginalText;
+                    classTimeTerminateBtn.disabled = false;
+                }
             });
+        }
+        
+        // Function to clear session variables (matching the logic from lines 1547-1565)
+        function clearSessionVariables() {
+            // Clear class time related session variables
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem('class_start_time');
+                sessionStorage.removeItem('class_start_time_formatted');
+                sessionStorage.removeItem('current_instructor_id');
+                sessionStorage.removeItem('current_instructor_name');
+                sessionStorage.removeItem('current_subject_id');
+                sessionStorage.removeItem('current_subject_name');
+                sessionStorage.removeItem('current_section');
+                sessionStorage.removeItem('attendance_session_id');
+                sessionStorage.removeItem('attendance_session_start');
+                sessionStorage.removeItem('attendance_session_end');
+            }
+            
+            // Also clear any local storage items
+            if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('classSessionState');
+                localStorage.removeItem('activeClassTime');
+                localStorage.removeItem('currentInstructor');
+                localStorage.removeItem('currentSubject');
+            }
+            
+            console.log('Session variables cleared successfully');
+        }
+        
+        // Function to update current time display (matching the logic from lines 1547-1565)
+        function updateCurrentTimeDisplay() {
+            // Hide the current time settings display
+            const currentTimeSettings = document.getElementById('currentTimeSettings');
+            if (currentTimeSettings) {
+                currentTimeSettings.style.display = 'none';
+            }
+            
+            // Clear the displayed start time
+            const displayedStartTime = document.getElementById('displayedStartTime');
+            if (displayedStartTime) {
+                displayedStartTime.textContent = 'No class time set';
+            }
+            
+            // Reset the class start time input
+            const classStartTimeInput = document.getElementById('classStartTime');
+            if (classStartTimeInput) {
+                classStartTimeInput.value = '';
+            }
+            
+            // Clear the hidden input for attendance
+            const classStartTimeHidden = document.getElementById('class-start-time');
+            if (classStartTimeHidden) {
+                classStartTimeHidden.value = '';
+            }
+            
+            // Update the class time status to show no active session
+            const classTimeStatus = document.getElementById('classTimeStatus');
+            if (classTimeStatus) {
+                classTimeStatus.innerHTML = `
+                    <div id="noActiveSessionAlert" class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> No Active Session</h6>
+                        <p class="mb-0">Please set a class start time to begin attendance tracking.</p>
+                    </div>
+                `;
+            }
+            
+            console.log('Current time display updated to show no active session');
+        }
+        
+        // Function to store session state (matching the logic from lines 1547-1565)
+        function storeSessionState(startTime, duration) {
+            // Store in session storage
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('class_start_time', startTime);
+                sessionStorage.setItem('class_start_time_formatted', startTime + ':00');
+                sessionStorage.setItem('class_duration', duration);
+                
+                // Store instructor and subject info if available
+                const currentInstructor = document.getElementById('displayedInstructorName')?.textContent || 'Current User';
+                const currentSubject = document.getElementById('displayedSubject')?.textContent || 'Not set';
+                
+                sessionStorage.setItem('current_instructor_name', currentInstructor);
+                sessionStorage.setItem('current_subject_name', currentSubject);
+            }
+            
+            // Store in local storage for persistence
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('classSessionState', JSON.stringify({
+                    class_start_time: startTime,
+                    class_duration: duration,
+                    timestamp: new Date().toISOString()
+                }));
+                localStorage.setItem('activeClassTime', startTime);
+            }
+            
+            console.log('Session state stored successfully:', { startTime, duration });
         }
         
         // Function to update session info with schedule data
@@ -3101,6 +3430,20 @@ $filteredSchedules = getFilteredSchedules(
             } else {
                 setTimeBtn.addEventListener('click', function() {
                     console.log("Set Class Time button clicked");
+                    
+                    // Immediately hide both "No Active Session" alerts when button is clicked
+                    const noActiveSessionAlert = document.getElementById('noActiveSessionAlert');
+                    if (noActiveSessionAlert) {
+                        noActiveSessionAlert.style.display = 'none';
+                        console.log('Hidden "No Active Session" alert on button click');
+                    }
+                    
+                    const noActiveClassSessionAlert = document.getElementById('noActiveClassSessionAlert');
+                    if (noActiveClassSessionAlert) {
+                        noActiveClassSessionAlert.style.display = 'none';
+                        console.log('Hidden "No Active Class Session" alert on button click');
+                    }
+                    
                     const startTimeInput = document.getElementById('classStartTime');
                     if (!startTimeInput) {
                         console.error("classStartTime input not found!");
@@ -3141,10 +3484,17 @@ $filteredSchedules = getFilteredSchedules(
                         console.log('Server response:', data);
                         if (data.success) {
                             alert('Class time set successfully to ' + (data.data.formatted_time || startTime) + '!');
-                            // Force reload with cache busting to ensure fresh data
-                            setTimeout(function() {
-                                window.location.href = window.location.pathname + '?t=' + new Date().getTime();
-                            }, 1000);
+                            
+                            // CRITICAL: Show terminate button immediately by updating class time status
+                            updateClassTimeStatus({
+                                class_start_time: data.data.class_start_time,
+                                formatted_time: data.data.formatted_time,
+                                instructor: data.data.instructor || 'Current User',
+                                subject: data.data.subject || 'Not set'
+                            });
+                            
+                            // Also call the setClassTime function to update other UI elements
+                            setClassTime(startTime, durationInput.value || 60);
                         } else {
                             alert('Failed to set class time: ' + (data.message || 'Unknown error'));
                         }
@@ -3333,6 +3683,19 @@ $filteredSchedules = getFilteredSchedules(
                 setTimeBtn.addEventListener('click', function() {
                     console.log("Set button clicked!");
                     
+                    // Immediately hide both "No Active Session" alerts when button is clicked
+                    const noActiveSessionAlert = document.getElementById('noActiveSessionAlert');
+                    if (noActiveSessionAlert) {
+                        noActiveSessionAlert.style.display = 'none';
+                        console.log('Hidden "No Active Session" alert on second button click handler');
+                    }
+                    
+                    const noActiveClassSessionAlert = document.getElementById('noActiveClassSessionAlert');
+                    if (noActiveClassSessionAlert) {
+                        noActiveClassSessionAlert.style.display = 'none';
+                        console.log('Hidden "No Active Class Session" alert on second button click handler');
+                    }
+                    
                     const startTimeInput = document.getElementById('classStartTime');
                     if (!startTimeInput) {
                         alert("Time input not found!");
@@ -3403,6 +3766,19 @@ $filteredSchedules = getFilteredSchedules(
         
         // Function to update class time status display
         function updateClassTimeStatus(data) {
+            // First, explicitly hide both "No Active Session" alerts
+            const noActiveSessionAlert = document.getElementById('noActiveSessionAlert');
+            if (noActiveSessionAlert) {
+                noActiveSessionAlert.style.display = 'none';
+                console.log('Hidden "No Active Session" alert in updateClassTimeStatus');
+            }
+            
+            const noActiveClassSessionAlert = document.getElementById('noActiveClassSessionAlert');
+            if (noActiveClassSessionAlert) {
+                noActiveClassSessionAlert.style.display = 'none';
+                console.log('Hidden "No Active Class Session" alert in updateClassTimeStatus');
+            }
+            
             const statusDiv = document.getElementById('classTimeStatus');
             if (statusDiv) {
                 const currentTime = new Date().toLocaleTimeString('en-US', {
@@ -3447,8 +3823,29 @@ $filteredSchedules = getFilteredSchedules(
                                 </div>
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="button" id="terminateClassSession" class="btn btn-danger btn-block" onclick="if(typeof terminateClassSession === 'function') { terminateClassSession(); } else { console.error('terminateClassSession function not found'); alert('Function not available'); }">
+                                    <i class="fas fa-stop-circle"></i> Terminate Session & Set Class Time Inactive
+                                </button>
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-info-circle"></i> This will end the current class session, clear all session data, and set class time settings to inactive
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 `;
+                
+                // Show header termination button and indicator
+                const headerTerminateBtn = document.getElementById('headerTerminateBtn');
+                const activeSessionIndicator = document.getElementById('activeSessionIndicator');
+                const terminationButtonContainer = document.getElementById('terminationButtonContainer');
+                if (headerTerminateBtn) headerTerminateBtn.style.display = 'inline-block';
+                if (activeSessionIndicator) activeSessionIndicator.style.display = 'inline-block';
+                if (terminationButtonContainer) terminationButtonContainer.style.display = 'block';
+                
+                // Store session state to match the logic from lines 1547-1565
+                storeSessionState(data.class_start_time || data.formatted_time, '60');
                 
                 // Start updating the current time every second
                 startSessionClock();
@@ -4624,11 +5021,17 @@ $filteredSchedules = getFilteredSchedules(
             function preserveSessionState() {
                 console.log('Preserving session state...');
                 
-                // Hide "No Active Session" warning
+                // Hide both "No Active Session" warnings
                 const noActiveSessionAlert = document.getElementById('noActiveSessionAlert');
                 if (noActiveSessionAlert) {
                     noActiveSessionAlert.style.display = 'none';
                     console.log('Hidden noActiveSessionAlert');
+                }
+                
+                const noActiveClassSessionAlert = document.getElementById('noActiveClassSessionAlert');
+                if (noActiveClassSessionAlert) {
+                    noActiveClassSessionAlert.style.display = 'none';
+                    console.log('Hidden noActiveClassSessionAlert');
                 }
                 
                 // Show session info area
@@ -5716,11 +6119,13 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
     
     // Function to load class time from database
     function loadClassTimeFromDatabase() {
+        console.log('Loading class time from database...');
         fetch('api/get-class-time.php')
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.data) {
-                    console.log('Class time loaded from database:', data.data);
+                console.log('Database response:', data);
+                if (data.success && data.data && data.data.class_start_time) {
+                    console.log('✅ Class time loaded from database:', data.data);
                     
                     // Update the time input field
                     const timeInput = document.getElementById('classStartTime');
@@ -5769,18 +6174,130 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
                     
                     console.log('Class time restored from database successfully');
                 } else {
-                    console.log('No class time found in database or error occurred');
+                    console.log('❌ No active class time found in database or error occurred:', data);
+                    // Reset UI to no-active-session state
+                    const timeInput = document.getElementById('classStartTime');
+                    if (timeInput) {
+                        timeInput.value = '';
+                    }
+
+                    const displayedStartTime = document.getElementById('displayedStartTime');
+                    if (displayedStartTime) {
+                        displayedStartTime.textContent = 'No class time set';
+                    }
+
+                    // Clear hidden input for attendance
+                    const classStartTimeInput = document.getElementById('class-start-time');
+                    if (classStartTimeInput) {
+                        classStartTimeInput.value = '';
+                    }
+
+                    // Hide current time settings display
+                    const currentTimeSettings = document.getElementById('currentTimeSettings');
+                    if (currentTimeSettings) {
+                        currentTimeSettings.style.display = 'none';
+                    }
+
+                    // Hide termination buttons and indicators
+                    const headerTerminateBtn = document.getElementById('headerTerminateBtn');
+                    const activeSessionIndicator = document.getElementById('activeSessionIndicator');
+                    const terminationButtonContainer = document.getElementById('terminationButtonContainer');
+                    if (headerTerminateBtn) headerTerminateBtn.style.display = 'none';
+                    if (activeSessionIndicator) activeSessionIndicator.style.display = 'none';
+                    if (terminationButtonContainer) terminationButtonContainer.style.display = 'none';
+
+                    // Remove any class time info from attendance table header
+                    const classTimeInfo = document.querySelector('.class-time-info');
+                    if (classTimeInfo) {
+                        classTimeInfo.style.display = 'none';
+                    }
+
+                    const classTimeStatus = document.getElementById('classTimeStatus');
+                    if (classTimeStatus) {
+                        classTimeStatus.innerHTML = `
+                            <div id="noActiveSessionAlert" class="alert alert-warning">
+                                <h6><i class=\"fas fa-exclamation-triangle\"></i> No Active Session</h6>
+                                <p class=\"mb-0\">Please set a class start time to begin attendance tracking.</p>
+                            </div>
+                        `;
+                    }
+
+                    const sessionInfoArea = document.getElementById('sessionInfoArea');
+                    if (sessionInfoArea) {
+                        sessionInfoArea.style.display = 'none';
+                    }
+
+                    const attendanceTableHeader = document.querySelector('.attendance-header_info') || document.querySelector('.attendance-header-info');
+                    if (attendanceTableHeader) {
+                        const classTimeInfo = attendanceTableHeader.querySelector('.class-time-info');
+                        if (classTimeInfo) {
+                            classTimeInfo.remove();
+                        }
+                    }
+
+                    const currentTimeSettings = document.getElementById('currentTimeSettings');
+                    if (currentTimeSettings) {
+                        currentTimeSettings.style.display = 'none';
+                    }
+
+                    const classStartTimeInput = document.getElementById('class-start-time');
+                    if (classStartTimeInput) {
+                        classStartTimeInput.value = '';
+                    }
                 }
             })
             .catch(error => {
-                console.error('Error loading class time from database:', error);
+                console.error('❌ Error loading class time from database:', error);
+                // Don't show any UI updates if there's an error - let the page load normally
             });
     }
     
     // Ensure session information is preserved on page load
     document.addEventListener('DOMContentLoaded', function() {
         // First, try to load class time from database
+        // Clear any invalid default time values from previous sessions before loading from database
+        if (typeof sessionStorage !== 'undefined') {
+            const storedTime = sessionStorage.getItem('class_start_time');
+            if (storedTime === '00:00' || storedTime === '12:00 AM' || storedTime === '12am') {
+                console.log('Clearing invalid default time from session storage:', storedTime);
+                sessionStorage.removeItem('class_start_time');
+                sessionStorage.removeItem('class_start_time_formatted');
+            }
+        }
+        
         loadClassTimeFromDatabase();
+        
+        // Fallback: If we have PHP session data, use it after a short delay (to let database load complete)
+        setTimeout(function() {
+            <?php if (isset($_SESSION['class_start_time']) && !empty($_SESSION['class_start_time'])): ?>
+                const timeInput = document.getElementById('classStartTime');
+                if (timeInput && (!timeInput.value || timeInput.value === '')) {
+                    console.log('📝 Fallback: Restoring class time from PHP session');
+                    timeInput.value = '<?= $_SESSION['class_start_time'] ?>';
+                    
+                    // Also update the displayed time
+                    const displayedStartTime = document.getElementById('displayedStartTime');
+                    if (displayedStartTime && displayedStartTime.textContent === 'No class time set') {
+                        <?php 
+                        $time = DateTime::createFromFormat('H:i', $_SESSION['class_start_time']);
+                        $formatted_time = $time ? $time->format('h:i A') : $_SESSION['class_start_time'];
+                        ?>
+                        displayedStartTime.textContent = '<?= $formatted_time ?>';
+                    }
+                    
+                    // Update the hidden input for attendance
+                    const classStartTimeInput = document.getElementById('class-start-time');
+                    if (classStartTimeInput) {
+                        classStartTimeInput.value = '<?= $_SESSION['class_start_time'] ?>';
+                    }
+                    
+                    console.log('✅ Fallback restoration completed');
+                }
+            <?php endif; ?>
+        }, 1000); // Wait 1 second for database load to complete
+        
+        // Check if there's an active session and show header termination button
+        checkActiveSessionOnLoad();
         
         // Check if we have an active session by looking for session info in PHP
         <?php if (isset($_SESSION['class_start_time']) && !empty($_SESSION['class_start_time'])): ?>
@@ -5792,6 +6309,11 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
                 const noActiveSessionAlert = document.getElementById('noActiveSessionAlert');
                 if (noActiveSessionAlert) {
                     noActiveSessionAlert.style.display = 'none';
+                }
+                
+                const noActiveClassSessionAlert = document.getElementById('noActiveClassSessionAlert');
+                if (noActiveClassSessionAlert) {
+                    noActiveClassSessionAlert.style.display = 'none';
                 }
                 
                 const sessionInfo = document.getElementById('sessionInfoArea');
@@ -5819,6 +6341,31 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
             <?php endif; ?>
         }, 5000); // Every 5 seconds
     });
+    
+    // Function to check for active session on page load
+    function checkActiveSessionOnLoad() {
+        // Check if there's an active class time in session
+        <?php if (isset($_SESSION['class_start_time']) && !empty($_SESSION['class_start_time'])): ?>
+            const headerTerminateBtn = document.getElementById('headerTerminateBtn');
+            const activeSessionIndicator = document.getElementById('activeSessionIndicator');
+            const terminationButtonContainer = document.getElementById('terminationButtonContainer');
+            
+            if (headerTerminateBtn) {
+                headerTerminateBtn.style.display = 'inline-block';
+                console.log('Header termination button shown on page load');
+            }
+            
+            if (activeSessionIndicator) {
+                activeSessionIndicator.style.display = 'inline-block';
+                console.log('Active session indicator shown on page load');
+            }
+            
+            if (terminationButtonContainer) {
+                terminationButtonContainer.style.display = 'block';
+                console.log('Class time termination button shown on page load');
+            }
+        <?php endif; ?>
+    }
 </script>
 
 <script src="scripts/force-responsive.js"></script>

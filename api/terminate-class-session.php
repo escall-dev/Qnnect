@@ -55,12 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check if user is logged in - check multiple session variables for robustness
-if (!isset($_SESSION['email']) && !isset($_SESSION['username']) && !isset($_SESSION['user_id'])) {
-    debugLog("User not logged in - no session variables found");
+// Authorization: prefer allowing termination if we have a valid school context
+$hasUserIdentity = isset($_SESSION['email']) || isset($_SESSION['username']) || isset($_SESSION['user_id']);
+$hasSchoolContext = isset($_SESSION['school_id']);
+if (!$hasUserIdentity && !$hasSchoolContext) {
+    debugLog("No user identity or school context found in session");
     echo json_encode([
         'success' => false,
-        'message' => 'Unauthorized access - Please log in again'
+        'message' => 'Unauthorized access - missing session context'
     ]);
     exit;
 }
@@ -152,25 +154,77 @@ try {
             debugLog("Database update error: " . $stmt->error);
         }
         
-        // Also update class_time_settings table if it exists and has school_id column
+        // Also update class_time_settings table to clear any active class start time
         try {
-            $class_time_update_query = "
-                UPDATE class_time_settings 
-                SET class_start_time = NULL,
-                    updated_at = NOW()
-                WHERE school_id = ? 
-                AND class_start_time IS NOT NULL
-            ";
-            
-            $class_time_stmt = $conn_qr->prepare($class_time_update_query);
-            $class_time_stmt->bind_param("i", $school_id);
-            
-            if ($class_time_stmt->execute()) {
-                $class_time_affected = $class_time_stmt->affected_rows;
-                debugLog("Updated $class_time_affected class time settings for school_id: $school_id");
+            // Detect which column name is present: 'start_time' (new) or 'class_start_time' (legacy)
+            $column_name = null;
+            if ($res = mysqli_query($conn_qr, "SHOW COLUMNS FROM class_time_settings LIKE 'start_time'")) {
+                if (mysqli_num_rows($res) > 0) { $column_name = 'start_time'; }
+                mysqli_free_result($res);
+            }
+            if ($column_name === null) {
+                if ($res = mysqli_query($conn_qr, "SHOW COLUMNS FROM class_time_settings LIKE 'class_start_time'")) {
+                    if (mysqli_num_rows($res) > 0) { $column_name = 'class_start_time'; }
+                    mysqli_free_result($res);
+                }
+            }
+
+            if ($column_name !== null) {
+                $class_time_update_query = "
+                    UPDATE class_time_settings 
+                    SET {$column_name} = NULL,
+                        updated_at = NOW()
+                    WHERE school_id = ? 
+                    AND {$column_name} IS NOT NULL
+                ";
+                if ($class_time_stmt = $conn_qr->prepare($class_time_update_query)) {
+                    $class_time_stmt->bind_param("i", $school_id);
+                    if ($class_time_stmt->execute()) {
+                        $class_time_affected = $class_time_stmt->affected_rows;
+                        debugLog("Cleared class_time_settings.{$column_name} for $class_time_affected row(s) (school_id: $school_id)");
+                    }
+                    $class_time_stmt->close();
+                }
+
+                // If both columns exist (rare), clear the other one as well to avoid stale data
+                $other_column = $column_name === 'start_time' ? 'class_start_time' : 'start_time';
+                if ($res = mysqli_query($conn_qr, "SHOW COLUMNS FROM class_time_settings LIKE '{$other_column}'")) {
+                    if (mysqli_num_rows($res) > 0) {
+                        $sql = "UPDATE class_time_settings SET {$other_column} = NULL, updated_at = NOW() WHERE school_id = ? AND {$other_column} IS NOT NULL";
+                        if ($stmt2 = $conn_qr->prepare($sql)) {
+                            $stmt2->bind_param("i", $school_id);
+                            $stmt2->execute();
+                            $stmt2->close();
+                        }
+                    }
+                    mysqli_free_result($res);
+                }
+            } else {
+                debugLog("class_time_settings does not have start_time or class_start_time columns");
             }
         } catch (Exception $e) {
             debugLog("Class time settings update skipped (table may not exist): " . $e->getMessage());
+        }
+
+        // CRITICAL: Set teacher_schedules status to 'inactive' to fully terminate class sessions
+        try {
+            $teacher_schedule_update_query = "
+                UPDATE teacher_schedules 
+                SET status = 'inactive',
+                    updated_at = NOW()
+                WHERE school_id = ? 
+                AND status = 'active'
+            ";
+            if ($teacher_stmt = $conn_qr->prepare($teacher_schedule_update_query)) {
+                $teacher_stmt->bind_param("i", $school_id);
+                if ($teacher_stmt->execute()) {
+                    $teacher_affected = $teacher_stmt->affected_rows;
+                    debugLog("Set teacher_schedules status to 'inactive' for $teacher_affected row(s) (school_id: $school_id)");
+                }
+                $teacher_stmt->close();
+            }
+        } catch (Exception $e) {
+            debugLog("Teacher schedules status update skipped (table may not exist): " . $e->getMessage());
         }
     }
     

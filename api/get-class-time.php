@@ -57,8 +57,8 @@ try {
         exit;
     }
     
-    // Get the latest class time setting for this school
-    $query = "SELECT start_time, updated_at FROM class_time_settings WHERE school_id = ? ORDER BY updated_at DESC LIMIT 1";
+    // Get the latest class time setting for this school, only if it's active
+    $query = "SELECT start_time, status, updated_at FROM class_time_settings WHERE school_id = ? ORDER BY updated_at DESC LIMIT 1";
     $stmt = $conn_qr->prepare($query);
     
     if (!$stmt) {
@@ -75,8 +75,22 @@ try {
     
     if ($row = $result->fetch_assoc()) {
         $classStartTime = $row['start_time'];
+        $status = $row['status'] ?? null;
         $updatedAt = $row['updated_at'];
-        
+
+        // If no active class time or status is not 'active', clear any lingering session values and report no data
+        if (empty($classStartTime) || $status !== 'active') {
+            unset($_SESSION['class_start_time']);
+            unset($_SESSION['class_start_time_formatted']);
+            debugLog("No active class time found (start_time: " . ($classStartTime ?? 'null') . ", status: " . ($status ?? 'null') . "). Clearing session state.");
+            echo json_encode([
+                'success' => false,
+                'message' => 'No active class time',
+                'data' => null
+            ]);
+            exit;
+        }
+
         // Restore to session - ensure 24-hour format for comparison
         $_SESSION['class_start_time'] = $classStartTime; // Store as HH:MM format
         $_SESSION['class_start_time_formatted'] = $classStartTime . ':00'; // Store as HH:MM:SS format for comparison

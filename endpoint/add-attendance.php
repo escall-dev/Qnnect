@@ -39,7 +39,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
     // For regular form submissions, redirect with error
     echo "<script>
         localStorage.setItem('sessionError', 'Session expired. Please log in again.');
-        window.location.href = 'http://localhost/personal-proj/Qnnect/admin/login.php';
+        window.location.href = 'http://localhost/Qnnect/admin/login.php';
     </script>";
     exit();
 }
@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'timestamp' => time()
             ]);
             echo "<script>
-                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
             </script>";
             exit();
         }
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'timestamp' => time()
                         ]);
                         echo "<script>
-                            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                            window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
                         </script>";
                         exit();
                     }
@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'timestamp' => time()
                     ]);
                     echo "<script>
-                        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                        window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
                     </script>";
                     exit();
                 }
@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'timestamp' => time()
                 ]);
                 echo "<script>
-                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                    window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
                 </script>";
                 exit();
             }
@@ -408,7 +408,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'status' => $status,
                             'id' => $inserted_id
                         ]);
-                        header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
+                        header("Location: http://localhost/Qnnect/index.php?$successParams");
                         exit();
                     } else {
                         error_log("FAILED: INSERT error: " . $stmt->error);
@@ -419,7 +419,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'details' => 'Unable to save attendance record to database. Please try again.',
                             'mode' => $attendanceMode
                         ]);
-                        header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+                        header("Location: http://localhost/Qnnect/index.php?$errorParams");
                         exit();
                     }
                 } else {
@@ -434,7 +434,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'details' => "Student $studentName already marked $attendanceStatus on $attendanceDate at $attendanceTime for $currentSubjectName."
                     ]);
                     echo "<script>
-                        window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                        window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
                     </script>";
                     exit();
                 }
@@ -450,7 +450,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'qr' => substr($qrCode, 0, 10) . '...' // Partial QR for debugging
                 ]);
                 echo "<script>
-                    window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                    window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
                 </script>";
                 exit();
             }
@@ -480,7 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'mode' => $attendanceMode
             ]);
             echo "<script>
-                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+                window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
             </script>";
             exit();
         }
@@ -492,7 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'mode' => $_SESSION['attendance_mode'] ?? 'general'
         ]);
         echo "<script>
-            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php?{$errorParams}';
+            window.location.href = 'http://localhost/Qnnect/index.php?{$errorParams}';
         </script>";
         exit();
     }

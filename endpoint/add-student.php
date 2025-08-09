@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Validate minimum length for complete course-section
             if (strlen($completeCourseSection) < 3) {
                 error_log("Complete course-section too short: $completeCourseSection");
-                header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Course-section must be at least 3 characters!"));
+                header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Course-section must be at least 3 characters!"));
                 exit();
             }
             
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Validate minimum length for custom course
                 if (strlen($courseName) < 3) {
                     error_log("Custom course name too short: $courseName");
-                    header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom course must be at least 3 characters!"));
+                    header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom course must be at least 3 characters!"));
                     exit();
                 }
                 
@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Validate minimum length for custom section
                 if (strlen($sectionName) < 3) {
                     error_log("Custom section name too short: $sectionName");
-                    header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom section must be at least 3 characters!"));
+                    header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom section must be at least 3 characters!"));
                     exit();
                 }
                 
@@ -231,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($faceVerified !== '1') {
             error_log("Face verification failed");
             // Redirect with error parameters
-            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Face verification is required!"));
+            header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Face verification is required!"));
             exit();
         }
         
@@ -292,20 +292,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Student inserted successfully with ID: $inserted_id");
 
             // Redirect with success parameters for the add success modal
-            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_success=1&student_name=" . urlencode($studentName) . "&student_id=" . $inserted_id);
+            header("Location: http://localhost/Qnnect/masterlist.php?add_success=1&student_name=" . urlencode($studentName) . "&student_id=" . $inserted_id);
             exit();
             
         } catch (Exception $e) {
             error_log("Error in student insertion: " . $e->getMessage());
             // Redirect with error parameters
-            header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Error: " . $e->getMessage()));
+            header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Error: " . $e->getMessage()));
             exit();
         }
 
     } else {
         error_log("Missing required fields in POST data");
         // Redirect with error parameters
-        header("Location: http://localhost/personal-proj/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Please fill in all fields and complete face verification!"));
+        header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Please fill in all fields and complete face verification!"));
         exit();
     }
 } else {

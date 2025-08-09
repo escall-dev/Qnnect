@@ -1,6 +1,14 @@
 <?php
 // Session Configuration for Role-Based System
 
+// Check if we're in a logout process - if so, don't create new sessions
+if (session_status() === PHP_SESSION_ACTIVE) {
+    if (isset($_SESSION['logging_out']) && $_SESSION['logging_out'] === true) {
+        // Don't recreate session if we're logging out
+        return;
+    }
+}
+
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     // Configure session settings for security
@@ -51,8 +59,11 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
 }
 */
 
-$_SESSION['last_activity'] = time();
-
-// Debug: Log session contents
-error_log('Session config loaded. Session contents: ' . print_r($_SESSION, true));
+// Only update activity if we're not logging out
+if (!isset($_SESSION['logging_out'])) {
+    $_SESSION['last_activity'] = time();
+    
+    // Debug: Log session contents
+    error_log('Session config loaded. Session contents: ' . print_r($_SESSION, true));
+}
 ?>
