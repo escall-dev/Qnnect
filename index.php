@@ -1653,14 +1653,14 @@ $filteredSchedules = getFilteredSchedules(
                                             if ($row = $result->fetch_assoc()) {
                                                 // Only set active_class_time if status is 'active' and start_time is not empty/null
                                                 if (!empty($row['start_time']) && isset($row['status']) && $row['status'] === 'active') {
-                                                    $active_class_time = $row['start_time'];
-                                                    $class_time_source = 'database (saved at ' . date('h:i A', strtotime($row['updated_at'])) . ')';
+                                                $active_class_time = $row['start_time'];
+                                                $class_time_source = 'database (saved at ' . date('h:i A', strtotime($row['updated_at'])) . ')';
                                                     // Set session variables when loading from database
-                                                    $_SESSION['class_start_time'] = $row['start_time'];
-                                                    $_SESSION['class_start_time_formatted'] = date('h:i A', strtotime($row['start_time']));
+                                                $_SESSION['class_start_time'] = $row['start_time'];
+                                                $_SESSION['class_start_time_formatted'] = date('h:i A', strtotime($row['start_time']));
                                                     error_log("Loaded ACTIVE class time from database: " . $active_class_time);
-                                                    error_log("Set session class_start_time: " . $_SESSION['class_start_time']);
-                                                    error_log("Set session class_start_time_formatted: " . $_SESSION['class_start_time_formatted']);
+                                                error_log("Set session class_start_time: " . $_SESSION['class_start_time']);
+                                                error_log("Set session class_start_time_formatted: " . $_SESSION['class_start_time_formatted']);
                                                 } else {
                                                     // Status is not active or start_time is empty - clear session flags
                                                     $active_class_time = null;
@@ -1671,25 +1671,25 @@ $filteredSchedules = getFilteredSchedules(
                                                 
                                                 // Only load teacher data if we have an active class time
                                                 if ($active_class_time) {
-                                                    $teacher_query = "SELECT teacher_username, subject, section FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY updated_at DESC LIMIT 1";
-                                                    $teacher_stmt = $conn_qr->prepare($teacher_query);
-                                                    if ($teacher_stmt) {
-                                                        $teacher_stmt->bind_param("i", $_SESSION['school_id']);
-                                                        $teacher_stmt->execute();
-                                                        $teacher_result = $teacher_stmt->get_result();
-                                                        if ($teacher_row = $teacher_result->fetch_assoc()) {
-                                                            $_SESSION['current_instructor_id'] = $teacher_row['teacher_username'];
-                                                            $_SESSION['current_subject'] = $teacher_row['subject'];
-                                                            $_SESSION['current_section'] = $teacher_row['section'];
+                                                $teacher_query = "SELECT teacher_username, subject, section FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY updated_at DESC LIMIT 1";
+                                                $teacher_stmt = $conn_qr->prepare($teacher_query);
+                                                if ($teacher_stmt) {
+                                                    $teacher_stmt->bind_param("i", $_SESSION['school_id']);
+                                                    $teacher_stmt->execute();
+                                                    $teacher_result = $teacher_stmt->get_result();
+                                                    if ($teacher_row = $teacher_result->fetch_assoc()) {
+                                                        $_SESSION['current_instructor_id'] = $teacher_row['teacher_username'];
+                                                        $_SESSION['current_subject'] = $teacher_row['subject'];
+                                                        $_SESSION['current_section'] = $teacher_row['section'];
                                                         } else {
                                                             // No active teacher schedules - clear class time
                                                             $active_class_time = null;
                                                             unset($_SESSION['class_start_time']);
                                                             unset($_SESSION['class_start_time_formatted']);
                                                             error_log("No active teacher schedules found; cleared class time session.");
-                                                        }
-                                                        $teacher_stmt->close();
                                                     }
+                                                    $teacher_stmt->close();
+                                                }
                                                 }
                                             } else {
                                                 // No records found - ensure session is cleared
@@ -2947,8 +2947,8 @@ $filteredSchedules = getFilteredSchedules(
             const classTimeOriginalText = classTimeTerminateBtn ? classTimeTerminateBtn.innerHTML : '';
             
             if (terminateBtn) {
-                terminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Terminating...';
-                terminateBtn.disabled = true;
+            terminateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Terminating...';
+            terminateBtn.disabled = true;
             }
             
             if (headerTerminateBtn) {
@@ -2963,18 +2963,18 @@ $filteredSchedules = getFilteredSchedules(
             
             // Make API calls to terminate session and set class time inactive
             Promise.all([
-                fetch('api/terminate-class-session.php', {
+            fetch('api/terminate-class-session.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     }
                 }),
                 fetch('api/set-class-time-inactive.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
             ])
             .then(responses => Promise.all(responses.map(response => response.json())))
             .then(results => {
@@ -3061,8 +3061,8 @@ $filteredSchedules = getFilteredSchedules(
             .finally(() => {
                 // Restore button states
                 if (terminateBtn) {
-                    terminateBtn.innerHTML = originalText;
-                    terminateBtn.disabled = false;
+                terminateBtn.innerHTML = originalText;
+                terminateBtn.disabled = false;
                 }
                 if (headerTerminateBtn) {
                     headerTerminateBtn.innerHTML = headerOriginalText;
