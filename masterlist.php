@@ -791,7 +791,7 @@ foreach ($result as $row) {
                             <label for="customCourseSection"><i class="fas fa-pen"></i> Enter Custom Course & Section</label>
                             <input type="text" class="form-control" id="customCourseSection" name="custom_course_section" 
                                    placeholder="Enter Course-Section (e.g. BSCS-101, BSIT-2A)"
-                                   minlength="3">
+                                   minlength="5" maxlength="20" pattern="[A-Za-z0-9- ]{5,20}">
                             <small class="form-text text-muted">Format: Course-Section (e.g. BSCS-101, BSIT-2A)</small>
                         </div>
                         
@@ -1367,7 +1367,7 @@ foreach ($result as $row) {
             
             // Reset form fields to be editable
             if (document.getElementById('studentName')) {
-                document.getElementById('studentName').style.pointerEvents = '';
+            document.getElementById('studentName').style.pointerEvents = '';
             }
             if (document.getElementById('courseSectionDropdown')) {
                 document.getElementById('courseSectionDropdown').style.pointerEvents = '';
@@ -1465,7 +1465,7 @@ foreach ($result as $row) {
                 const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
                 
                 if (qrImg) {
-                    qrImg.src = apiUrl;
+                qrImg.src = apiUrl;
                     qrImg.onload = function() {
                         console.log('QR code image loaded successfully');
                     };
@@ -1483,7 +1483,7 @@ foreach ($result as $row) {
                 
                 // Disable form fields after QR generation
                 if (document.getElementById('studentName')) {
-                    document.getElementById('studentName').style.pointerEvents = 'none';
+                document.getElementById('studentName').style.pointerEvents = 'none';
                 }
                 if (courseSectionDropdown) {
                     courseSectionDropdown.style.pointerEvents = 'none';
@@ -1608,10 +1608,10 @@ foreach ($result as $row) {
                 const value = $(this).val().trim();
                 $('#finalCourseSection').val(value);
                 
-                // Validate format
-                if (value.length >= 3 && value.includes('-')) {
+                // Validate format - only require non-empty and hyphen separator
+                if (value && value.includes('-')) {
                     $(this).removeClass('is-invalid').addClass('is-valid');
-                } else if (value.length < 3) {
+                } else if (!value) {
                     $(this).removeClass('is-valid').addClass('is-invalid');
                 } else if (!value.includes('-')) {
                     $(this).removeClass('is-valid').addClass('is-invalid');
@@ -1643,22 +1643,22 @@ foreach ($result as $row) {
                 
                 // Check if custom course-section is filled
                 const customCourseSectionValue = customCourseSection.val().trim();
-                
-                // Validate course selection
+                    
+                    // Validate course selection
                 if (courseSelect.val() === '' || courseSelect.val() === null) {
-                    e.preventDefault();
-                    alert('Please select a course-section from the dropdown');
-                    courseSelect.focus();
-                    return false;
-                }
-
-                // Validate course if custom selected
-                if (courseSelect.val() === 'custom') {
-                    if (!customCourseSectionValue || customCourseSectionValue.length < 3) {
                         e.preventDefault();
-                        alert('Please enter a custom course-section (at least 3 characters)');
-                        customCourseSection.focus();
+                    alert('Please select a course-section from the dropdown');
+                        courseSelect.focus();
                         return false;
+                    }
+    
+                    // Validate course if custom selected
+                    if (courseSelect.val() === 'custom') {
+                    if (!customCourseSectionValue || customCourseSectionValue.trim() === '') {
+                            e.preventDefault();
+                        alert('Please enter a custom course-section');
+                        customCourseSection.focus();
+                            return false;
                     }
                     
                     // Set the final field to custom value
@@ -1670,7 +1670,7 @@ foreach ($result as $row) {
                 
                 // Check if we have a valid final course-section value
                 if (!finalField.val()) {
-                    e.preventDefault();
+                            e.preventDefault();
                     alert('Please select or enter a valid course-section');
                     return false;
                 }
@@ -1720,9 +1720,9 @@ foreach ($result as $row) {
                 if (updateCourseSelect.val() === 'custom') {
                     // If custom option selected, validate and set the course_section value
                     const customValue = updateCustomCourseInput.val().trim();
-                    if (!customValue || customValue.length < 3) {
+                    if (!customValue || customValue.trim() === '') {
                         e.preventDefault();
-                        alert('Please enter a valid custom course & section (minimum 3 characters)');
+                        alert('Please enter a valid custom course & section');
                         updateCustomCourseInput.focus();
                         return false;
                     }

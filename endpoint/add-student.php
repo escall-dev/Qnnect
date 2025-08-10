@@ -62,10 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Using course-section from dropdown: $studentCourse");
             
 
-            // Validate minimum length for complete course-section
-            if (strlen($completeCourseSection) < 3) {
-                error_log("Complete course-section too short: $completeCourseSection");
-                header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Course-section must be at least 3 characters!"));
+            // Validate that complete course-section is not empty
+            if (empty($completeCourseSection)) {
+                error_log("Complete course-section is empty: $completeCourseSection");
+                header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Course-section cannot be empty!"));
 
                 exit();
             }
@@ -95,11 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Use the custom course name
                 $courseName = trim($_POST['custom_course']);
                 
-                // Validate minimum length for custom course
-                if (strlen($courseName) < 3) {
-                    error_log("Custom course name too short: $courseName");
+                // Validate that custom course is not empty
+                if (empty($courseName)) {
+                    error_log("Custom course name is empty: $courseName");
 
-                    header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom course must be at least 3 characters!"));
+                    header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Custom course cannot be empty!"));
 
                     exit();
                 }
@@ -116,11 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Use the custom section name
                 $sectionName = trim($_POST['custom_section']);
                 
-                // Validate minimum length for custom section
-                if (strlen($sectionName) < 3) {
-                    error_log("Custom section name too short: $sectionName");
+                // Validate that custom section is not empty
+                if (empty($sectionName)) {
+                    error_log("Custom section name is empty: $sectionName");
 
-                    header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Custom section must be at least 3 characters!"));
+                    header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Custom section cannot be empty!"));
 
                     exit();
                 }
