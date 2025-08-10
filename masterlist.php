@@ -97,6 +97,19 @@ if ($column_result->num_rows == 0) {
                 width: calc(100% - 50px);
             }
         }
+        
+        /* Ensure QR buttons are visible */
+        .qr-button {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .action-button {
+            display: flex !important;
+            gap: 5px;
+            align-items: center;
+        }
 
         @media (max-width: 768px) {
             .sidebar {
@@ -624,6 +637,8 @@ $allStudents = $allStudentsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Store all students in a hidden input for JavaScript
 echo '<input type="hidden" id="allStudentsData" value="' . htmlspecialchars(json_encode($allStudents)) . '">';
+echo '<!-- Debug: All students data -->';
+echo '<script>console.log("All students data:", ' . json_encode($allStudents) . ');</script>';
 
 // Regular pagination for initial display (filtered by school_id AND user_id)
 $limit = 10;
@@ -654,6 +669,9 @@ foreach ($result as $row) {
     $studentName = $row["student_name"];
     $studentCourse = $row["course_section"];
     $qrCode = $row["generated_code"];
+    
+    // Debug output
+    echo "<!-- Debug: Student ID: $studentID, Name: $studentName, QR: $qrCode -->";
 ?>
                             <tr class="student-row">
     <th scope="row" id="studentID-<?= $studentID ?>"><?= $studentID ?></th>
@@ -1021,7 +1039,7 @@ foreach ($result as $row) {
     
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
 
@@ -1530,6 +1548,8 @@ foreach ($result as $row) {
     <script>
         // Custom QR code modal implementation
         $(document).ready(function() {
+            console.log('Document ready, initializing QR functionality...');
+            
             // Add global QR modal to the page
             $('body').append(`
                 <div id="globalQrModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
@@ -1557,11 +1577,34 @@ foreach ($result as $row) {
                     </div>
                 </div>
             `);
+            
+            console.log('QR modal added to page');
+            console.log('Initial QR buttons found:', $('.qr-button').length);
+            
+            // Debug: Check if QR buttons have data attributes
+            $('.qr-button').each(function(index) {
+                console.log(`QR button ${index}:`, {
+                    element: this,
+                    data: $(this).data(),
+                    html: $(this).html()
+                });
+            });
 
             // Handle QR button clicks
             $('.qr-button').on('click', function() {
                 const studentName = $(this).data('name');
                 const qrCode = $(this).data('qr');
+                
+                console.log('QR button clicked:', { studentName, qrCode });
+                console.log('Button element:', this);
+                console.log('Data attributes:', $(this).data());
+                
+                // Test if modal elements exist
+                console.log('Modal elements:', {
+                    title: $('#qrModalTitle').length,
+                    image: $('#qrModalImage').length,
+                    modal: $('#globalQrModal').length
+                });
                 
                 // Update modal content
                 $('#qrModalTitle').text(studentName + "'s QR Code");
@@ -1569,12 +1612,16 @@ foreach ($result as $row) {
                 
                 // Show modal
                 $('#globalQrModal').show();
-            });
-            
-            // Close modal handlers
-            $('#closeQrModal, #closeQrButton').on('click', function() {
-                $('#globalQrModal').hide();
-            });
+                
+                            console.log('Modal should be visible now');
+        });
+        
+
+        
+        // Close modal handlers
+        $('#closeQrModal, #closeQrButton').on('click', function() {
+            $('#globalQrModal').hide();
+        });
             
             // Close when clicking outside
             $('#globalQrModal').on('click', function(e) {
@@ -1826,6 +1873,8 @@ foreach ($result as $row) {
                     `;
                     tbody.appendChild(row);
                 });
+                
+                console.log('Added', filteredStudents.length, 'filtered rows with QR buttons');
 
                 // Hide pagination if searching/filtering
                 paginationContainer.style.display = (searchTerm || filterValue) ? 'none' : 'block';
@@ -1856,15 +1905,16 @@ foreach ($result as $row) {
 
             // Reattach QR button event listeners after table updates
             function reattachQRListeners() {
-                document.querySelectorAll('.qr-button').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const studentName = this.dataset.name;
-                        const qrCode = this.dataset.qr;
-                        
-                        $('#qrModalTitle').text(studentName + "'s QR Code");
-                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
-                        $('#globalQrModal').show();
-                    });
+                console.log('Reattaching QR listeners to', $('.qr-button').length, 'buttons');
+                $('.qr-button').off('click').on('click', function() {
+                    const studentName = $(this).data('name');
+                    const qrCode = $(this).data('qr');
+                    
+                    console.log('QR button clicked (reattached):', { studentName, qrCode });
+                    
+                    $('#qrModalTitle').text(studentName + "'s QR Code");
+                    $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
+                    $('#globalQrModal').show();
                 });
             }
 
