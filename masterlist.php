@@ -796,11 +796,9 @@ foreach ($result as $row) {
                         <div class="form-group" id="customCourseGroup" style="display: none;">
                             <label for="customCourse"><i class="fas fa-edit"></i> Custom Course Name</label>
                             <input type="text" class="form-control" id="customCourse" name="custom_course" 
-                                placeholder="Enter custom course/grade level (min 3 characters)" 
-                                minlength="3" 
-                                pattern=".{3,}"
-                                title="Custom course must be at least 3 characters">
-                            <small class="form-text text-muted">Must be at least 3 characters long</small>
+                                placeholder="Enter custom course/grade level" 
+                                title="Enter any custom course name">
+                            <small class="form-text text-muted">Enter any course name you want</small>
                         </div>
                         
                         <div class="form-group">
@@ -817,19 +815,16 @@ foreach ($result as $row) {
                         <div class="form-group" id="customSectionGroup" style="display: none;">
                             <label for="customSection"><i class="fas fa-edit"></i> Custom Section Name</label>
                             <input type="text" class="form-control" id="customSection" name="custom_section" 
-                                placeholder="Enter custom section (min 3 characters)" 
-                                minlength="3"
-                                pattern=".{3,}"
-                                title="Custom section must be at least 3 characters">
-                            <small class="form-text text-muted">Must be at least 3 characters long</small>
+                                placeholder="Enter custom section" 
+                                title="Enter any custom section name">
+                            <small class="form-text text-muted">Enter any section name you want</small>
                         </div>
                         
                         <!-- Complete Custom Course & Section input -->
                         <div class="form-group">
                             <label for="completeCourseSection"><i class="fas fa-graduation-cap"></i> Custom Course or Grade Level & Section</label>
                             <input type="text" class="form-control" id="completeCourseSection" name="complete_course_section" 
-                                placeholder="Enter Course-Section directly (e.g. 11 - ICT LAPU)"
-                                minlength="3">
+                                placeholder="Enter Course-Section directly (e.g. 11 - ICT LAPU)">
                             <small class="form-text text-muted">Format for custom: Course-Section (e.g. BSCS-101)</small>
                         </div>
                         
@@ -978,7 +973,7 @@ foreach ($result as $row) {
                             // First check if we have a direct entry in the complete course section field
                             if (completeCourseSection && completeCourseSection.value.trim()) {
                                 const completeValue = completeCourseSection.value.trim();
-                                if (completeValue.length >= 3 && completeValue.includes('-')) {
+                                if (completeValue && completeValue.includes('-')) {
                                     combinedField.value = completeValue;
                                     
                                     // Disable individual field validations since we're using the combined field
@@ -991,8 +986,8 @@ foreach ($result as $row) {
                                     completeCourseSection.classList.add('is-valid');
                                     
                                     return;
-                                } else if (completeValue.length < 3) {
-                                    completeCourseSection.setCustomValidity("Course-section must be at least 3 characters");
+                                } else if (!completeValue) {
+                                    completeCourseSection.setCustomValidity("Course-section cannot be empty");
                                     completeCourseSection.classList.add('is-invalid');
                                     completeCourseSection.classList.remove('is-valid');
                                 } else if (!completeValue.includes('-')) {
@@ -1006,9 +1001,9 @@ foreach ($result as $row) {
                             // Determine course value (dropdown or custom input)
                             let courseValue = courseSelect.value;
                             if (courseValue === 'custom' && customCourseInput.value) {
-                                // Validate minimum length for custom course
-                                if (customCourseInput.value.trim().length < 3) {
-                                    customCourseInput.setCustomValidity("Custom course must be at least 3 characters");
+                                // Validate that custom course is not empty
+                                if (!customCourseInput.value.trim()) {
+                                    customCourseInput.setCustomValidity("Custom course cannot be empty");
                                     customCourseInput.classList.add('is-invalid');
                                     customCourseInput.classList.remove('is-valid');
                                 } else {
@@ -1022,9 +1017,9 @@ foreach ($result as $row) {
                             // Determine section value (dropdown or custom input)
                             let sectionValue = sectionSelect.value;
                             if (sectionValue === 'custom' && customSectionInput.value) {
-                                // Validate minimum length for custom section
-                                if (customSectionInput.value.trim().length < 3) {
-                                    customSectionInput.setCustomValidity("Custom section must be at least 3 characters");
+                                // Validate that custom section is not empty
+                                if (!customSectionInput.value.trim()) {
+                                    customSectionInput.setCustomValidity("Custom section cannot be empty");
                                     customSectionInput.classList.add('is-invalid');
                                     customSectionInput.classList.remove('is-valid');
                                 } else {
@@ -1745,9 +1740,9 @@ foreach ($result as $row) {
                 
                 if (completeCourseSection) {
                     // If direct entry is used, validate its format
-                    if (completeCourseSection.length < 3) {
+                    if (!completeCourseSection.trim()) {
                         e.preventDefault();
-                        alert('Course-section must be at least 3 characters');
+                        alert('Course-section cannot be empty');
                         $('#completeCourseSection').focus();
                         return false;
                     }
@@ -1768,9 +1763,9 @@ foreach ($result as $row) {
                     // Validate course if custom selected
                     if (courseSelect.val() === 'custom') {
                         const customCourseValue = customCourseInput.val().trim();
-                        if (!customCourseValue || customCourseValue.length < 3) {
+                        if (!customCourseValue) {
                             e.preventDefault();
-                            alert('Custom course must be at least 3 characters');
+                            alert('Custom course cannot be empty');
                             customCourseInput.focus();
                             return false;
                         }
@@ -1787,9 +1782,9 @@ foreach ($result as $row) {
                     // Validate section if custom selected
                     if (sectionSelect.val() === 'custom') {
                         const customSectionValue = customSectionInput.val().trim();
-                        if (!customSectionValue || customSectionValue.length < 3) {
+                        if (!customSectionValue) {
                             e.preventDefault();
-                            alert('Custom section must be at least 3 characters');
+                            alert('Custom section cannot be empty');
                             customSectionInput.focus();
                             return false;
                         }
@@ -1851,9 +1846,9 @@ foreach ($result as $row) {
                 if (updateCourseSelect.val() === 'custom') {
                     // If custom option selected, validate and set the course_section value
                     const customValue = updateCustomCourseInput.val().trim();
-                    if (!customValue || customValue.length < 3) {
+                    if (!customValue) {
                         e.preventDefault();
-                        alert('Please enter a valid custom course & section (minimum 3 characters)');
+                        alert('Please enter a valid custom course & section');
                         updateCustomCourseInput.focus();
                         return false;
                     }
