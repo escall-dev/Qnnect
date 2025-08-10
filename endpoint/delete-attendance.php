@@ -8,7 +8,9 @@ if (isset($_GET['attendance'])) {
     if (!is_numeric($attendance)) {
         echo "<script>
             alert('Invalid attendance ID!');
-            window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
+
+            window.location.href = 'http://localhost/Qnnect/index.php';
+
         </script>";
         exit;
     }
@@ -23,7 +25,9 @@ if (isset($_GET['attendance'])) {
         if (!$result) {
             echo "<script>
                 alert('Attendance record not found!');
-                window.location.href = 'http://localhost/personal-proj/Qnnect/index.php';
+
+                window.location.href = 'http://localhost/Qnnect/index.php';
+
             </script>";
             exit;
         }
@@ -40,7 +44,9 @@ if (isset($_GET['attendance'])) {
                 'student' => $result['student_name'] ?? 'Student',
                 'id' => $attendance
             ]);
-            header("Location: http://localhost/personal-proj/Qnnect/index.php?$successParams");
+
+            header("Location: http://localhost/Qnnect/index.php?$successParams");
+
             exit();
         } else {
             $errorParams = http_build_query([
@@ -48,7 +54,9 @@ if (isset($_GET['attendance'])) {
                 'message' => 'Failed to delete attendance! No rows were affected.',
                 'details' => 'Database reported successful execution but no rows were modified.'
             ]);
-            header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+
+            header("Location: http://localhost/Qnnect/index.php?$errorParams");
+
             exit();
         }
 
@@ -58,7 +66,9 @@ if (isset($_GET['attendance'])) {
             'message' => 'Database Error',
             'details' => $e->getMessage()
         ]);
-        header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+
+        header("Location: http://localhost/Qnnect/index.php?$errorParams");
+
         exit();
     } catch (Exception $e) {
         $errorParams = http_build_query([
@@ -66,7 +76,8 @@ if (isset($_GET['attendance'])) {
             'message' => 'Error during deletion',
             'details' => $e->getMessage()
         ]);
-        header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+        header("Location: http://localhost/Qnnect/index.php?$errorParams");
+
         exit();
     }
 } else {
@@ -75,7 +86,9 @@ if (isset($_GET['attendance'])) {
         'message' => 'No attendance ID provided!',
         'details' => 'The attendance ID parameter was missing from the request.'
     ]);
-    header("Location: http://localhost/personal-proj/Qnnect/index.php?$errorParams");
+
+    header("Location: http://localhost/Qnnect/index.php?$errorParams");
+
     exit();
 }
 ?>

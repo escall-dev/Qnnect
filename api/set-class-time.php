@@ -86,6 +86,7 @@ try {
             id INT AUTO_INCREMENT PRIMARY KEY,
             school_id INT NOT NULL,
             start_time TIME NOT NULL,
+            status ENUM('active', 'inactive') DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY unique_school_time (school_id)
@@ -95,12 +96,27 @@ try {
             throw new Exception("Failed to create class_time_settings table: " . $conn_qr->error);
         }
         debugLog("Created class_time_settings table");
+    } else {
+        // Table exists, check if status column exists
+        $columnCheckQuery = "SHOW COLUMNS FROM class_time_settings LIKE 'status'";
+        $columnResult = $conn_qr->query($columnCheckQuery);
+        
+        if ($columnResult->num_rows == 0) {
+            // Add status column if it doesn't exist
+            $addColumnQuery = "ALTER TABLE class_time_settings ADD COLUMN status ENUM('active', 'inactive') DEFAULT 'active' AFTER start_time";
+            if (!$conn_qr->query($addColumnQuery)) {
+                debugLog("Failed to add status column: " . $conn_qr->error);
+                // Continue without failing completely
+            } else {
+                debugLog("Added status column to existing table");
+            }
+        }
     }
     
     // Insert or update the class time setting
-    $query = "INSERT INTO class_time_settings (school_id, start_time, updated_at, created_at)
-              VALUES (?, ?, NOW(), NOW())
-              ON DUPLICATE KEY UPDATE start_time = VALUES(start_time), updated_at = NOW()";
+    $query = "INSERT INTO class_time_settings (school_id, start_time, status, updated_at, created_at)
+              VALUES (?, ?, 'active', NOW(), NOW())
+              ON DUPLICATE KEY UPDATE start_time = VALUES(start_time), status = 'active', updated_at = NOW()";
     
     $stmt = $conn_qr->prepare($query);
     if (!$stmt) {
