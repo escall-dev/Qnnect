@@ -62,29 +62,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Using course-section from dropdown: $studentCourse");
             
 
-            // Validate that complete course-section is not empty
-            if (empty($completeCourseSection)) {
-                error_log("Complete course-section is empty: $completeCourseSection");
-                header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Course-section cannot be empty!"));
-
-                exit();
-            }
+            // No validation needed for dropdown values - they come pre-validated
             
-            // Use the custom entry as the course-section value
-            $studentCourse = $customCourseSection;
-            error_log("Using custom course-section: $studentCourse");
-            
-            // Try to extract course and section if it contains a hyphen
-            if (strpos($customCourseSection, '-') !== false) {
-                $parts = explode('-', $customCourseSection, 2);
+            // Extract course and section from the dropdown value
+            if (strpos($studentCourse, '-') !== false) {
+                $parts = explode('-', $studentCourse, 2);
                 $courseName = trim($parts[0]);
                 $sectionName = trim($parts[1]);
-                error_log("Extracted from custom field - Course: $courseName, Section: $sectionName");
+                error_log("Extracted from dropdown - Course: $courseName, Section: $sectionName");
             } else {
                 // If no hyphen, we'll still use it but warn about format
-                error_log("Custom course-section missing hyphen separator: $customCourseSection");
+                error_log("Dropdown course-section missing hyphen separator: $studentCourse");
                 // Set both to the same value so we have something for the database
-                $courseName = $customCourseSection;
+                $courseName = $studentCourse;
                 $sectionName = 'DEFAULT';
             }
         }
@@ -241,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Face verification failed");
             // Redirect with error parameters
 
-            header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Face verification is required!"));
+            header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Face verification is required!"));
             exit();
         }
         
@@ -303,14 +293,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Redirect with success parameters for the add success modal
 
-            header("Location: http://localhost/Qnnect/masterlist.php?add_success=1&student_name=" . urlencode($studentName) . "&student_id=" . $inserted_id);
+            header("Location: ../masterlist.php?add_success=1&student_name=" . urlencode($studentName) . "&student_id=" . $inserted_id);
 
             
         } catch (Exception $e) {
             error_log("Error in student insertion: " . $e->getMessage());
             // Redirect with error parameters
 
-            header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Error: " . $e->getMessage()));
+            header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Error: " . $e->getMessage()));
 
             exit();
         }
@@ -319,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log("Missing required fields in POST data");
         // Redirect with error parameters
 
-        header("Location: http://localhost/Qnnect/masterlist.php?add_error=1&message=" . urlencode("Please fill in all fields and complete face verification!"));
+        header("Location: ../masterlist.php?add_error=1&message=" . urlencode("Please fill in all fields and complete face verification!"));
 
         exit();
     }

@@ -791,10 +791,9 @@ foreach ($result as $row) {
                             <label for="customCourseSection"><i class="fas fa-pen"></i> Enter Custom Course & Section</label>
                             <input type="text" class="form-control" id="customCourseSection" name="custom_course_section" 
                                    placeholder="Enter Course-Section (e.g. BSCS-101, BSIT-2A)"
-                                   minlength="5" maxlength="20" pattern="[A-Za-z0-9- ]{5,20}">
+                                   minlength="3">
                             <small class="form-text text-muted">Format: Course-Section (e.g. BSCS-101, BSIT-2A)</small>
                         </div>
-                        
                         <!-- Hidden field to store the final course-section value -->
                         <input type="hidden" id="finalCourseSection" name="course_section" value="">
                         
@@ -848,43 +847,53 @@ foreach ($result as $row) {
                                     dropdown.innerHTML = '<option value="" disabled selected>Error loading course-sections</option>';
                                 });
                         }
-
-
-
-                        // Handle dropdown selection
-                        function handleDropdownSelection() {
-                            const courseSectionDropdown = document.getElementById('courseSectionDropdown');
-                            const completeCourseSection = document.getElementById('completeCourseSection');
+                        
+                        // Toggle custom course-section input visibility
+                        function toggleCustomCourseSection() {
+                            const courseSelect = document.getElementById('courseSectionDropdown');
+                            const customGroup = document.getElementById('customCourseSectionGroup');
+                            const customInput = document.getElementById('customCourseSection');
                             
-                            if (courseSectionDropdown.value === 'custom') {
-                                // Show custom input and hide dropdown
-                                completeCourseSection.style.display = 'block';
-                                completeCourseSection.focus();
-                                completeCourseSection.required = true;
-                            } else if (courseSectionDropdown.value) {
-                                // Clear direct entry when using dropdown
-                                completeCourseSection.value = '';
-                                completeCourseSection.style.display = 'none';
-                                completeCourseSection.required = false;
+                            if (courseSelect.value === 'custom') {
+                                customGroup.style.display = 'block';
+                                customInput.required = true;
+                                customInput.focus();
+                            } else {
+                                customGroup.style.display = 'none';
+                                customInput.required = false;
                             }
                         }
-
-                        // Initialize when DOM is loaded
+                        
+                        // Update the final field with selected or custom value
+                        function updateFinalField() {
+                            const courseSelect = document.getElementById('courseSectionDropdown');
+                            const customInput = document.getElementById('customCourseSection');
+                            const finalField = document.getElementById('finalCourseSection');
+                            
+                            if (courseSelect.value === 'custom') {
+                                finalField.value = customInput.value.trim();
+                            } else {
+                                finalField.value = courseSelect.value;
+                            }
+                        }
+                        
+                        // Add event listeners
                         document.addEventListener('DOMContentLoaded', function() {
-                            // Load course-sections from teacher schedules
+                            // Load course-sections when page loads
                             loadCourseSections();
                             
-                            // Add event listeners
-                            const courseSectionDropdown = document.getElementById('courseSectionDropdown');
-                            const completeCourseSection = document.getElementById('completeCourseSection');
+                            // Add change event listener to dropdown
+                            const courseSelect = document.getElementById('courseSectionDropdown');
+                            courseSelect.addEventListener('change', function() {
+                                toggleCustomCourseSection();
+                                updateFinalField();
+                            });
                             
-                            if (courseSectionDropdown) {
-                                courseSectionDropdown.addEventListener('change', handleDropdownSelection);
-                            }
-                            
-                            if (completeCourseSection) {
-                                completeCourseSection.addEventListener('input', handleDirectEntry);
-                            }
+                            // Add input event listener to custom input
+                            const customInput = document.getElementById('customCourseSection');
+                            customInput.addEventListener('input', function() {
+                                updateFinalField();
+                            });
                         });
                         </script>
                                 
@@ -1367,7 +1376,7 @@ foreach ($result as $row) {
             
             // Reset form fields to be editable
             if (document.getElementById('studentName')) {
-            document.getElementById('studentName').style.pointerEvents = '';
+                document.getElementById('studentName').style.pointerEvents = '';
             }
             if (document.getElementById('courseSectionDropdown')) {
                 document.getElementById('courseSectionDropdown').style.pointerEvents = '';
@@ -1465,7 +1474,7 @@ foreach ($result as $row) {
                 const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
                 
                 if (qrImg) {
-                qrImg.src = apiUrl;
+                    qrImg.src = apiUrl;
                     qrImg.onload = function() {
                         console.log('QR code image loaded successfully');
                     };
@@ -1483,7 +1492,7 @@ foreach ($result as $row) {
                 
                 // Disable form fields after QR generation
                 if (document.getElementById('studentName')) {
-                document.getElementById('studentName').style.pointerEvents = 'none';
+                    document.getElementById('studentName').style.pointerEvents = 'none';
                 }
                 if (courseSectionDropdown) {
                     courseSectionDropdown.style.pointerEvents = 'none';
@@ -1608,10 +1617,10 @@ foreach ($result as $row) {
                 const value = $(this).val().trim();
                 $('#finalCourseSection').val(value);
                 
-                // Validate format - only require non-empty and hyphen separator
-                if (value && value.includes('-')) {
+                // Validate format
+                if (value.length >= 3 && value.includes('-')) {
                     $(this).removeClass('is-invalid').addClass('is-valid');
-                } else if (!value) {
+                } else if (value.length < 3) {
                     $(this).removeClass('is-valid').addClass('is-invalid');
                 } else if (!value.includes('-')) {
                     $(this).removeClass('is-valid').addClass('is-invalid');
@@ -1643,22 +1652,22 @@ foreach ($result as $row) {
                 
                 // Check if custom course-section is filled
                 const customCourseSectionValue = customCourseSection.val().trim();
-                    
-                    // Validate course selection
+                
+                // Validate course selection
                 if (courseSelect.val() === '' || courseSelect.val() === null) {
-                        e.preventDefault();
+                    e.preventDefault();
                     alert('Please select a course-section from the dropdown');
-                        courseSelect.focus();
-                        return false;
-                    }
-    
-                    // Validate course if custom selected
-                    if (courseSelect.val() === 'custom') {
-                    if (!customCourseSectionValue || customCourseSectionValue.trim() === '') {
-                            e.preventDefault();
-                        alert('Please enter a custom course-section');
+                    courseSelect.focus();
+                    return false;
+                }
+
+                // Validate course if custom selected
+                if (courseSelect.val() === 'custom') {
+                    if (!customCourseSectionValue || customCourseSectionValue.length < 3) {
+                        e.preventDefault();
+                        alert('Please enter a custom course-section (at least 3 characters)');
                         customCourseSection.focus();
-                            return false;
+                        return false;
                     }
                     
                     // Set the final field to custom value
@@ -1670,7 +1679,7 @@ foreach ($result as $row) {
                 
                 // Check if we have a valid final course-section value
                 if (!finalField.val()) {
-                            e.preventDefault();
+                    e.preventDefault();
                     alert('Please select or enter a valid course-section');
                     return false;
                 }
@@ -1720,7 +1729,7 @@ foreach ($result as $row) {
                 if (updateCourseSelect.val() === 'custom') {
                     // If custom option selected, validate and set the course_section value
                     const customValue = updateCustomCourseInput.val().trim();
-                    if (!customValue || customValue.trim() === '') {
+                    if (!customValue) {
                         e.preventDefault();
                         alert('Please enter a valid custom course & section');
                         updateCustomCourseInput.focus();
