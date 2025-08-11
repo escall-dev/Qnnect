@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 05, 2025 at 03:07 AM
+-- Generation Time: Aug 11, 2025 at 03:12 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -41,9 +41,9 @@ CREATE TABLE `recent_logins` (
 --
 
 INSERT INTO `recent_logins` (`id`, `username`, `profile_image`, `last_login`, `created_at`, `school_id`) VALUES
-(1, 'escall', 'uploads/profile_images/profile_1752690336.jpg', '2025-08-02 18:20:49', '2025-07-13 16:43:05', 1),
-(13, 'ara', 'uploads/profile_images/profile_1752744870_40011e02deb1edad.jpg', '2025-08-02 18:39:44', '2025-07-13 16:53:40', 1),
-(114, 'alex', 'uploads/profile_images/profile_1752694438_4af1d3abb596df2b.jpg', '2025-08-02 18:55:11', '2025-07-16 19:34:13', 2);
+(1, 'escall', 'uploads/profile_images/profile_1752690336.jpg', '2025-08-11 13:03:44', '2025-07-13 16:43:05', 1),
+(13, 'ara', 'uploads/profile_images/profile_1752744870_40011e02deb1edad.jpg', '2025-08-11 13:03:34', '2025-07-13 16:53:40', 1),
+(114, 'alex', 'uploads/profile_images/profile_1752694438_4af1d3abb596df2b.jpg', '2025-08-11 11:38:52', '2025-07-16 19:34:13', 2);
 
 -- --------------------------------------------------------
 
@@ -385,7 +385,36 @@ INSERT INTO `system_logs` (`id`, `user_id`, `school_id`, `action`, `details`, `i
 (261, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-02 18:39:54'),
 (262, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-02 18:45:35'),
 (263, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-02 18:50:02'),
-(264, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-02 18:54:35');
+(264, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-02 18:54:35'),
+(265, 25, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-09 09:48:57'),
+(266, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-09 09:56:51'),
+(267, 25, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-09 10:32:20'),
+(268, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-09 10:35:08'),
+(269, 23, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-09 10:35:40'),
+(270, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-10 11:38:35'),
+(271, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-10 11:52:35');
+INSERT INTO `system_logs` (`id`, `user_id`, `school_id`, `action`, `details`, `ip_address`, `user_agent`, `created_at`) VALUES
+(272, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-10 15:18:42'),
+(273, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-10 16:07:33'),
+(274, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-10 16:08:10'),
+(275, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:03:13'),
+(276, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:04:54'),
+(277, 23, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:06:50'),
+(278, 23, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:07:36'),
+(279, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:08:28'),
+(280, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:09:24'),
+(281, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 03:25:38'),
+(282, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 06:02:20'),
+(283, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 06:03:07'),
+(284, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 06:12:01'),
+(285, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 06:12:11'),
+(286, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 10:11:54'),
+(287, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 10:13:21'),
+(288, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 10:30:15'),
+(289, 24, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 11:36:31'),
+(290, 23, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 11:39:03'),
+(291, 25, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 11:40:16'),
+(292, 23, 1, 'USER_LOGIN', 'School: 1', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-11 13:03:44');
 
 -- --------------------------------------------------------
 
@@ -901,8 +930,36 @@ INSERT INTO `tbl_user_logs` (`log_id`, `username`, `user_type`, `log_in_time`, `
 (490, 'ara', 'admin', '2025-08-03 02:35:54', NULL, '::1', 25, 1),
 (491, 'alex', 'admin', '2025-08-03 02:39:54', '2025-08-03 02:50:10', '::1', 24, 2),
 (492, 'alex', 'admin', '2025-08-03 02:45:35', '2025-08-03 02:50:10', '::1', 24, 2),
-(493, 'alex', 'admin', '2025-08-03 02:50:02', NULL, '::1', 24, 2),
-(494, 'alex', 'admin', '2025-08-03 02:54:35', NULL, '::1', 24, 2);
+(493, 'alex', 'admin', '2025-08-03 02:50:02', '2025-08-11 18:13:30', '::1', 24, 2),
+(494, 'alex', 'admin', '2025-08-03 02:54:35', '2025-08-11 18:13:30', '::1', 24, 2),
+(495, 'ara', 'admin', '2025-08-09 17:48:57', NULL, '::1', 25, 1),
+(496, 'alex', 'admin', '2025-08-09 17:56:51', '2025-08-11 18:13:30', '::1', 24, 2),
+(497, 'ara', 'admin', '2025-08-09 18:32:20', NULL, '::1', 25, 1),
+(498, 'alex', 'admin', '2025-08-09 18:35:08', '2025-08-11 18:13:30', '::1', 24, 2),
+(499, 'escall', 'admin', '2025-08-09 18:35:40', NULL, '::1', 23, 1),
+(500, 'alex', 'admin', '2025-08-10 19:38:35', '2025-08-11 18:13:30', '::1', 24, 2),
+(501, 'alex', 'admin', '2025-08-10 19:52:35', '2025-08-11 18:13:30', '::1', 24, 2),
+(502, 'alex', 'admin', '2025-08-10 23:18:42', '2025-08-11 18:13:30', '::1', 24, 2),
+(503, 'alex', 'admin', '2025-08-11 00:07:33', '2025-08-11 18:13:30', '::1', 24, 2),
+(504, 'alex', 'admin', '2025-08-11 00:08:10', '2025-08-11 18:13:30', '::1', 24, 2),
+(505, 'alex', 'admin', '2025-08-11 11:03:13', '2025-08-11 18:13:30', '::1', 24, 2),
+(506, 'alex', 'admin', '2025-08-11 11:04:54', '2025-08-11 18:13:30', '::1', 24, 2),
+(507, 'escall', 'admin', '2025-08-11 11:06:50', NULL, '::1', 23, 1),
+(508, 'escall', 'admin', '2025-08-11 11:07:36', NULL, '::1', 23, 1),
+(509, 'alex', 'admin', '2025-08-11 11:08:28', '2025-08-11 18:13:30', '::1', 24, 2),
+(510, 'alex', 'admin', '2025-08-11 11:09:24', '2025-08-11 18:13:30', '::1', 24, 2),
+(511, 'alex', 'admin', '2025-08-11 11:25:38', '2025-08-11 18:13:30', '::1', 24, 2),
+(512, 'alex', 'admin', '2025-08-11 14:02:20', '2025-08-11 18:13:30', '::1', 24, 2),
+(513, 'alex', 'admin', '2025-08-11 14:03:07', '2025-08-11 18:13:30', '::1', 24, 2),
+(514, 'alex', 'admin', '2025-08-11 14:12:01', '2025-08-11 18:13:30', '::1', 24, 2),
+(515, 'alex', 'admin', '2025-08-11 14:12:11', '2025-08-11 18:13:30', '::1', 24, 2),
+(516, 'alex', 'admin', '2025-08-11 18:11:54', '2025-08-11 18:13:30', '::1', 24, 2),
+(517, 'alex', 'admin', '2025-08-11 18:13:21', '2025-08-11 19:36:40', '::1', 24, 2),
+(518, 'alex', 'admin', '2025-08-11 18:30:15', '2025-08-11 19:36:40', '::1', 24, 2),
+(519, 'alex', 'admin', '2025-08-11 19:36:31', NULL, '::1', 24, 2),
+(520, 'escall', 'admin', '2025-08-11 19:39:03', NULL, '::1', 23, 1),
+(521, 'ara', 'admin', '2025-08-11 19:40:16', NULL, '::1', 25, 1),
+(522, 'escall', 'admin', '2025-08-11 21:03:44', NULL, '::1', 23, 1);
 
 -- --------------------------------------------------------
 
@@ -993,7 +1050,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `recent_logins`
 --
 ALTER TABLE `recent_logins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=542;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=605;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -1011,13 +1068,13 @@ ALTER TABLE `schools`
 -- AUTO_INCREMENT for table `system_logs`
 --
 ALTER TABLE `system_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=265;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=293;
 
 --
 -- AUTO_INCREMENT for table `tbl_user_logs`
 --
 ALTER TABLE `tbl_user_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=495;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=523;
 
 --
 -- AUTO_INCREMENT for table `users`
