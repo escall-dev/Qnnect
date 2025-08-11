@@ -249,8 +249,10 @@ if (isset($_GET['attendance'])) {
 // Get user's school_id (assuming it's stored in session)
 $school_id = $_SESSION['school_id'] ?? 1;
 
-// Get dropdown data
-$scheduleData = getScheduleDropdownData($school_id);
+// Get dropdown data (scoped to user)
+$current_teacher_username_for_dropdown = $_SESSION['userData']['username'] ?? $_SESSION['email'] ?? '';
+$current_user_id_for_dropdown = $_SESSION['user_id'] ?? null;
+$scheduleData = getScheduleDropdownData($school_id, $current_teacher_username_for_dropdown, (int)$current_user_id_for_dropdown);
 
 // Get selected filters from GET parameters
 $selectedInstructor = $_GET['instructor'] ?? '';
@@ -1869,11 +1871,15 @@ $filteredSchedules = getFilteredSchedules(
                                                 echo "<option value=\"" . htmlspecialchars($subject) . "\" $selected>" . htmlspecialchars($subject) . "</option>";
                                             }
                                         } else {
-                                            // Fallback: get all subjects if no teacher-specific subjects found
-                                            $all_subjects = getAllSubjects($school_id);
-                                            foreach ($all_subjects as $subject) {
-                                                $selected = (isset($_SESSION['current_subject']) && $_SESSION['current_subject'] == $subject) ? 'selected' : '';
-                                                echo "<option value=\"" . htmlspecialchars($subject) . "\" $selected>" . htmlspecialchars($subject) . "</option>";
+                                            // User-scoped fallback
+                                            $all_subjects = getAllSubjectsForUser($school_id, $current_teacher_username, $current_user_id);
+                                            if (!empty($all_subjects)) {
+                                                foreach ($all_subjects as $subject) {
+                                                    $selected = (isset($_SESSION['current_subject']) && $_SESSION['current_subject'] == $subject) ? 'selected' : '';
+                                                    echo "<option value=\"" . htmlspecialchars($subject) . "\" $selected>" . htmlspecialchars($subject) . "</option>";
+                                                }
+                                            } else {
+                                                echo "<option value=\"\" disabled>No subjects available for your account</option>";
                                             }
                                         }
                                         ?>

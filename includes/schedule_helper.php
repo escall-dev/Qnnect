@@ -3,62 +3,79 @@
 require_once(__DIR__ . '/../conn/db_connect.php');
 
 /**
- * Get all unique schedule data for dropdowns from teacher_schedules table
- * @param int $school_id - The school ID to filter data for (required)
+ * Get all unique schedule data for dropdowns scoped to the current user
+ *
+ * @param int $school_id         The school ID to filter data for (required)
+ * @param string $teacher_username Current user's teacher username (required)
+ * @param int $user_id           Current user's ID (required)
  */
-function getScheduleDropdownData($school_id) {
+function getScheduleDropdownData($school_id, $teacher_username, $user_id) {
     global $conn_qr;
-    
+
     $data = [
         'instructors' => [],
         'sections' => [],
         'subjects' => [],
         'times' => []
     ];
-    
-    // Get unique instructors (teacher_username)
-    $sql = "SELECT DISTINCT teacher_username FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY teacher_username";
+
+    // Instructors: only the current teacher
+    $sql = "SELECT DISTINCT teacher_username 
+            FROM teacher_schedules 
+            WHERE school_id = ? AND status = 'active' AND teacher_username = ? AND user_id = ?
+            ORDER BY teacher_username";
     $stmt = $conn_qr->prepare($sql);
-    $stmt->bind_param("i", $school_id);
+    $stmt->bind_param("isi", $school_id, $teacher_username, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $data['instructors'][] = $row['teacher_username'];
     }
-    
-    // Get unique sections from course_section field in tbl_student
-    $sql = "SELECT DISTINCT course_section FROM tbl_student WHERE school_id = ? AND course_section IS NOT NULL AND course_section != '' ORDER BY course_section";
+
+    // Sections taught by this user
+    $sql = "SELECT DISTINCT section 
+            FROM teacher_schedules 
+            WHERE school_id = ? AND status = 'active' AND teacher_username = ? AND user_id = ?
+            ORDER BY section";
     $stmt = $conn_qr->prepare($sql);
-    $stmt->bind_param("i", $school_id);
+    $stmt->bind_param("isi", $school_id, $teacher_username, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
-        $data['sections'][] = $row['course_section'];
+        if (!empty($row['section'])) {
+            $data['sections'][] = $row['section'];
+        }
     }
-    
-    // Get unique subjects
-    $sql = "SELECT DISTINCT subject FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY subject";
+
+    // Subjects taught by this user
+    $sql = "SELECT DISTINCT subject 
+            FROM teacher_schedules 
+            WHERE school_id = ? AND status = 'active' AND teacher_username = ? AND user_id = ?
+            ORDER BY subject";
     $stmt = $conn_qr->prepare($sql);
-    $stmt->bind_param("i", $school_id);
+    $stmt->bind_param("isi", $school_id, $teacher_username, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $data['subjects'][] = $row['subject'];
     }
-    
-    // Get unique time slots
-    $sql = "SELECT DISTINCT start_time, end_time FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY start_time";
+
+    // Time slots for this user
+    $sql = "SELECT DISTINCT start_time, end_time 
+            FROM teacher_schedules 
+            WHERE school_id = ? AND status = 'active' AND teacher_username = ? AND user_id = ?
+            ORDER BY start_time";
     $stmt = $conn_qr->prepare($sql);
-    $stmt->bind_param("i", $school_id);
+    $stmt->bind_param("isi", $school_id, $teacher_username, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $data['times'][] = [
             'start_time' => $row['start_time'],
-            'end_time' => $row['end_time']
+            'end_time'   => $row['end_time']
         ];
     }
-    
+
     return $data;
 }
 
@@ -154,15 +171,21 @@ function getTeacherSubjects($teacher_username, $school_id, $user_id = null) {
 }
 
 /**
- * Get all unique subjects from teacher_schedules table for a school
- * @param int $school_id - The school ID to filter data for (required)
+ * Get all unique subjects from teacher_schedules for the current user
+ *
+ * @param int $school_id
+ * @param string $teacher_username
+ * @param int $user_id
  */
-function getAllSubjects($school_id) {
+function getAllSubjectsForUser($school_id, $teacher_username, $user_id) {
     global $conn_qr;
     
-    $sql = "SELECT DISTINCT subject FROM teacher_schedules WHERE school_id = ? AND status = 'active' ORDER BY subject";
+    $sql = "SELECT DISTINCT subject 
+            FROM teacher_schedules 
+            WHERE school_id = ? AND status = 'active' AND teacher_username = ? AND user_id = ?
+            ORDER BY subject";
     $stmt = $conn_qr->prepare($sql);
-    $stmt->bind_param("i", $school_id);
+    $stmt->bind_param("isi", $school_id, $teacher_username, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     

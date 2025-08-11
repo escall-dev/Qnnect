@@ -35,22 +35,15 @@ $instructor = $_GET['instructor'] ?? null;
 $action = $_GET['action'] ?? 'get_dropdown_data';
 
 if ($action === 'get_dropdown_data') {
-    // Get all dropdown data
-    $scheduleData = getScheduleDropdownData($school_id);
-    
-    echo json_encode([
-        'success' => true,
-        'data' => $scheduleData
-    ]);
+    // Get user-scoped dropdown data
+    $scheduleData = getScheduleDropdownData($school_id, $teacher_username, (int)$user_id);
+    echo json_encode(['success' => true, 'data' => $scheduleData]);
     
 } elseif ($action === 'get_teacher_subjects') {
     // Get subjects for specific teacher
-    if ($instructor) {
-        $subjects = getTeacherSubjects($instructor, $school_id);
-    } else {
-        // Get subjects for current logged-in teacher
-        $subjects = getTeacherSubjects($teacher_username, $school_id, $user_id);
-    }
+    // Always scope by current user's user_id to avoid cross-user leakage
+    $target_teacher = $instructor ?: $teacher_username;
+    $subjects = getTeacherSubjects($target_teacher, $school_id, $user_id);
     
     echo json_encode([
         'success' => true,
@@ -58,13 +51,9 @@ if ($action === 'get_dropdown_data') {
     ]);
     
 } elseif ($action === 'get_all_subjects') {
-    // Get all subjects in the school
-    $subjects = getAllSubjects($school_id);
-    
-    echo json_encode([
-        'success' => true,
-        'subjects' => $subjects
-    ]);
+    // Get all subjects for the current user only
+    $subjects = getAllSubjectsForUser($school_id, $teacher_username, (int)$user_id);
+    echo json_encode(['success' => true, 'subjects' => $subjects]);
     
 } elseif ($action === 'get_filtered_schedules') {
     // Get filtered schedules based on parameters
