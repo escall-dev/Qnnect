@@ -108,13 +108,9 @@ try {
             }
         }
 
-        // CRITICAL: Set teacher_schedules status to 'inactive' to fully terminate class sessions
-        $teacher_sql = "UPDATE teacher_schedules SET status = 'inactive', updated_at = NOW() WHERE school_id = ? AND status = 'active'";
-        if ($stmt = $conn_qr->prepare($teacher_sql)) {
-            $stmt->bind_param('i', $school_id);
-            $stmt->execute();
-            $stmt->close();
-        }
+        // NOTE: Teacher schedules should NOT be set to inactive on logout
+        // They are permanent schedule templates, not active class sessions
+        // Only class time settings and attendance sessions should be terminated
     }
 } catch (Throwable $e) {
     // Fail-safe: continue logout even if termination fails

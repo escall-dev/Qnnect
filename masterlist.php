@@ -97,7 +97,7 @@ if ($column_result->num_rows == 0) {
                 width: calc(100% - 50px);
             }
         }
-        
+
         /* Ensure QR buttons are visible */
         .qr-button {
             display: inline-block !important;
@@ -1614,14 +1614,14 @@ foreach ($result as $row) {
                 $('#globalQrModal').show();
                 
                             console.log('Modal should be visible now');
-        });
+            });
         
 
-        
-        // Close modal handlers
-        $('#closeQrModal, #closeQrButton').on('click', function() {
-            $('#globalQrModal').hide();
-        });
+            
+            // Close modal handlers
+            $('#closeQrModal, #closeQrButton').on('click', function() {
+                $('#globalQrModal').hide();
+            });
             
             // Close when clicking outside
             $('#globalQrModal').on('click', function(e) {
@@ -1911,10 +1911,10 @@ foreach ($result as $row) {
                     const qrCode = $(this).data('qr');
                     
                     console.log('QR button clicked (reattached):', { studentName, qrCode });
-                    
-                    $('#qrModalTitle').text(studentName + "'s QR Code");
-                    $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
-                    $('#globalQrModal').show();
+                        
+                        $('#qrModalTitle').text(studentName + "'s QR Code");
+                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
+                        $('#globalQrModal').show();
                 });
             }
 

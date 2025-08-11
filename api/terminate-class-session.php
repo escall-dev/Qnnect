@@ -206,26 +206,10 @@ try {
             debugLog("Class time settings update skipped (table may not exist): " . $e->getMessage());
         }
 
-        // CRITICAL: Set teacher_schedules status to 'inactive' to fully terminate class sessions
-        try {
-            $teacher_schedule_update_query = "
-                UPDATE teacher_schedules 
-                SET status = 'inactive',
-                    updated_at = NOW()
-                WHERE school_id = ? 
-                AND status = 'active'
-            ";
-            if ($teacher_stmt = $conn_qr->prepare($teacher_schedule_update_query)) {
-                $teacher_stmt->bind_param("i", $school_id);
-                if ($teacher_stmt->execute()) {
-                    $teacher_affected = $teacher_stmt->affected_rows;
-                    debugLog("Set teacher_schedules status to 'inactive' for $teacher_affected row(s) (school_id: $school_id)");
-                }
-                $teacher_stmt->close();
-            }
-        } catch (Exception $e) {
-            debugLog("Teacher schedules status update skipped (table may not exist): " . $e->getMessage());
-        }
+        // NOTE: Teacher schedules should NOT be set to inactive when terminating class sessions
+        // They are permanent schedule templates, not active class sessions
+        // Only class time settings and attendance sessions should be terminated
+        debugLog("Teacher schedules preserved (not terminated when ending class sessions)");
     }
     
     debugLog("Session data after termination: " . print_r($_SESSION, true));

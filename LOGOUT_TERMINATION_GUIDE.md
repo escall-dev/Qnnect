@@ -28,9 +28,9 @@ The logout process terminates the following class time related data:
 - Handles both column formats for backward compatibility
 
 #### Teacher Schedules (`teacher_schedules` table)
-- Sets `status` to 'inactive' for all active schedules
-- Updates `updated_at` timestamp
-- Ensures no active teacher schedules remain
+- **NOT terminated on logout** - Teacher schedules are permanent templates
+- Only class time settings and attendance sessions are terminated
+- Teacher schedules persist across sessions and remain active
 
 #### Attendance Sessions (`attendance_sessions` table)
 - Sets `end_time` to current timestamp
