@@ -73,8 +73,11 @@ try {
     unset($_SESSION['attendance_session_end']);
 
     if (isset($conn_qr) && $conn_qr) {
+        // Avoid DATE() in WHERE to leverage indexes
         $current_date = date('Y-m-d');
-        $current_time = date('H:i:s');
+        $start_of_day = $current_date . ' 00:00:00';
+        $start_of_next_day = date('Y-m-d', strtotime($current_date . ' +1 day')) . ' 00:00:00';
+        $now_ts = date('Y-m-d H:i:s');
 
         $has_school_id = false;
         if ($result = mysqli_query($conn_qr, "SHOW COLUMNS FROM attendance_sessions LIKE 'school_id'")) {
@@ -88,12 +91,13 @@ try {
                 SET end_time = NOW(), 
                     status = 'terminated' 
                 WHERE school_id = ? 
-                AND DATE(start_time) = ? 
+                AND start_time >= ? 
+                AND start_time < ? 
                 AND end_time >= ? 
                 AND status = 'active'
             ";
             if ($stmt = $conn_qr->prepare($update_query)) {
-                $stmt->bind_param('iss', $school_id, $current_date, $current_time);
+                $stmt->bind_param('isss', $school_id, $start_of_day, $start_of_next_day, $now_ts);
                 $stmt->execute();
                 $stmt->close();
             }
@@ -102,12 +106,13 @@ try {
                 UPDATE attendance_sessions 
                 SET end_time = NOW(), 
                     status = 'terminated' 
-                WHERE DATE(start_time) = ? 
+                WHERE start_time >= ? 
+                AND start_time < ? 
                 AND end_time >= ? 
                 AND status = 'active'
             ";
             if ($stmt = $conn_qr->prepare($update_query)) {
-                $stmt->bind_param('ss', $current_date, $current_time);
+                $stmt->bind_param('sss', $start_of_day, $start_of_next_day, $now_ts);
                 $stmt->execute();
                 $stmt->close();
             }
@@ -160,56 +165,8 @@ try {
         // Only class time settings and attendance sessions should be terminated
         error_log("[ADMIN-LOGOUT] Teacher schedules preserved (not terminated on logout)");
 
-        // Additional: Call both termination APIs for comprehensive cleanup
-        try {
-            // Call terminate class session API
-            $terminate_url = 'http://' . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['REQUEST_URI'])) . '/api/terminate-class-session.php';
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $terminate_url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, 'terminate=1');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded',
-                'Cookie: ' . session_name() . '=' . session_id()
-            ]);
-            
-            $response = curl_exec($ch);
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            
-            if ($http_code === 200) {
-                error_log("[ADMIN-LOGOUT] Successfully called terminate-class-session API");
-            } else {
-                error_log("[ADMIN-LOGOUT] Failed to call terminate-class-session API. HTTP Code: $http_code");
-            }
-            
-            // Call set class time inactive API
-            $inactive_url = 'http://' . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['REQUEST_URI'])) . '/api/set-class-time-inactive.php';
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $inactive_url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, 'set_inactive=1');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded',
-                'Cookie: ' . session_name() . '=' . session_id()
-            ]);
-            
-            $response = curl_exec($ch);
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            
-            if ($http_code === 200) {
-                error_log("[ADMIN-LOGOUT] Successfully called set-class-time-inactive API");
-            } else {
-                error_log("[ADMIN-LOGOUT] Failed to call set-class-time-inactive API. HTTP Code: $http_code");
-            }
-        } catch (Exception $e) {
-            error_log("[ADMIN-LOGOUT] Error calling termination APIs: " . $e->getMessage());
-        }
+        // Remove blocking HTTP calls during logout to speed up UX
+        // Admin logout already performs necessary DB cleanup directly above
     }
 } catch (Throwable $e) {
     // Continue logout even if termination fails

@@ -110,8 +110,11 @@ try {
     
     // Update database if there's an active attendance session
     if (isset($conn_qr)) {
+        // Use range-based comparisons to allow index use on start_time
         $current_date = date('Y-m-d');
-        $current_time = date('H:i:s');
+        $start_of_day = $current_date . ' 00:00:00';
+        $start_of_next_day = date('Y-m-d', strtotime($current_date . ' +1 day')) . ' 00:00:00';
+        $now_ts = date('Y-m-d H:i:s');
         
         // Check if school_id column exists in attendance_sessions table
         $check_column = "SHOW COLUMNS FROM attendance_sessions LIKE 'school_id'";
@@ -125,26 +128,28 @@ try {
                 SET end_time = NOW(), 
                     status = 'terminated' 
                 WHERE school_id = ? 
-                AND DATE(start_time) = ? 
+                AND start_time >= ? 
+                AND start_time < ? 
                 AND end_time >= ? 
                 AND status = 'active'
             ";
             
             $stmt = $conn_qr->prepare($update_query);
-            $stmt->bind_param("iss", $school_id, $current_date, $current_time);
+            $stmt->bind_param("isss", $school_id, $start_of_day, $start_of_next_day, $now_ts);
         } else {
             // Fallback: update all active sessions (for backward compatibility)
             $update_query = "
                 UPDATE attendance_sessions 
                 SET end_time = NOW(), 
                     status = 'terminated' 
-                WHERE DATE(start_time) = ? 
+                WHERE start_time >= ? 
+                AND start_time < ? 
                 AND end_time >= ? 
                 AND status = 'active'
             ";
             
             $stmt = $conn_qr->prepare($update_query);
-            $stmt->bind_param("ss", $current_date, $current_time);
+            $stmt->bind_param("sss", $start_of_day, $start_of_next_day, $now_ts);
         }
         
         if ($stmt->execute()) {

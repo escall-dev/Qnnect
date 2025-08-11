@@ -3,8 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Start the session
-session_start();
+// Start the session if not already active
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Set headers for JSON response
 header('Content-Type: application/json');

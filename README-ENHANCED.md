@@ -1,3 +1,7 @@
+- Performance note: Logout optimized
+  - Removed blocking HTTP calls in `admin/logout.php`
+  - Optimized `attendance_sessions` termination queries to avoid `DATE()` on `start_time`
+  - Recommended indexes for `attendance_sessions`: `INDEX(school_id, start_time)`, `INDEX(start_time)`, `INDEX(end_time)`
 # 📘 Qnnect - Enhanced Multi-Tenant QR Attendance System
 
 ## 🎯 Recent Improvements (Multi-Tenant & Enhanced Features)
