@@ -171,7 +171,7 @@ fetch('api/terminate-class-session.php', {
 
 ### Database Tables Updated
 1. **class_time_settings** - Clears start_time/class_start_time
-2. **teacher_schedules** - Sets status to 'inactive'
+2. **teacher_schedules** - **NOT affected** (permanent templates)
 3. **attendance_sessions** - Sets status to 'terminated'
 
 ## Testing

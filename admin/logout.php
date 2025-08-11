@@ -155,15 +155,10 @@ try {
             error_log("[ADMIN-LOGOUT] class_time_settings table does not have start_time or class_start_time columns");
         }
 
-        // CRITICAL: Set teacher_schedules status to 'inactive' to fully terminate class sessions
-        $teacher_sql = "UPDATE teacher_schedules SET status = 'inactive', updated_at = NOW() WHERE school_id = ? AND status = 'active'";
-        if ($stmt = $conn_qr->prepare($teacher_sql)) {
-            $stmt->bind_param('i', $school_id);
-            $stmt->execute();
-            $teacher_affected = $stmt->affected_rows;
-            error_log("[ADMIN-LOGOUT] Set teacher_schedules status to 'inactive' for $teacher_affected row(s) (school_id: $school_id)");
-            $stmt->close();
-        }
+        // NOTE: Teacher schedules should NOT be set to inactive on logout
+        // They are permanent schedule templates, not active class sessions
+        // Only class time settings and attendance sessions should be terminated
+        error_log("[ADMIN-LOGOUT] Teacher schedules preserved (not terminated on logout)");
 
         // Additional: Call both termination APIs for comprehensive cleanup
         try {
