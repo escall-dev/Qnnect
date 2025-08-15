@@ -469,12 +469,10 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
                     <table class="table table-striped" id="logsTable">
                         <thead style="background-color: #098744; color: white;">
                             <tr>
-                                <th>Log ID</th>
                                 <th>Username</th>
                                 <th>User Type</th>
                                 <th>Log In Time</th>
                                 <th>Log Out Time</th>
-                                
                             </tr>
                         </thead>
                         <tbody>
@@ -493,7 +491,6 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
                             <?php else: ?>
                                 <?php foreach ($logs as $log): ?>
                                     <tr>
-                                        <td><?php echo $log['log_id']; ?></td>
                                         <td><?php echo htmlspecialchars($log['username']); ?></td>
                                         <td>
                                             <?php if ($log['user_type'] === 'Admin'): ?>
@@ -585,7 +582,7 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
             const table = $('#logsTable').DataTable({
                 destroy: true, // Force destroy any existing table
                 responsive: true,
-                order: [[0, 'desc']], // Sort by Log ID descending (most recent first)
+                order: [[2, 'desc']],
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 dom: '<"row"<"col-md-6"B><"col-md-6"f>>rtip',

@@ -766,6 +766,50 @@ $filteredSchedules = getFilteredSchedules(
             background-color: white;
         }
 
+        /* Ensure Name column is wide and readable, and Action stays compact */
+        #attendanceTable th,
+        #attendanceTable td {
+            vertical-align: middle;
+        }
+        /* Name column (1st): keep on one line with ellipsis, do not break letters */
+        #attendanceTable th:nth-child(1),
+        #attendanceTable td:nth-child(1) {
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+        /* Course & Section column (2nd): left align for readability */
+        #attendanceTable th:nth-child(2),
+        #attendanceTable td:nth-child(2) {
+            text-align: left;
+        }
+        /* Date column (3rd): allow full date text */
+        #attendanceTable th:nth-child(3),
+        #attendanceTable td:nth-child(3) {
+            white-space: nowrap; /* keep date in one line, but column is wider */
+        }
+
+        /* Action column (6th): compact body cells, header fully readable */
+        #attendanceTable th:nth-child(6) {
+            width: 80px !important;
+            max-width: 80px !important;
+            text-align: center;
+            white-space: nowrap;            /* keep on one line */
+            overflow: visible;              /* avoid clipping */
+            text-overflow: clip;            /* disable ellipsis */
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        #attendanceTable td:nth-child(6) {
+            width: 80px !important;
+            max-width: 80px !important;
+            text-align: center;
+            white-space: nowrap;            /* keep button on one line */
+        }
+
         .qr-container {
             background-color: rgba(255, 255, 255, 0.8);
             border-radius: 20px;
@@ -1165,28 +1209,25 @@ $filteredSchedules = getFilteredSchedules(
         .qr-section {
             width: 100%;
             max-height: 90vh;
-            overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: #098744 #f1f1f1;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        .qr-section::-webkit-scrollbar {
+        .qr-container::-webkit-scrollbar {
             width: 8px;
         }
 
-        .qr-section::-webkit-scrollbar-track {
+        .qr-container::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
 
-        .qr-section::-webkit-scrollbar-thumb {
+        .qr-container::-webkit-scrollbar-thumb {
             background: #098744;
             border-radius: 4px;
         }
 
-        .qr-section::-webkit-scrollbar-thumb:hover {
+        .qr-container::-webkit-scrollbar-thumb:hover {
             background: #076a32;
         }
 
@@ -1208,6 +1249,11 @@ $filteredSchedules = getFilteredSchedules(
             flex: 1 !important;
             display: flex !important;
             flex-direction: column !important;
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #098744 #f1f1f1;
         }
 
         /* Update attendance list styling */
@@ -1530,23 +1576,7 @@ $filteredSchedules = getFilteredSchedules(
     <div class="main" id="main">
         <div class="container-fluid">
             <!-- Header with Termination Button -->
-            <div class="row mb-3">
-                <div class="col-12">
-                    
-                        <div class="d-flex align-items-center">
-                            <!-- Active Session Indicator -->
-                            <div id="activeSessionIndicator" class="mr-3" style="display: none;">
-                                <span class="badge badge-success">
-                                    <i class="fas fa-clock"></i> Active Session
-                                </span>
-                            </div>
-                            <!-- Prominent Termination Button -->
-                            <button type="button" id="headerTerminateBtn" class="btn btn-danger btn-lg" style="display: none;" onclick="terminateClassSession()">
-                                <i class="fas fa-stop-circle"></i> Terminate & Set Inactive
-                            </button>
-                        </div>
-                    </div>
-                </div>
+           
             </div>
             
             <!-- Outer wrapper container for QR and Attendance -->
@@ -1555,7 +1585,7 @@ $filteredSchedules = getFilteredSchedules(
                 <!-- Unified Container for QR and Attendance -->
                 <div class="unified-attendance-container">
                     <div class="qr-section">
-                        <div class="qr-container" style="background-color: rgba(255, 255, 255, 0.95); border-radius: 15px 0 0 15px; padding: 15px; box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; height: 100%; border-right: 3px solid #098744;">
+                        <div class="qr-container" style="background-color: rgba(255, 255, 255, 0.95); border-radius: 15px 0 0 15px; padding: 15px; box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; height: 100%; border-right: 3px solid #098744; overflow-y: auto; overflow-x: hidden;">
                 
                 <div class="scanner-con mb-3">
                     <h6 class="text-center mb-2">Scan QR Code for Attendance</h6>
@@ -1581,37 +1611,12 @@ $filteredSchedules = getFilteredSchedules(
                             <div id="currentTimeSettings" class="alert alert-info py-2 mb-3" style="<?= isset($_SESSION['class_start_time']) ? '' : 'display:none;' ?>">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-check-circle text-success mr-2"></i>
-                                    <div>
-                                        <strong class="d-block">Current Class Time:</strong>
-                                        <span id="displayedStartTime" class="font-weight-bold">
-                                        <?php 
-                                        if(isset($_SESSION['class_start_time'])) {
-                                            $time = DateTime::createFromFormat('H:i', $_SESSION['class_start_time']);
-                                            echo $time ? $time->format('h:i A') : $_SESSION['class_start_time'];
-                                        } else {
-                                            echo 'No class time set';
-                                        }
-                                        ?>
-                                        </span>
-                                        <small class="text-muted d-block mt-1">
-                                            <i class="fas fa-info-circle"></i> Attendance after this time will be marked as "Late"
-                                        </small>
-                                        <small class="text-success d-block mt-1 font-weight-bold">
-                                            <i class="fas fa-check"></i> Time is active and being used for attendance
-                                        </small>
+                                    
                                     </div>
                                 </div>
                                 
                                 <!-- Termination Button - Only shown when class time is set -->
-                                <div id="terminationButtonContainer" class="mt-3" style="<?= isset($_SESSION['class_start_time']) ? '' : 'display:none;' ?>">
-                                    <button type="button" id="classTimeTerminateBtn" class="btn btn-danger btn-block" onclick="terminateClassSession()">
-                                        <i class="fas fa-stop-circle"></i> Terminate Class Session
-                                    </button>
-                                    <small class="text-muted mt-2 d-block text-center">
-                                        <i class="fas fa-info-circle"></i> Click to end the current class session and clear all settings
-                                    </small>
-                                </div>
-                            </div>
+                                
                             
                             <form id="classTimeForm">
                                 <div class="form-group mb-3">
@@ -1761,7 +1766,7 @@ $filteredSchedules = getFilteredSchedules(
                                         </div>
                                         <div class="row mt-3">
                                             <div class="col-12">
-                                                <button type="button" id="terminateClassSession" class="btn btn-danger btn-block" onclick="if(typeof terminateClassSession === 'function') { terminateClassSession(); } else { console.error('terminateClassSession function not found'); alert('Function not available'); }">
+                                                <button type="button" id="terminateClassSession" class="btn btn-danger btn-block" data-toggle="modal" data-target="#endSessionConfirmModal">
                                                     <i class="fas fa-stop-circle"></i> Terminate Session & Set Class Time Inactive
                                                 </button>
                                                 <small class="text-muted mt-2 d-block">
@@ -2078,8 +2083,18 @@ $filteredSchedules = getFilteredSchedules(
                         <div class="class-time-info alert alert-success py-2 mb-2">
                             <i class="fas fa-check-circle"></i> <strong>Class Time Set:</strong> 
                             <?php 
-                                $time = DateTime::createFromFormat('H:i', $_SESSION['class_start_time']);
-                                echo $time ? $time->format('h:i A') : $_SESSION['class_start_time'];
+                                $rawTime = $_SESSION['class_start_time'];
+                                $displayTime = null;
+                                $formats = ['H:i', 'H:i:s', 'h:i A', 'h:i:s A', 'g:i A', 'g:i a', 'G:i', 'G:i:s'];
+                                foreach ($formats as $fmt) {
+                                    $dt = DateTime::createFromFormat($fmt, $rawTime);
+                                    if ($dt instanceof DateTime) { $displayTime = $dt->format('h:i A'); break; }
+                                }
+                                if (!$displayTime) {
+                                    $ts = strtotime($rawTime);
+                                    $displayTime = $ts ? date('h:i A', $ts) : $rawTime;
+                                }
+                                echo htmlspecialchars($displayTime);
                             ?>
                         </div>
                         <?php endif; ?>
@@ -2089,16 +2104,23 @@ $filteredSchedules = getFilteredSchedules(
                     
                     <!-- Table container with height optimized for 8 records -->
                     <div class="table-container table-responsive" style="flex: 1; overflow-y: auto; height: auto; max-height: 440px; border: 2px solid #098744; background-color: white; display: block; overflow-x: hidden;">
-                        <table class="table text-center table-sm table-bordered" id="attendanceTable" style="border-collapse: separate; border-spacing: 0; width: 100%; margin: 0;">
+                        <table class="table text-center table-sm table-bordered" id="attendanceTable" style="border-collapse: separate; border-spacing: 0; width: 100%; margin: 0; table-layout: fixed;">
+                            <colgroup>
+                                <col style="width: 37%">   <!-- Name -->
+                                <col style="width: 24%">   <!-- Course & Section -->
+                                <col style="width: 16%">   <!-- Date (wider) -->
+                                <col style="width: 12%">   <!-- Time In -->
+                                <col style="width: 9%">    <!-- Status -->
+                                <col style="width: 80px">  <!-- Action -->
+                            </colgroup>
                             <thead style="background-color: #098744; color: white; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                                 <tr>
-                                    <th scope="col" style="width: 5%; padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">#</th>
-                                    <th scope="col" style="width: 20%; padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">Name</th>
-                                    <th scope="col" style="width: 15%; padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">Course & Section</th>
-                                    <th scope="col" style="width: 15%; padding: 12px 8px; min-width: 120px; position: sticky; top: 0; background-color: #098744;">Date</th>
-                                    <th scope="col" style="width: 15%; padding: 12px 8px; min-width: 100px; position: sticky; top: 0; background-color: #098744;">Time In</th>
-                                    <th scope="col" style="width: 15%; padding: 12px 8px; min-width: 100px; position: sticky; top: 0; background-color: #098744;">Status</th>
-                                    <th scope="col" style="width: 10%; padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">Action</th>
+                                    <th scope="col" style="padding: 12px 8px; position: sticky; top: 0; background-color: #098744; text-align:left;">Name</th>
+                                    <th scope="col" style="padding: 12px 8px; position: sticky; top: 0; background-color: #098744; text-align:left;">Course & Section</th>
+                                    <th scope="col" style="padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">Date</th>
+                                    <th scope="col" style="padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">Time In</th>
+                                    <th scope="col" style="padding: 12px 8px; position: sticky; top: 0; background-color: #098744;">Status</th>
+                                    <th scope="col" style="padding: 12px 4px; position: sticky; top: 0; background-color: #098744; text-align:center;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2150,10 +2172,9 @@ $filteredSchedules = getFilteredSchedules(
                                             : "<span class='badge badge-warning'><i class='fas fa-clock'></i> Late</span>";
                                         
                                         // Display the most recent attendance record
-                                        echo "<tr style='background-color: #098744; color: white;'>
-                                                <th scope='row'>{$recentAttendance['tbl_attendance_id']}</th>
-                                                <td>{$recentAttendance['student_name']}</td>
-                                                <td>{$recentAttendance['course_section']}</td>
+                    echo "<tr style='background-color: #098744; color: white;'>
+                        <td class='text-truncate' title='" . htmlspecialchars($recentAttendance['student_name'], ENT_QUOTES) . "'>{$recentAttendance['student_name']}</td>
+                        <td>{$recentAttendance['course_section']}</td>
                                                 <td style='white-space: nowrap;'>" . date('M d, Y', strtotime($recentAttendance["time_in"])) . "</td>
                                                 <td style='white-space: nowrap;'>" . date('h:i:s A', strtotime($recentAttendance["time_in"])) . "</td>
                                                 <td style='white-space: nowrap;'>{$statusBadge}</td>
@@ -2182,8 +2203,7 @@ $filteredSchedules = getFilteredSchedules(
                                                     : "<span class='badge badge-secondary'><i class='fas fa-question-circle'></i> Unknown</span>");
                                     ?>
                                 <tr style="background-color: #098744; color: white;">
-                                    <th scope="row"><?= $attendanceID ?></th>
-                                    <td><?= $studentName ?></td>
+                                    <td class="text-truncate" title="<?= htmlspecialchars($studentName, ENT_QUOTES) ?>"><?= $studentName ?></td>
                                     <td><?= $studentCourse ?></td>
                                     <td style="white-space: nowrap;"><?= $attendanceDate ?></td>
                                     <td style="white-space: nowrap;"><?= $timeIn ?></td>
@@ -2322,6 +2342,47 @@ $filteredSchedules = getFilteredSchedules(
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmSubjectRemoval">Remove Subject</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- End Session Confirmation Modal -->
+<div class="modal fade" id="endSessionConfirmModal" tabindex="-1" role="dialog" aria-labelledby="endSessionConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="endSessionConfirmModalLabel"><i class="fas fa-stop-circle"></i> End Session Confirmation</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to terminate the current class session? This will end attendance tracking for the current session and set class time inactive.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmEndSessionBtn" class="btn btn-danger" onclick="terminateClassSession()">Confirm</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<!-- End Session Success Modal -->
+<div class="modal fade" id="endSessionSuccessModal" tabindex="-1" role="dialog" aria-labelledby="endSessionSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="endSessionSuccessModalLabel"><i class="fas fa-check-circle"></i> Session Terminated</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Class session terminated successfully. All settings were cleared and class time is now inactive.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal">OK</button>
             </div>
         </div>
     </div>
@@ -2939,11 +3000,6 @@ $filteredSchedules = getFilteredSchedules(
         function terminateClassSession() {
             console.log('terminateClassSession function called');
             
-            if (!confirm('Are you sure you want to terminate the current class session? This will end attendance tracking for the current session.')) {
-                console.log('User cancelled termination');
-                return;
-            }
-            
             // Show loading state on all termination buttons
             const terminateBtn = document.getElementById('terminateClassSession');
             const headerTerminateBtn = document.getElementById('headerTerminateBtn');
@@ -2987,11 +3043,19 @@ $filteredSchedules = getFilteredSchedules(
                 const [terminateResult, inactiveResult] = results;
                 
                 if (terminateResult.success && inactiveResult.success) {
-                    // Show success message
-                    if (typeof showInstructorAlert === 'function') {
+                    // Hide confirmation modal if visible
+                    try { $('#endSessionConfirmModal').modal('hide'); } catch(e) {}
+                    // Prefer a dedicated success modal
+                    try {
+                        $('#endSessionSuccessModal').modal('show');
+                    } catch (e) {
+                        if (typeof showQRFeedbackModal === 'function') {
+                            showQRFeedbackModal('success', 'Session Terminated', 'Class session terminated successfully');
+                        } else if (typeof showInstructorAlert === 'function') {
                         showInstructorAlert('Class session terminated successfully', 'success');
                     } else {
                         alert('Class session terminated successfully');
+                        }
                     }
                     
                     // Hide all termination buttons and indicators
@@ -3053,7 +3117,9 @@ $filteredSchedules = getFilteredSchedules(
                         'Error setting class time to inactive: ' + inactiveResult.message :
                         'Error terminating session: ' + terminateResult.message;
                     
-                    if (typeof showInstructorAlert === 'function') {
+                    if (typeof showQRFeedbackModal === 'function') {
+                        showQRFeedbackModal('error', 'Termination Failed', errorMessage);
+                    } else if (typeof showInstructorAlert === 'function') {
                         showInstructorAlert(errorMessage, 'danger');
                     } else {
                         alert(errorMessage);
@@ -4996,8 +5062,7 @@ $filteredSchedules = getFilteredSchedules(
                     // Create new row
                     const newRow = document.createElement('tr');
                     
-                    // Get the current row count for the # column
-                    const currentRowCount = attendanceTableBody.children.length + 1;
+                    // Removed numbering column: no need to compute row count
                     
                     // Determine status badge with icons to match existing format
                     const statusBadge = data.status === 'On Time' 
@@ -5005,13 +5070,12 @@ $filteredSchedules = getFilteredSchedules(
                         : `<span class="badge badge-warning"><i class="fas fa-clock"></i> Late</span>`;
                     
                     newRow.innerHTML = `
-                        <td class="text-center">${currentRowCount}</td>
-                        <td>${data.student_name || 'Unknown'}</td>
+                        <td class="text-truncate" title="${data.student_name || 'Unknown'}">${data.student_name || 'Unknown'}</td>
                         <td class="text-center">${data.course_section || 'N/A'}</td>
                         <td class="text-center" style="white-space: nowrap;">${dateFormatted}</td>
                         <td class="text-center" style="white-space: nowrap;">${timeFormatted}</td>
                         <td class="text-center" style="white-space: nowrap;">${statusBadge}</td>
-                        <td class="text-center">
+                        <td class="text-center" style="width:70px;max-width:70px;">
                             <div class="action-button">
                                 <button class="btn btn-danger delete-button" onclick="deleteAttendance(${data.attendance_id || 0})">X</button>
                             </div>
@@ -5021,14 +5085,7 @@ $filteredSchedules = getFilteredSchedules(
                     // Add the new row at the top of the table
                     attendanceTableBody.insertBefore(newRow, attendanceTableBody.firstChild);
                     
-                    // Update row numbers for all existing rows
-                    const allRows = attendanceTableBody.querySelectorAll('tr');
-                    allRows.forEach((row, index) => {
-                        const numberCell = row.querySelector('td:first-child');
-                        if (numberCell) {
-                            numberCell.textContent = index + 1;
-                        }
-                    });
+                    // No numbering column: nothing to renumber
                     
                     // Add highlight animation to the new row
                     newRow.style.backgroundColor = '#d4edda';
@@ -5227,10 +5284,8 @@ $filteredSchedules = getFilteredSchedules(
             let lastAttendanceId = 0;
             
             function initializeLastAttendanceId() {
-                const firstRow = $('#attendanceTable tbody tr:first-child th:first-child');
-                if (firstRow.length) {
-                    lastAttendanceId = parseInt(firstRow.text()) || 0;
-                }
+                // Numbering column removed; keep variable for compatibility with no-op init
+                lastAttendanceId = 0;
             }
             
             function checkForNewAttendance() {
@@ -5269,16 +5324,15 @@ $filteredSchedules = getFilteredSchedules(
                         : `<span class='badge badge-secondary'><i class='fas fa-question-circle'></i> ${record.status || 'Unknown'}</span>`);
                 
                 const newRow = `
-                    <tr style="background-color: #098744; color: white;" data-new="true">
-                        <th scope="row">${record.tbl_attendance_id}</th>
+                    <tr style=\"background-color: #098744; color: white;\" data-new=\"true\">
                         <td>${record.student_name}</td>
                         <td>${record.course_section}</td>
-                        <td style="white-space: nowrap;">${record.formatted_date}</td>
-                        <td style="white-space: nowrap;">${record.formatted_time}</td>
-                        <td style="white-space: nowrap;">${statusBadge}</td>
+                        <td style=\"white-space: nowrap;\">${record.formatted_date}</td>
+                        <td style=\"white-space: nowrap;\">${record.formatted_time}</td>
+                        <td style=\"white-space: nowrap;\">${statusBadge}</td>
                         <td>
-                            <div class="action-button">
-                                <button class="btn btn-danger delete-button" onclick="deleteAttendance(${record.tbl_attendance_id})">X</button>
+                            <div class=\"action-button\">
+                                <button class=\"btn btn-danger delete-button\" onclick=\"deleteAttendance(${record.tbl_attendance_id})\">X</button>
                             </div>
                         </td>
                     </tr>
@@ -5380,51 +5434,7 @@ $filteredSchedules = getFilteredSchedules(
                 console.log('playSuccessSound is deprecated, use playSound("success") instead');
                 playSound('success');
                 
-                /* Original implementation - kept for reference
-                try {
-                    // Create audio context
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    
-                    // Create success tone sequence
-                    const playTone = (frequency, startTime, duration) => {
-                        const oscillator = audioContext.createOscillator();
-                */
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        
-                        oscillator.frequency.setValueAtTime(frequency, startTime);
-                        oscillator.type = 'sine';
-                        
-                        // Envelope for smooth sound
-                        gainNode.gain.setValueAtTime(0, startTime);
-                        gainNode.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-                        
-                        oscillator.start(startTime);
-                        oscillator.stop(startTime + duration);
-                    };
-                    
-                    // Play success melody: C5 -> E5 -> G5
-                    const now = audioContext.currentTime;
-                    playTone(523.25, now, 0.15);        // C5
-                    playTone(659.25, now + 0.1, 0.15);  // E5
-                    playTone(783.99, now + 0.2, 0.3);   // G5
-                    
-                } catch (e) {
-                    console.log('Web Audio API not supported or error:', e);
-                    // Fallback to HTML5 audio
-                    try {
-                        const audio = document.getElementById('successSound');
-                        if (audio) {
-                            audio.currentTime = 0;
-                            audio.play().catch(e => console.log('Audio play failed:', e));
-                        }
-                    } catch (fallbackError) {
-                        console.log('Fallback audio also failed:', fallbackError);
-                    }
-                }
+                // Original implementation kept for reference (removed for linting)
             }
             
             // Check for success parameters in URL
@@ -5463,40 +5473,7 @@ $filteredSchedules = getFilteredSchedules(
                 console.log('playErrorSound is deprecated, use playSound("error") instead');
                 playSound('error');
                 
-                /* Original implementation - kept for reference
-                try {
-                    // Create audio context
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                */
-                    
-                    // Create error tone sequence
-                    const playTone = (frequency, startTime, duration) => {
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        
-                        oscillator.frequency.setValueAtTime(frequency, startTime);
-                        oscillator.type = 'sine';
-                        
-                        // Envelope for smooth sound
-                        gainNode.gain.setValueAtTime(0, startTime);
-                        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-                        
-                        oscillator.start(startTime);
-                        oscillator.stop(startTime + duration);
-                    };
-                    
-                    // Play error melody: Two descending low tones
-                    const now = audioContext.currentTime;
-                    playTone(220, now, 0.3);        // A3
-                    playTone(175, now + 0.35, 0.3); // F3
-                    
-                } catch (e) {
-                    console.log('Web Audio API not supported or error:', e);
-                }
+                // Original implementation kept for reference (removed for linting)
             }
             
             // Check for error parameters in URL
@@ -5720,6 +5697,14 @@ $filteredSchedules = getFilteredSchedules(
                 
                 // Run it immediately on load
                 window.checkAndShowMessages();
+
+                // Wire up confirmation button for end session modal
+                const confirmEndBtn = document.getElementById('confirmEndSessionBtn');
+                if (confirmEndBtn) {
+                    confirmEndBtn.addEventListener('click', function() {
+                        terminateClassSession();
+                    });
+                }
             });
             
             // Enhanced QR code processing with better error handling

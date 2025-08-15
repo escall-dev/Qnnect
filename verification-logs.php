@@ -411,7 +411,6 @@ if ($test_result) {
                     <table class="table table-striped" id="logsTable">
                         <thead style="background-color: #098744; color: white;">
                             <tr>
-                                <th>Log ID</th>
                                 <th>Student</th>
                                 <th>Status</th>
                                 <th>Date & Time</th>
@@ -427,7 +426,6 @@ if ($test_result) {
                             <?php else: ?>
                                 <?php foreach ($logs as $log): ?>
                                     <tr>
-                                        <td><?php echo $log['log_id']; ?></td>
                                         <td><?php echo htmlspecialchars($log['student_name']); ?></td>
                                         <td>
                                             <span class="status-badge <?php echo $log['status'] === 'Success' ? 'status-success' : 'status-failed'; ?>">
@@ -469,7 +467,7 @@ if ($test_result) {
             // Initialize DataTable
             const table = initializeStandardDataTable('#logsTable', {
                 responsive: true,
-                order: [[0, 'desc']],
+                order: [[2, 'desc']],
                 dom: '<"row"<"col-md-6"B><"col-md-6"f>>rtip',
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 buttons: [

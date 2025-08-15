@@ -291,8 +291,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $inserted_id = $conn->lastInsertId();
             error_log("Student inserted successfully with ID: $inserted_id");
 
-            // Redirect with success parameters for the add success modal
+            // Backfill the latest face verification log with this student ID (if any)
+            try {
+                // Find the most recent verification log for this name and tenant where student_id is NULL
+                $selectLog = $conn->prepare("SELECT log_id FROM tbl_face_verification_logs
+                                             WHERE student_id IS NULL AND student_name = :student_name
+                                               AND school_id = :school_id AND user_id = :user_id
+                                             ORDER BY verification_time DESC, log_id DESC
+                                             LIMIT 1");
+                $selectLog->bindParam(':student_name', $studentName, PDO::PARAM_STR);
+                $selectLog->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+                $selectLog->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $selectLog->execute();
+                $logId = $selectLog->fetchColumn();
 
+                if ($logId) {
+                    $updateLog = $conn->prepare("UPDATE tbl_face_verification_logs
+                                                  SET student_id = :student_id
+                                                  WHERE log_id = :log_id");
+                    $updateLog->bindParam(':student_id', $inserted_id, PDO::PARAM_INT);
+                    $updateLog->bindParam(':log_id', $logId, PDO::PARAM_INT);
+                    $updateLog->execute();
+                    error_log("Backfilled verification log_id=$logId with student_id=$inserted_id");
+                } else {
+                    error_log("No pending verification log found to backfill for student '$studentName'");
+                }
+            } catch (Exception $e) {
+                error_log("Failed to backfill verification log with student_id: " . $e->getMessage());
+            }
+
+            // Redirect with success parameters for the add success modal
             header("Location: ../masterlist.php?add_success=1&student_name=" . urlencode($studentName) . "&student_id=" . $inserted_id);
 
             

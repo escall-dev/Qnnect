@@ -221,12 +221,12 @@ $schools = getSchools($conn);
         .top-logo {
             position: absolute;
             top: 20px;
-            left: 40px;
+            left: 40px; /* slight nudge for larger logo */
         }
 
         .spcpc-logo {
-            width: 135px;
-            height: 135px;
+            width: 185px;  /* was 135px */
+            height: 185px; /* was 135px */
             object-fit: contain;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
         }
@@ -253,6 +253,7 @@ $schools = getSchools($conn);
             padding-bottom: 10px; /* Added padding for descenders */
             left: 0;
             margin-right: auto;
+            font-family: 'Debata', sans-serif;
         }
 
         .tagline {
@@ -734,7 +735,7 @@ $schools = getSchools($conn);
         <!-- Left Section - Branding -->
         <div class="branding-section">
             <div class="top-logo">
-                <img src="image/SPCPC-logo-trans.png" alt="SPCPC Logo" class="spcpc-logo">
+                <img src="image/Qnnect-v1.2.png" alt="Qnnect Logo" class="spcpc-logo">
             </div>
             
             <div class="brand-content">

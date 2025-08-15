@@ -604,7 +604,6 @@ if ($column_result->num_rows == 0) {
                     <table class="table text-center table-sm table-bordered" id="studentTable">
                         <thead style="background-color: #098744; color: white; position: sticky; top: 0; z-index: 1;">
                             <tr>
-                                <th scope="col">#</th>
                                 <th scope="col">Name</th>
                                 <th scope="col">Course & Section</th>
                                 <th scope="col">Action</th>
@@ -674,7 +673,6 @@ foreach ($result as $row) {
     echo "<!-- Debug: Student ID: $studentID, Name: $studentName, QR: $qrCode -->";
 ?>
                             <tr class="student-row">
-    <th scope="row" id="studentID-<?= $studentID ?>"><?= $studentID ?></th>
     <td id="studentName-<?= $studentID ?>"><?= $studentName ?></td>
     <td id="studentCourse-<?= $studentID ?>"><?= $studentCourse ?></td>
     <td>
@@ -1854,7 +1852,6 @@ foreach ($result as $row) {
                     const row = document.createElement('tr');
                     row.className = 'student-row';
                     row.innerHTML = `
-                        <th scope="row" id="studentID-${student.tbl_student_id}">${student.tbl_student_id}</th>
                         <td id="studentName-${student.tbl_student_id}">${student.student_name}</td>
                         <td id="studentCourse-${student.tbl_student_id}">${student.course_section}</td>
                         <td>
@@ -2008,7 +2005,6 @@ foreach ($result as $row) {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>#</th>
                                     <th>Name</th>
                                     <th>Course & Section</th>
                                 </tr>
@@ -2018,7 +2014,6 @@ foreach ($result as $row) {
                                     <tr>
                                         <td>${row.cells[0].textContent}</td>
                                         <td>${row.cells[1].textContent}</td>
-                                        <td>${row.cells[2].textContent}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>

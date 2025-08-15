@@ -148,61 +148,86 @@ body {
     border-bottom-right-radius: 15px;
 }
 
-/* Prevent date and time cells from wrapping */
+/* Prevent date/time/status cells from wrapping */
+#attendanceTable td:nth-child(3),
 #attendanceTable td:nth-child(4),
 #attendanceTable td:nth-child(5),
-#attendanceTable td:nth-child(6),
+#attendanceTable th:nth-child(3),
 #attendanceTable th:nth-child(4),
-#attendanceTable th:nth-child(5),
-#attendanceTable th:nth-child(6) {
+#attendanceTable th:nth-child(5) {
     white-space: nowrap;
 }
 
-/* Adjust column widths for better spacing */
+/* Adjust column widths for better spacing (updated mapping without # column) */
 #attendanceTable th:nth-child(1),
 #attendanceTable td:nth-child(1) {
-    width: 5% !important;
+    width: 45% !important;
+    min-width: 380px !important;
+    max-width: 500px !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow: visible !important;
 }
 
 #attendanceTable th:nth-child(2),
 #attendanceTable td:nth-child(2) {
-    width: 20% !important;
+    width: 24% !important;
+    min-width: 160px !important;
 }
 
 #attendanceTable th:nth-child(3),
 #attendanceTable td:nth-child(3) {
-    width: 15% !important;
+    width: 12% !important;
 }
 
 #attendanceTable th:nth-child(4),
 #attendanceTable td:nth-child(4) {
-    width: 15% !important;
-    min-width: 120px !important;
+    width: 12% !important;
+    min-width: 110px !important;
 }
 
 #attendanceTable th:nth-child(5),
-#attendanceTable td:nth-child(5),
-#attendanceTable th:nth-child(6),
-#attendanceTable td:nth-child(6) {
-    width: 15% !important;
+#attendanceTable td:nth-child(5) {
+    width: 10% !important;
     min-width: 100px !important;
 }
 
-#attendanceTable th:nth-child(7),
-#attendanceTable td:nth-child(7) {
-    width: 10% !important;
+#attendanceTable th:nth-child(6),
+#attendanceTable td:nth-child(6) {
+    width: 3% !important;
+    min-width: 60px !important;
+    max-width: 70px !important;
+    text-align: center !important;
+}
+
+/* No numbering column in Masterlist: ensure name has comfortable width */
+#studentTable th:nth-child(1),
+#studentTable td:nth-child(1) {
+    min-width: 200px !important;
 }
 
 /* Make sure table cells have proper padding */
 #attendanceTable td, 
 #attendanceTable th {
     padding: 12px 8px !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
     border: 1px solid #0ca557 !important;
     vertical-align: middle !important;
     box-sizing: border-box !important;
     text-align: left !important;
+}
+
+/* Override default cell behavior for Name column */
+#attendanceTable td:nth-child(1), 
+#attendanceTable th:nth-child(1) {
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
+/* Override default cell behavior for Action column */
+#attendanceTable td:nth-child(6), 
+#attendanceTable th:nth-child(6) {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 /* Keep header cells centered */
