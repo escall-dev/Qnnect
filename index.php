@@ -1688,12 +1688,9 @@ $filteredSchedules = getFilteredSchedules(
                                                         $_SESSION['current_instructor_id'] = $teacher_row['teacher_username'];
                                                         $_SESSION['current_subject'] = $teacher_row['subject'];
                                                         $_SESSION['current_section'] = $teacher_row['section'];
-                                                        } else {
-                                                            // No active teacher schedules - clear class time
-                                                            $active_class_time = null;
-                                                            unset($_SESSION['class_start_time']);
-                                                            unset($_SESSION['class_start_time_formatted']);
-                                                            error_log("No active teacher schedules found; cleared class time session.");
+                                                    } else {
+                                                        // No active teacher schedules - keep class time active, just skip instructor/subject binding
+                                                        error_log("No active teacher schedules found; preserving active class time.");
                                                     }
                                                     $teacher_stmt->close();
                                                 }
@@ -2452,6 +2449,49 @@ $filteredSchedules = getFilteredSchedules(
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <script src="./functions/pagination.js"></script>
     <script src="./js/modal-helpers.js"></script>
+
+    <!-- Early modal bootstrap for URL-driven errors (ensures modal shows even if other scripts fail) -->
+    <script>
+        (function () {
+            try {
+                var params = new URLSearchParams(window.location.search);
+                var err = params.get('error');
+                if (!err) return;
+
+                var message = params.get('message') || '';
+                var details = params.get('details') || '';
+
+                var showNow = window.showQRFeedbackModal || function(type, title, msg, det){
+                    var modal = document.getElementById('qrFeedbackModal');
+                    if (!modal) return;
+                    var t = document.getElementById('qrFeedbackModalTitle');
+                    var m = document.getElementById('qrFeedbackModalMessage');
+                    var d = document.getElementById('qrFeedbackModalDetails');
+                    var icon = document.getElementById('qrFeedbackModalIcon');
+                    modal.className = 'qr-feedback-modal';
+                    modal.classList.add('qr-feedback-modal-error');
+                    if (icon) { icon.className = ''; icon.classList.add('fas','fa-times-circle'); }
+                    if (t) t.textContent = title || 'QR Code Error';
+                    if (m) m.textContent = msg || '';
+                    if (d) { d.textContent = det || ''; d.style.display = det ? 'block' : 'none'; }
+                    modal.style.display = 'flex';
+                    modal.style.zIndex = '10000';
+                    setTimeout(function(){
+                        modal.classList.add('fade-out');
+                        setTimeout(function(){ modal.style.display = 'none'; modal.classList.remove('fade-out'); }, 500);
+                    }, 2500);
+                };
+
+                if (err === 'duplicate_scan') {
+                    showNow('error', 'Duplicate Attendance', message || 'Attendance already recorded', details || '');
+                } else if (err === 'invalid_qr' || err === 'invalid_qr_format' || err === 'missing_qr' || err === 'empty_qr') {
+                    showNow('error', 'Invalid QR Code', message || 'Invalid QR Code', details || '');
+                }
+            } catch (e) {
+                console.warn('Early modal bootstrap failed:', e);
+            }
+        })();
+    </script>
 
     <!--sidebar-toggle-->
     <script>
@@ -3431,10 +3471,23 @@ $filteredSchedules = getFilteredSchedules(
             if (errorParam) {
                 switch(errorParam) {
                     case 'duplicate_scan':
-                        showDuplicateAttendanceModal();
+                        // Prefer unified feedback modal for consistency
+                        if (typeof showQRFeedbackModal === 'function') {
+                            const msg = urlParams.get('message') || 'Attendance already recorded';
+                            const details = urlParams.get('details') || '';
+                            showQRFeedbackModal('error', 'Duplicate Attendance', msg, details);
+                        } else {
+                            showDuplicateAttendanceModal();
+                        }
                         break;
                     case 'invalid_qr':
-                        showCustomAlert('Invalid QR Code!', 'error');
+                        if (typeof showErrorAttendanceModal === 'function') {
+                            const msgInv = urlParams.get('message') || 'Invalid QR Code';
+                            const detInv = urlParams.get('details') || '';
+                            showErrorAttendanceModal('Invalid QR Code!', msgInv, detInv);
+                        } else {
+                            showCustomAlert('Invalid QR Code!', 'error');
+                        }
                         break;
                     case 'empty_qr':
                         showCustomAlert('QR Code cannot be empty!', 'error');
@@ -4992,14 +5045,37 @@ $filteredSchedules = getFilteredSchedules(
                                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
                             }, 3000);
                         } else {
-                            // Enhanced error message with debug info if available
-                            let errorMsg = response.message || 'Failed to record attendance. Please try again.';
-                            if (response.debug) {
-                                console.error('Debug info:', response.debug);
-                                errorMsg += ' (Error details in console)';
+                            // Handle duplicate and invalid QR via modals
+                            if (response.error === 'duplicate_scan' && response.data && response.data.duplicate) {
+                                // Save data to localStorage for existing modal filler
+                                localStorage.setItem('duplicateAttendance', JSON.stringify({
+                                    studentName: response.data.student_name,
+                                    instructorName: response.data.instructor_name || 'N/A',
+                                    subjectName: response.data.subject_name || 'N/A',
+                                    attendanceDate: response.data.attendance_date || '',
+                                    attendanceTime: response.data.attendance_time || '',
+                                    attendanceStatus: response.data.attendance_status || ''
+                                }));
+                                // Show modal
+                                if (typeof showDuplicateAttendanceModal === 'function') {
+                                    showDuplicateAttendanceModal();
+                                }
+                            } else if (response.error === 'invalid_qr') {
+                                if (typeof showErrorAttendanceModal === 'function') {
+                                    showErrorAttendanceModal('Invalid QR Code!', response.message || 'QR code not found.', '');
+                                } else {
+                                    showAlert(response.message || 'Invalid QR Code', 'danger');
+                                }
+                            } else {
+                                // Fallback
+                                let errorMsg = response.message || 'Failed to record attendance. Please try again.';
+                                if (response.debug) {
+                                    console.error('Debug info:', response.debug);
+                                    errorMsg += ' (Error details in console)';
+                                }
+                                showAlert(errorMsg, 'danger');
                             }
-                            showAlert(errorMsg, 'danger');
-                            
+
                             // Restart scanner
                             setTimeout(function() {
                                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
@@ -5446,35 +5522,16 @@ $filteredSchedules = getFilteredSchedules(
             }
             
             // Legacy function maintained for backward compatibility
-            function showSuccessAttendanceModal(student, status) {
-                console.log('showSuccessAttendanceModal called, redirecting to new modal system');
-                showQRFeedbackModal('success', 'Attendance Recorded', `${student || 'Student'} marked as ${status?.toLowerCase() || 'present'}`);
-            }
+            // Removed duplicate showSuccessAttendanceModal definition (kept earlier definition above)
                 
             // Legacy function maintained for backward compatibility
             function playErrorSound() {
                 console.log('playErrorSound is deprecated, use playSound("error") instead');
                 playSound('error');
             }
-                
-                // Auto-hide after 4 seconds
-                setTimeout(function() {
-                    modal.addClass('fade-out');
-                    setTimeout(function() {
-                        modal.hide();
-                        modal.removeClass('fade-out');
-                    }, 300); // Wait for fade-out animation
-                }, 4000);
-            }
             
             // Function to play error sound using Web Audio API - replaced by playSound
-            // Keeping original definition for backward compatibility
-            function playErrorSound() {
-                console.log('playErrorSound is deprecated, use playSound("error") instead');
-                playSound('error');
-                
-                // Original implementation kept for reference (removed for linting)
-            }
+            // Duplicate removed to avoid redeclaration errors
             
             // Check for error parameters in URL
             function checkForErrorMessage() {
@@ -6203,16 +6260,20 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
                     }
 
                     // Clear hidden input for attendance
-                    const classStartTimeInput = document.getElementById('class-start-time');
-                    if (classStartTimeInput) {
-                        classStartTimeInput.value = '';
-                    }
+                    (function(){
+                        const classStartTimeInputEl = document.getElementById('class-start-time');
+                        if (classStartTimeInputEl) {
+                            classStartTimeInputEl.value = '';
+                        }
+                    })();
 
                     // Hide current time settings display
-                    const currentTimeSettings = document.getElementById('currentTimeSettings');
-                    if (currentTimeSettings) {
-                        currentTimeSettings.style.display = 'none';
-                    }
+                    (function(){
+                        const currentTimeSettingsEl = document.getElementById('currentTimeSettings');
+                        if (currentTimeSettingsEl) {
+                            currentTimeSettingsEl.style.display = 'none';
+                        }
+                    })();
 
                     // Hide termination buttons and indicators
                     const headerTerminateBtn = document.getElementById('headerTerminateBtn');
@@ -6251,15 +6312,19 @@ if (isset($conn_login) && $conn_login instanceof mysqli) {
                         }
                     }
 
-                    const currentTimeSettings = document.getElementById('currentTimeSettings');
-                    if (currentTimeSettings) {
-                        currentTimeSettings.style.display = 'none';
-                    }
+                    (function(){
+                        const currentTimeSettingsEl2 = document.getElementById('currentTimeSettings');
+                        if (currentTimeSettingsEl2) {
+                            currentTimeSettingsEl2.style.display = 'none';
+                        }
+                    })();
 
-                    const classStartTimeInput = document.getElementById('class-start-time');
-                    if (classStartTimeInput) {
-                        classStartTimeInput.value = '';
-                    }
+                    (function(){
+                        const classStartTimeInputEl2 = document.getElementById('class-start-time');
+                        if (classStartTimeInputEl2) {
+                            classStartTimeInputEl2.value = '';
+                        }
+                    })();
                 }
             })
             .catch(error => {

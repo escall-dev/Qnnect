@@ -3,8 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Start the session
-session_start();
+// Use unified session configuration
+require_once('../includes/session_config.php');
 
 // Set headers for JSON response
 header('Content-Type: application/json');

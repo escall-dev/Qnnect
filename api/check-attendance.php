@@ -1,6 +1,6 @@
 <?php
-// Start session to access instructor data
-session_start();
+// Use unified session configuration
+require_once('../includes/session_config.php');
 
 // Include database connection
 include('../conn/db_connect.php');
@@ -121,7 +121,8 @@ try {
         if ($is_manual_entry) {
             echo json_encode([
                 'success' => false,
-                'message' => 'No student found for the specified course and section.'
+                'message' => 'No student found for the specified course and section.',
+                'error' => 'invalid_qr'
             ]);
         } else {
             // Log the actual query for debugging
@@ -137,6 +138,7 @@ try {
             echo json_encode([
                 'success' => false,
                 'message' => 'Invalid QR code. Student not found.',
+                'error' => 'invalid_qr',
                 'debug' => [
                     'qr_code' => $qr_code,
                     'school_id' => $school_id,
@@ -178,12 +180,30 @@ try {
     $attendanceResult = $stmt->get_result();
     
     if ($attendanceResult->num_rows > 0) {
+        // Fetch latest attendance details for this student today to show in modal
+        $latestStmt = $conn_qr->prepare("SELECT time_in, status FROM tbl_attendance 
+               WHERE tbl_student_id = ? AND DATE(time_in) = ? AND instructor_id = ? AND user_id = ? AND school_id = ?
+               ORDER BY time_in DESC LIMIT 1");
+        $latestStmt->bind_param("isiii", $student_id, $today, $instructor_id, $user_id, $school_id);
+        $latestStmt->execute();
+        $latest = $latestStmt->get_result()->fetch_assoc();
+        $latest_time_in = $latest ? $latest['time_in'] : null;
+        $latest_status = $latest ? $latest['status'] : null;
+        $attendance_time = $latest_time_in ? date('h:i A', strtotime($latest_time_in)) : null;
+        $attendance_date = $latest_time_in ? date('M d, Y', strtotime($latest_time_in)) : null;
+
         echo json_encode([
             'success' => false,
             'message' => 'Student has already checked in today for this class.',
+            'error' => 'duplicate_scan',
             'data' => [
                 'student_id' => $student_id,
                 'student_name' => $student_name,
+                'instructor_name' => ($_SESSION['current_instructor_name'] ?? ''),
+                'subject_name' => ($_SESSION['current_subject_name'] ?? ''),
+                'attendance_time' => $attendance_time,
+                'attendance_date' => $attendance_date,
+                'attendance_status' => $latest_status,
                 'duplicate' => true
             ]
         ]);

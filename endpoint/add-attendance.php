@@ -22,6 +22,31 @@ if (!isset($conn_qr)) {
     }
 }
 
+// Ensure DB connection is alive; attempt a quick reconnect if dropped
+function ensureQrConnection() {
+    $hostName = "localhost";
+    $dbUser = "root";
+    $dbPassword = "";
+    $qrDb = "qr_attendance_db";
+    if (!isset($GLOBALS['conn_qr']) || !$GLOBALS['conn_qr'] || !@mysqli_ping($GLOBALS['conn_qr'])) {
+        if (isset($GLOBALS['conn_qr']) && $GLOBALS['conn_qr']) { @mysqli_close($GLOBALS['conn_qr']); }
+        $GLOBALS['conn_qr'] = @mysqli_connect($hostName, $dbUser, $dbPassword, $qrDb);
+    }
+    return $GLOBALS['conn_qr'];
+}
+
+// Guard: if connection still not available, redirect with detailed DB error
+$conn_qr = ensureQrConnection();
+if (!$conn_qr) {
+    $errorParams = http_build_query([
+        'error' => 'db_error',
+        'message' => 'Database connection error',
+        'details' => mysqli_connect_error() ?: 'Unable to connect to the database. Please try again.'
+    ]);
+    echo "<script>window.location.href='http://localhost/Qnnect/index.php?{$errorParams}';</script>";
+    exit();
+}
+
 // Enhanced session validation with better error handling
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
     // Return JSON response instead of HTML for AJAX requests
@@ -48,6 +73,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $school_id = $_SESSION['school_id'];
+// Normalize attendance mode for downstream logging/redirects
+$attendanceMode = $_SESSION['attendance_mode'] ?? 'general';
 
 // Debug logging with enhanced security context
 error_log("=== ADD ATTENDANCE DEBUG ===");
@@ -315,6 +342,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 record_attendance:
                 // Step 2: Enhanced duplicate check with compound key validation
+                // Ensure connection before each critical DB operation
+                $conn_qr = ensureQrConnection();
+
                 $checkStmt = $conn_qr->prepare("SELECT * FROM tbl_attendance 
                     WHERE tbl_student_id = ? 
                     AND DATE(time_in) = CURDATE() 
@@ -381,6 +411,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log('Final Status: ' . $status);
                     
                     // Insert with complete multi-tenant isolation
+                    // Recheck connection before insert
+                    $conn_qr = ensureQrConnection();
                     $stmt = $conn_qr->prepare("INSERT INTO tbl_attendance 
                         (tbl_student_id, time_in, status, instructor_id, subject_id, user_id, school_id) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -428,8 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $errorParams = http_build_query([
                             'error' => 'db_insert_failed',
                             'message' => 'Failed to save attendance',
-                            'details' => 'Unable to save attendance record to database. Please try again.',
-                            'mode' => $attendanceMode
+                            'details' => 'Unable to save attendance record to database. Please try again.'
                         ]);
 
                         header("Location: http://localhost/Qnnect/index.php?$errorParams");
@@ -462,8 +493,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'error' => 'invalid_qr',
                     'message' => 'QR code not registered to this school',
                     'details' => 'This QR code is not associated with any student in this school system.',
-                    'mode' => $attendanceMode,
-                    'qr' => substr($qrCode, 0, 10) . '...' // Partial QR for debugging
+                    'qr' => substr($qrCode, 0, 10) . '...'
                 ]);
                 echo "<script>
 
@@ -494,8 +524,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errorParams = http_build_query([
                 'error' => 'db_error',
                 'message' => $errorMessage,
-                'details' => $errorDetails,
-                'mode' => $attendanceMode
+                'details' => $errorDetails
             ]);
             echo "<script>
 
@@ -508,8 +537,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errorParams = http_build_query([
             'error' => 'missing_qr',
             'message' => 'QR code data missing',
-            'details' => 'No QR code data was received. Please try scanning again.',
-            'mode' => $_SESSION['attendance_mode'] ?? 'general'
+            'details' => 'No QR code data was received. Please try scanning again.'
         ]);
         echo "<script>
 
