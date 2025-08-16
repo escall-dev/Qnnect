@@ -1870,6 +1870,7 @@ $filteredSchedules = getFilteredSchedules(
                                         if (!empty($teacher_subjects)) {
                                             foreach ($teacher_subjects as $subject) {
                                                 $selected = (isset($_SESSION['current_subject']) && $_SESSION['current_subject'] == $subject) ? 'selected' : '';
+                                                // Value is subject name; ID will be resolved server-side
                                                 echo "<option value=\"" . htmlspecialchars($subject) . "\" $selected>" . htmlspecialchars($subject) . "</option>";
                                             }
                                         } else {
@@ -2134,6 +2135,8 @@ $filteredSchedules = getFilteredSchedules(
                                         SELECT a.*, s.student_name, s.course_section 
                                         FROM tbl_attendance a
                                         LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id 
+                                            AND s.school_id = a.school_id 
+                                            AND s.user_id = a.user_id
                                         WHERE a.time_in IS NOT NULL AND a.user_id = ? AND a.school_id = ?
                                         ORDER BY a.time_in DESC 
                                         LIMIT ?, ?
@@ -2168,10 +2171,12 @@ $filteredSchedules = getFilteredSchedules(
                                             ? "<span class='badge badge-success'><i class='fas fa-check-circle'></i> On Time</span>" 
                                             : "<span class='badge badge-warning'><i class='fas fa-clock'></i> Late</span>";
                                         
-                                        // Display the most recent attendance record
+                                        // Display the most recent attendance record (null-safe + escaped)
+                                        $recentName = isset($recentAttendance['student_name']) ? (string)$recentAttendance['student_name'] : '';
+                                        $recentCourse = isset($recentAttendance['course_section']) ? (string)$recentAttendance['course_section'] : '';
                     echo "<tr style='background-color: #098744; color: white;'>
-                        <td class='text-truncate' title='" . htmlspecialchars($recentAttendance['student_name'], ENT_QUOTES) . "'>{$recentAttendance['student_name']}</td>
-                        <td>{$recentAttendance['course_section']}</td>
+                        <td class='text-truncate' title='" . htmlspecialchars($recentName, ENT_QUOTES) . "'>" . htmlspecialchars($recentName, ENT_QUOTES) . "</td>
+                        <td>" . htmlspecialchars($recentCourse, ENT_QUOTES) . "</td>
                                                 <td style='white-space: nowrap;'>" . date('M d, Y', strtotime($recentAttendance["time_in"])) . "</td>
                                                 <td style='white-space: nowrap;'>" . date('h:i:s A', strtotime($recentAttendance["time_in"])) . "</td>
                                                 <td style='white-space: nowrap;'>{$statusBadge}</td>
@@ -2185,8 +2190,8 @@ $filteredSchedules = getFilteredSchedules(
                                         // Display remaining attendance records
                                         foreach ($result as $row) {
                                             $attendanceID = $row["tbl_attendance_id"];
-                                            $studentName = $row["student_name"];
-                                            $studentCourse = $row["course_section"];
+                                            $studentName = isset($row["student_name"]) ? (string)$row["student_name"] : '';
+                                            $studentCourse = isset($row["course_section"]) ? (string)$row["course_section"] : '';
                                             $attendanceDate = date('M d, Y', strtotime($row["time_in"]));
                                             $timeIn = date('h:i:s A', strtotime($row["time_in"]));
                                             
@@ -2200,8 +2205,8 @@ $filteredSchedules = getFilteredSchedules(
                                                     : "<span class='badge badge-secondary'><i class='fas fa-question-circle'></i> Unknown</span>");
                                     ?>
                                 <tr style="background-color: #098744; color: white;">
-                                    <td class="text-truncate" title="<?= htmlspecialchars($studentName, ENT_QUOTES) ?>"><?= $studentName ?></td>
-                                    <td><?= $studentCourse ?></td>
+                                    <td class="text-truncate" title="<?= htmlspecialchars($studentName, ENT_QUOTES) ?>"><?= htmlspecialchars($studentName, ENT_QUOTES) ?></td>
+                                    <td><?= htmlspecialchars($studentCourse, ENT_QUOTES) ?></td>
                                     <td style="white-space: nowrap;"><?= $attendanceDate ?></td>
                                     <td style="white-space: nowrap;"><?= $timeIn ?></td>
                                     <td style="white-space: nowrap;"><?= $row_statusBadge ?></td>
@@ -3305,20 +3310,61 @@ $filteredSchedules = getFilteredSchedules(
         // Enhanced subject setting for general mode
         const setSubjectBtn = document.getElementById('setCurrentSubject');
         if (setSubjectBtn) {
-            setSubjectBtn.addEventListener('click', function() {
+            setSubjectBtn.addEventListener('click', async function() {
                 const subjectSelect = document.getElementById('generalSubjectSelect');
                 const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
-                
-                if (selectedOption.value) {
-                    // Update displayed subject
-                    const displayedSubject = document.getElementById('displayedSubject');
-                    if (displayedSubject) {
-                        displayedSubject.textContent = selectedOption.text;
-                    }
-                    
-                    showInstructorAlert('Subject set successfully: ' + selectedOption.text, 'success');
-                } else {
+                const subjectName = selectedOption?.text?.trim() || '';
+                const subjectId = selectedOption?.value || '';
+
+                if (!subjectName) {
                     showInstructorAlert('Please select a subject', 'warning');
+                    return;
+                }
+
+                try {
+                    // Persist in server session
+                    const form = new FormData();
+                    form.append('subjectName', subjectName);
+                    if (subjectId) form.append('subjectId', subjectId);
+                    const resp = await fetch('./api/set-current-subject.php', { method: 'POST', body: form });
+                    const data = await resp.json();
+
+                    if (!data.success) {
+                        showInstructorAlert(data.message || 'Failed to set subject', 'danger');
+                        return;
+                    }
+
+                    // Update UI: Current Subject label
+                    const displayedSubject = document.getElementById('displayedSubject');
+                    if (displayedSubject) displayedSubject.textContent = subjectName;
+
+                    // Update UI: Active Class Session subject (if visible)
+                    const activeSessionSubjectEl = document.querySelector('#classTimeStatus .alert.alert-success .row.mt-2 .col-md-6:nth-child(2)');
+                    // Fallback: more robust selector for the subject strong label
+                    const subjectStrong = Array.from(document.querySelectorAll('#classTimeStatus strong'))
+                        .find(el => el.textContent.trim().startsWith('Subject:'));
+                    if (subjectStrong) {
+                        const textNode = subjectStrong.nextSibling;
+                        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                            textNode.nodeValue = ' ' + subjectName + ' ';
+                        } else {
+                            subjectStrong.parentElement.innerHTML = `<strong>Subject:</strong> ${subjectName}`;
+                        }
+                    }
+
+                    // Persist in web storage for quick UI restore
+                    if (typeof sessionStorage !== 'undefined') {
+                        sessionStorage.setItem('current_subject_name', subjectName);
+                        if (subjectId) sessionStorage.setItem('current_subject_id', subjectId);
+                    }
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('currentSubject', subjectName);
+                    }
+
+                    showInstructorAlert('Subject set successfully: ' + subjectName, 'success');
+                } catch (e) {
+                    console.error('Failed to set subject', e);
+                    showInstructorAlert('Failed to set subject', 'danger');
                 }
             });
         }
@@ -3347,25 +3393,22 @@ $filteredSchedules = getFilteredSchedules(
             const subject = subjectSelect.value;
 
             try {
-                const response = await fetch('api/get-filtered-schedules.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        instructor: instructor,
-                        section: section,
-                        subject: subject
-                    })
+                const params = new URLSearchParams({
+                    action: 'get_filtered_schedules',
+                    instructor: instructor || '',
+                    section: section || '',
+                    subject: subject || ''
                 });
+                const response = await fetch('api/get-schedule-data.php?' + params.toString(), { method: 'GET' });
 
                 if (response.ok) {
-                    const data = await response.json();
-                    updateScheduleInfo(data);
+                    const resp = await response.json();
+                    const schedules = resp && resp.schedules ? resp.schedules : [];
+                    updateScheduleInfo(schedules);
 
                     // Update class time if schedule is found
-                    if (data && data.length > 0) {
-                        const schedule = data[0];
+                    if (schedules && schedules.length > 0) {
+                        const schedule = schedules[0];
                         document.getElementById('classStartTime').value = schedule.start_time;
                         // Trigger class time update
                         document.getElementById('setClassTime').click();

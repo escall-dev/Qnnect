@@ -74,7 +74,7 @@ try {
     $result = $stmt->get_result();
     
     if ($row = $result->fetch_assoc()) {
-        $classStartTime = $row['start_time'];
+    $classStartTime = $row['start_time'];
         $status = $row['status'] ?? null;
         $updatedAt = $row['updated_at'];
 
@@ -91,11 +91,26 @@ try {
             exit;
         }
 
-        // Restore to session - ensure 24-hour format for comparison
-        $_SESSION['class_start_time'] = $classStartTime; // Store as HH:MM format
-        $_SESSION['class_start_time_formatted'] = $classStartTime . ':00'; // Store as HH:MM:SS format for comparison
+        // Restore to session - ensure consistent HH:MM and HH:MM:SS
+        if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $classStartTime)) {
+            $_SESSION['class_start_time'] = substr($classStartTime, 0, 5);    // HH:MM
+            $_SESSION['class_start_time_formatted'] = $classStartTime;        // HH:MM:SS
+        } elseif (preg_match('/^\d{1,2}:\d{2}$/', $classStartTime)) {
+            $_SESSION['class_start_time'] = $classStartTime;                  // HH:MM
+            $_SESSION['class_start_time_formatted'] = $classStartTime . ':00';// HH:MM:SS
+        } else {
+            // Fallback: try to parse; if fails, default
+            $ts = strtotime($classStartTime);
+            if ($ts !== false) {
+                $_SESSION['class_start_time'] = date('H:i', $ts);
+                $_SESSION['class_start_time_formatted'] = date('H:i:s', $ts);
+            } else {
+                $_SESSION['class_start_time'] = '08:00';
+                $_SESSION['class_start_time_formatted'] = '08:00:00';
+            }
+        }
         
-        debugLog("Class time restored from database: " . $classStartTime);
+        debugLog("Class time restored from database: raw=" . $classStartTime . ", session HM=" . $_SESSION['class_start_time'] . ", session HMS=" . $_SESSION['class_start_time_formatted']);
         
         // Format the time for display - ensure 12-hour format
         function formatTimeToAmPm($time) {

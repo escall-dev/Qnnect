@@ -4,7 +4,7 @@ if (!defined('DB_CONNECT_INCLUDED')) {
     define('DB_CONNECT_INCLUDED', true);
 
 // Database configuration
-$hostName = "localhost";
+$hostName = "127.0.0.1";
 $dbUser = "root";
 $dbPassword = "";
 

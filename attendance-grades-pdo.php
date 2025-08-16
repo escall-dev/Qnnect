@@ -239,7 +239,7 @@ try {
     <!-- Custom Alert Box -->
     <div id="customAlert" class="custom-alert"></div>
 
-    <?php include('./includes/sidebar.php'); ?>
+    <?php include('./components/sidebar-nav.php'); ?>
     
     <!-- Main Content -->
     <div class="main">

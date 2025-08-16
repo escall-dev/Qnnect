@@ -55,7 +55,7 @@ $teacherUsername = '';
 try {
     if (isset($_SESSION['user_id'])) {
         $userId = (int) $_SESSION['user_id'];
-        $loginPdo = new PDO("mysql:host=localhost;dbname=login_register", 'root', '');
+        $loginPdo = new PDO("mysql:host=127.0.0.1;dbname=login_register", 'root', '');
         $loginPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $stmtUser = $loginPdo->prepare("SELECT full_name, username FROM users WHERE id = ?");
         $stmtUser->execute([$userId]);

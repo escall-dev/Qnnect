@@ -405,7 +405,7 @@ if(isset($_POST["register"])){
                         ?>
                         <small class="text-muted">
                             <i class="fas fa-info-circle"></i> 
-                            Using default schools. <a href="../setup_role_system.php">Run setup for full features</a>
+                            Using default schools. <a href="../role_system_index.php">Run setup for full features</a>
                         </small>
                         <?php endif; ?>
                     </div>

@@ -28,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                          s.student_name, s.course_section
                   FROM tbl_attendance a
                   JOIN tbl_student s ON a.tbl_student_id = s.tbl_student_id
+                                     AND s.school_id = a.school_id
+                                     AND s.user_id = a.user_id
                   WHERE a.tbl_attendance_id > ? 
                   AND a.school_id = ? 
                   AND a.user_id = ?

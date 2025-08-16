@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Convert MySQL connection to PDO for helper functions
-$dsn = 'mysql:host=localhost;dbname=qr_attendance_db;charset=utf8mb4';
+$dsn = 'mysql:host=127.0.0.1;dbname=qr_attendance_db;charset=utf8mb4';
 $username = 'root';
 $password = '';
 $pdo = new PDO($dsn, $username, $password, [

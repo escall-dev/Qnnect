@@ -137,10 +137,10 @@
                 <h3><i class="fas fa-rocket"></i> Quick Actions</h3>
             </div>
             <div class="card-body text-center">
-                <a href="setup_role_system.php" class="btn-custom">
+                <a href="admin/admin_panel.php" class="btn-custom">
                     <i class="fas fa-cogs"></i> Setup System
                 </a>
-                <a href="test_role_system.php" class="btn-outline-custom">
+                <a href="README.md" class="btn-outline-custom">
                     <i class="fas fa-check-circle"></i> Test System
                 </a>
                 <a href="admin/login.php" class="btn-custom">
@@ -261,8 +261,8 @@
             </div>
             <div class="card-body">
                 <ol>
-                    <li><strong>Run Setup:</strong> Click <a href="setup_role_system.php">"Setup System"</a> to initialize the database</li>
-                    <li><strong>Test System:</strong> Use <a href="test_role_system.php">"Test System"</a> to verify everything works</li>
+                    <li><strong>Run Setup:</strong> Open <a href="admin/admin_panel.php">Admin Panel</a> to configure the system</li>
+                    <li><strong>Test System:</strong> See <a href="README.md">README</a> for verification steps</li>
                     <li><strong>Login:</strong> Access the <a href="admin/login.php">new login system</a> with default credentials</li>
                     <li><strong>Configure:</strong> Add schools, users, and customize themes via the admin panel</li>
                     <li><strong>Generate Schedules:</strong> Use the auto-schedule generator for classes</li>
@@ -276,7 +276,7 @@
                 <h3><i class="fas fa-book"></i> Documentation & Support</h3>
             </div>
             <div class="card-body text-center">
-                <a href="ROLE_BASED_SYSTEM_GUIDE.md" class="btn-outline-custom">
+                <a href="README.md" class="btn-outline-custom">
                     <i class="fas fa-file-alt"></i> Complete Guide
                 </a>
                 <a href="dashboard.php" class="btn-outline-custom">

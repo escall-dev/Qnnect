@@ -15,7 +15,7 @@ if (!isset($_SESSION['email'])) {
 }
 
 // Convert MySQL connection to PDO for helper functions
-$dsn = 'mysql:host=localhost;dbname=qr_attendance_db;charset=utf8mb4';
+$dsn = 'mysql:host=127.0.0.1;dbname=qr_attendance_db;charset=utf8mb4';
 $username = 'root';
 $password = '';
 $pdo = new PDO($dsn, $username, $password, [
@@ -114,6 +114,9 @@ try {
             $courses[] = $course;
         }
     }
+} catch (Exception $e) {
+    // Swallow non-fatal errors while building filter lists
+}
     
     // Get distinct sections for the selected course
     $sectionsQuery = "SELECT DISTINCT SUBSTRING_INDEX(course_section, '-', -1) AS section 
@@ -161,6 +164,7 @@ try {
     });
     
     // Get student attendance grades data
+    try {
     $gradesQuery = "
         SELECT 
             s.tbl_student_id, 
@@ -902,7 +906,7 @@ if (!isset($_SESSION['email'])) {
 }
 
 // Convert MySQL connection to PDO for helper functions
-$dsn = 'mysql:host=localhost;dbname=qr_attendance_db;charset=utf8mb4';
+$dsn = 'mysql:host=127.0.0.1;dbname=qr_attendance_db;charset=utf8mb4';
 $username = 'root';
 $password = '';
 $pdo = new PDO($dsn, $username, $password, [

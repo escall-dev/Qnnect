@@ -743,10 +743,15 @@ foreach ($result as $row) {
     $sections_table_result = $conn_qr->query($check_sections_table_query);
     
     if ($courses_table_result->num_rows == 0 || $sections_table_result->num_rows == 0) {
-        // Include the setup file to create the tables
-        include('./db_setup/create_course_section_tables.php');
-        // Also update section-course relationships if needed
-        include('./update_section_courses.php');
+        // Include the setup file to create the tables (if present)
+        $setupA = __DIR__ . '/db_setup/create_course_section_tables.php';
+        $setupB = __DIR__ . '/update_section_courses.php';
+        if (file_exists($setupA)) {
+            include $setupA;
+        }
+        if (file_exists($setupB)) {
+            include $setupB;
+        }
     }
     
     // Get all courses from database - filter by user_id and school_id

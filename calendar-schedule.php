@@ -129,7 +129,14 @@ $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         Room: <?= htmlspecialchars($sched['room']) ?><br>
                                         <?= date('g:i A', strtotime($sched['start_time'])) ?> - <?= date('g:i A', strtotime($sched['end_time'])) ?>
                                     </div>
-                                    <button class="edit-btn" data-id="<?= $sched['id'] ?>">Edit</button>
+                                    <button class="edit-btn" 
+                                            data-id="<?= $sched['id'] ?>"
+                                            data-subject="<?= htmlspecialchars($sched['subject']) ?>"
+                                            data-section="<?= htmlspecialchars($sched['section'] ?? ($sched['section_strand'] ?? '')) ?>"
+                                            data-day="<?= htmlspecialchars($day) ?>"
+                                            data-room="<?= htmlspecialchars($sched['room']) ?>">
+                                        Edit
+                                    </button>
                                     <button class="delete-btn" data-id="<?= $sched['id'] ?>">Delete</button>
                                 </div>
                                 <?php
@@ -152,7 +159,14 @@ $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 Room: <?= htmlspecialchars($sched['room']) ?><br>
                 <?= date('g:i A', strtotime($sched['start_time'])) ?> - <?= date('g:i A', strtotime($sched['end_time'])) ?>
             </div>
-            <button class="edit-btn" data-id="<?= $sched['id'] ?>">Edit</button>
+            <button class="edit-btn" 
+                    data-id="<?= $sched['id'] ?>"
+                    data-subject="<?= htmlspecialchars($sched['subject']) ?>"
+                    data-section="<?= htmlspecialchars($sched['section'] ?? ($sched['section_strand'] ?? '')) ?>"
+                    data-day="<?= htmlspecialchars($selected_day) ?>"
+                    data-room="<?= htmlspecialchars($sched['room']) ?>">
+                Edit
+            </button>
             <button class="delete-btn" data-id="<?= $sched['id'] ?>">Delete</button>
         </div>
     <?php endforeach; ?>
@@ -181,7 +195,14 @@ $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <td><?= htmlspecialchars($sched['instructor']) ?></td>
                 <td><?= htmlspecialchars($sched['room']) ?></td>
                 <td>
-                    <button class="edit-btn" data-id="<?= $sched['id'] ?>">Edit</button>
+                    <button class="edit-btn" 
+                            data-id="<?= $sched['id'] ?>"
+                            data-subject="<?= htmlspecialchars($sched['subject']) ?>"
+                            data-section="<?= htmlspecialchars($sched['section'] ?? ($sched['section_strand'] ?? '')) ?>"
+                            data-day="<?= htmlspecialchars($sched['day_of_week']) ?>"
+                            data-room="<?= htmlspecialchars($sched['room']) ?>">
+                        Edit
+                    </button>
                     <button class="delete-btn" data-id="<?= $sched['id'] ?>">Delete</button>
                 </td>
             </tr>
@@ -194,10 +215,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = function() {
             if (confirm('Delete this schedule?')) {
-                fetch('api/schedule-management.php?action=delete', {
+                fetch('api/delete-schedule.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id: this.dataset.id})
+                    body: JSON.stringify({ id: this.dataset.id })
                 }).then(res => res.json()).then(resp => {
                     if (resp.success) location.reload();
                     else alert('Delete failed');
@@ -209,13 +230,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.onclick = function() {
             const id = this.dataset.id;
-            const newStart = prompt('New start time (HH:MM:SS)?');
-            const newEnd = prompt('New end time (HH:MM:SS)?');
+            const newStart = prompt('New start time (e.g., 08:00 AM)?', this.closest('.sched-block')?.querySelector('.meta')?.textContent?.match(/(\d{1,2}:\d{2}\s?[AP]M)/)?.[0] || '');
+            const newEnd = prompt('New end time (e.g., 09:00 AM)?');
             if (newStart && newEnd) {
-                fetch('api/schedule-management.php?action=edit', {
+                const form = new URLSearchParams();
+                form.append('action', 'update');
+                form.append('schedule_id', id);
+                form.append('subject', this.dataset.subject || '');
+                form.append('section', this.dataset.section || '');
+                form.append('day_of_week', this.dataset.day || '');
+                form.append('start_time', newStart);
+                form.append('end_time', newEnd);
+                form.append('room', this.dataset.room || '');
+                fetch('api/manage-schedule.php', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id, start_time: newStart, end_time: newEnd})
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: form.toString()
                 }).then(res => res.json()).then(resp => {
                     if (resp.success) location.reload();
                     else alert('Edit failed');

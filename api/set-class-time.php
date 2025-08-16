@@ -60,8 +60,8 @@ if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $classStartTime)) {
 }
 
 // Store the class time in session - ensure 24-hour format for comparison
-$_SESSION['class_start_time'] = $classStartTime; // Store as HH:MM format
-$_SESSION['class_start_time_formatted'] = $classStartTime . ':00'; // Store as HH:MM:SS format for comparison
+$_SESSION['class_start_time'] = $classStartTime; // HH:MM
+$_SESSION['class_start_time_formatted'] = $classStartTime . ':00'; // HH:MM:SS
 
 debugLog("Class time stored in session successfully");
 debugLog("Session class_start_time: " . $_SESSION['class_start_time']);

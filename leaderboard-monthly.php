@@ -595,7 +595,7 @@ $total_days = $total_days_result->fetch_assoc()['total_days'];
 
                         <!-- Export Buttons (Hidden) -->
                         <div class="export-buttons mb-3" style="display:none;">
-                            <form method="POST" class="d-inline" action="export_leaderboard_monthly.php">
+                            <form method="POST" class="d-inline" action="#" onsubmit="return false;"> <!-- export endpoint not available -->
                                 <input type="hidden" name="month" value="<?php echo $month; ?>">
                                 <input type="hidden" name="year" value="<?php echo $year; ?>">
                                 <input type="hidden" name="course" value="<?php echo isset($_GET['course']) ? htmlspecialchars($_GET['course']) : ''; ?>">
@@ -777,7 +777,7 @@ $total_days = $total_days_result->fetch_assoc()['total_days'];
                 // Create a temporary form and submit it
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = 'export_leaderboard_monthly.php';
+                form.action = '#'; // Disabled: endpoint not implemented
                 
                 const formatInput = document.createElement('input');
                 formatInput.type = 'hidden';
@@ -819,7 +819,7 @@ $total_days = $total_days_result->fetch_assoc()['total_days'];
                 // Create a temporary form and submit it
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = 'export_leaderboard_monthly.php';
+                form.action = '#'; // Disabled: endpoint not implemented
                 
                 const formatInput = document.createElement('input');
                 formatInput.type = 'hidden';
@@ -861,7 +861,7 @@ $total_days = $total_days_result->fetch_assoc()['total_days'];
                 // Create a temporary form and submit it
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = 'export_leaderboard_monthly.php';
+                form.action = '#'; // Disabled: endpoint not implemented
                 
                 const formatInput = document.createElement('input');
                 formatInput.type = 'hidden';

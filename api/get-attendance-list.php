@@ -1,6 +1,6 @@
 <?php
-// Include database connection
-require_once '../conn/db_conn.php';
+// Include database connection (MySQLi)
+require_once '../conn/db_connect.php';
 session_start();
 
 header('Content-Type: application/json');
@@ -25,6 +25,8 @@ try {
         SELECT a.*, s.student_name, s.course_section 
         FROM tbl_attendance a
         LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id 
+            AND s.school_id = a.school_id 
+            AND s.user_id = a.user_id
         WHERE a.time_in IS NOT NULL AND a.user_id = ? AND a.school_id = ?
         ORDER BY a.time_in DESC 
         LIMIT ?, ?
