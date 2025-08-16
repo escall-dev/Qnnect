@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 11, 2025 at 11:59 AM
+-- Generation Time: Aug 16, 2025 at 11:36 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -247,15 +247,15 @@ CREATE TABLE `class_schedules` (
 
 CREATE TABLE `class_time_settings` (
   `id` int(11) NOT NULL,
-  `instructor_name` varchar(100) NOT NULL,
-  `course_section` varchar(100) NOT NULL,
-  `subject` varchar(100) NOT NULL,
+  `instructor_name` varchar(100) NOT NULL DEFAULT '',
+  `course_section` varchar(100) NOT NULL DEFAULT '',
+  `subject` varchar(100) NOT NULL DEFAULT '',
   `start_time` time NOT NULL,
   `status` enum('active','inactive') DEFAULT 'active',
-  `end_time` time NOT NULL,
-  `days_of_week` varchar(100) NOT NULL,
+  `end_time` time NOT NULL DEFAULT '00:00:00',
+  `days_of_week` varchar(100) NOT NULL DEFAULT '',
   `school_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT 1,
+  `user_id` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -265,28 +265,8 @@ CREATE TABLE `class_time_settings` (
 --
 
 INSERT INTO `class_time_settings` (`id`, `instructor_name`, `course_section`, `subject`, `start_time`, `status`, `end_time`, `days_of_week`, `school_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(0, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-11 03:06:05', '2025-08-11 06:03:23'),
-(31, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 25, '2025-08-02 18:21:42', '2025-08-11 06:03:23'),
-(32, '', '', '', '00:00:00', 'active', '00:00:00', '', 2, 1, '2025-08-02 18:29:53', '2025-08-11 06:12:13'),
-(33, '', '', '', '00:00:00', 'active', '00:00:00', '', 2, 1, '2025-08-02 18:34:58', '2025-08-11 06:12:13'),
-(34, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-05 01:10:32', '2025-08-11 06:03:23'),
-(35, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-05 01:11:59', '2025-08-11 06:03:23'),
-(36, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 01:29:18', '2025-08-11 06:03:23'),
-(37, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 01:29:23', '2025-08-11 06:03:23'),
-(38, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 01:29:27', '2025-08-11 06:03:23'),
-(39, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 10:00:06', '2025-08-11 06:03:23'),
-(40, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 12:05:48', '2025-08-11 06:03:23'),
-(41, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 12:09:46', '2025-08-11 06:03:23'),
-(42, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 12:50:20', '2025-08-11 06:03:23'),
-(43, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 13:36:49', '2025-08-11 06:03:23'),
-(44, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 13:36:59', '2025-08-11 06:03:23'),
-(45, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 13:37:26', '2025-08-11 06:03:23'),
-(46, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 13:37:36', '2025-08-11 06:03:23'),
-(47, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 13:39:14', '2025-08-11 06:03:23'),
-(48, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-06 13:40:18', '2025-08-11 06:03:23'),
-(49, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-08 14:39:05', '2025-08-11 06:03:23'),
-(50, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-08 14:42:45', '2025-08-11 06:03:23'),
-(51, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 1, 1, '2025-08-08 14:43:08', '2025-08-11 06:03:23');
+(1, '', '', '', '00:00:00', 'active', '00:00:00', '', 1, 1, '2025-08-15 14:55:12', '2025-08-16 07:46:14'),
+(2, '', '', '', '18:00:00', 'active', '18:28:58', '', 2, 1, '2025-08-15 15:28:58', '2025-08-16 09:29:22');
 
 -- --------------------------------------------------------
 
@@ -365,7 +345,6 @@ INSERT INTO `tbl_attendance` (`tbl_attendance_id`, `tbl_student_id`, `time_in`, 
 (41, 7, '2025-08-01 05:27:45', 'Late', 'general', NULL, 6, NULL, 2, 24),
 (42, 7, '2025-08-01 05:45:54', 'Late', 'general', NULL, 6, NULL, 2, 24),
 (44, 7, '2025-08-01 05:53:51', 'Late', 'general', NULL, 6, NULL, 2, 24),
-(45, 7, '2025-08-01 06:07:42', 'Late', 'general', NULL, 6, NULL, 2, 24),
 (57, 14, '2025-08-01 14:32:25', 'Late', 'general', NULL, 7, NULL, 1, 23),
 (58, 14, '2025-08-01 14:33:24', 'Late', 'general', NULL, 7, NULL, 1, 23),
 (59, 14, '2025-08-01 14:34:27', 'Late', 'general', NULL, 7, NULL, 1, 23),
@@ -382,11 +361,6 @@ INSERT INTO `tbl_attendance` (`tbl_attendance_id`, `tbl_student_id`, `time_in`, 
 (70, 8, '2025-08-01 14:51:56', 'On Time', 'general', NULL, 7, NULL, 1, 23),
 (71, 8, '2025-08-01 14:52:43', 'Late', 'general', NULL, 7, NULL, 1, 23),
 (72, 14, '2025-08-01 16:24:51', 'On Time', 'general', NULL, 7, NULL, 1, 23),
-(73, 14, '2025-08-01 16:25:18', 'Late', 'general', NULL, 7, NULL, 1, 23),
-(74, 8, '2025-08-01 16:25:32', 'On Time', 'general', NULL, 7, NULL, 1, 23),
-(93, 27, '2025-08-02 16:24:00', 'On Time', 'general', NULL, 6, NULL, 2, 24),
-(96, 27, '2025-08-02 17:49:35', 'On Time', 'general', NULL, 6, NULL, 2, 24),
-(99, 17, '2025-08-02 17:52:05', 'On Time', 'general', NULL, 6, NULL, 2, 24),
 (101, 28, '2025-08-02 18:36:55', 'On Time', 'general', NULL, NULL, NULL, 1, 25),
 (102, 29, '2025-08-02 18:38:29', 'On Time', 'general', NULL, NULL, NULL, 1, 25),
 (103, 29, '2025-08-02 18:38:53', 'On Time', 'general', NULL, NULL, NULL, 1, 25),
@@ -394,8 +368,17 @@ INSERT INTO `tbl_attendance` (`tbl_attendance_id`, `tbl_student_id`, `time_in`, 
 (147, 42, '2025-08-06 12:09:12', 'On Time', 'general', NULL, 0, 1, 1, 23),
 (148, 43, '2025-08-06 12:11:05', 'Late', 'general', NULL, 0, 1, 1, 23),
 (149, 43, '2025-08-06 12:50:39', 'On Time', 'general', NULL, 1, 1, 1, 23),
-(150, 42, '2025-08-06 13:37:05', 'On Time', 'general', NULL, 1, 1, 1, 23),
-(151, 7, '2025-08-06 13:41:11', 'Late', 'general', NULL, 1, 1, 2, 24);
+(0, 29, '2025-08-16 05:06:30', 'Late', 'general', NULL, 1, 1, 1, 25),
+(0, 28, '2025-08-16 05:06:45', 'On Time', 'general', NULL, 0, 1, 1, 25),
+(0, 0, '2025-08-16 05:24:01', 'On Time', 'general', NULL, 1, 1, 1, 25),
+(0, 51, '2025-08-16 05:33:22', 'On Time', 'general', NULL, 0, 1, 1, 25),
+(0, 29, '2025-08-16 05:33:39', 'On Time', 'general', NULL, 0, 1, 1, 25),
+(0, 0, '2025-08-16 05:35:26', 'On Time', 'general', NULL, 7, 1, 1, 23),
+(0, 43, '2025-08-16 05:35:36', 'On Time', 'general', NULL, 0, 1, 1, 23),
+(0, 0, '2025-08-16 06:31:51', 'On Time', 'general', NULL, 0, 1, 1, 23),
+(0, 0, '2025-08-16 07:12:06', 'On Time', 'general', NULL, 7, 0, 1, 23),
+(0, 0, '2025-08-16 09:29:08', 'Late', 'general', NULL, 6, 4, 2, 24),
+(0, 0, '2025-08-16 09:29:46', 'On Time', 'general', NULL, 6, 3, 2, 24);
 
 -- --------------------------------------------------------
 
@@ -423,7 +406,13 @@ INSERT INTO `tbl_courses` (`course_id`, `course_name`, `user_id`, `school_id`, `
 (33, '12 HUMMS', 1, 1, '2025-08-06 16:40:20'),
 (34, '12', 25, 1, '2025-08-06 17:04:41'),
 (35, '12 PRADA', 1, 1, '2025-08-06 17:05:19'),
-(36, '12 GUCCI', 25, 1, '2025-08-06 17:07:08');
+(36, '12 GUCCI', 25, 1, '2025-08-06 17:07:08'),
+(0, 'HUMMS', 25, 1, '2025-08-15 07:14:12'),
+(0, 'BSIT 402', 24, 2, '2025-08-15 18:39:26'),
+(0, 'BSIT 302', 23, 1, '2025-08-15 18:42:37'),
+(0, 'BSIS', 23, 1, '2025-08-16 04:05:07'),
+(0, 'ICT', 23, 1, '2025-08-16 04:06:41'),
+(0, 'BSIT 302', 25, 1, '2025-08-16 05:08:09');
 
 -- --------------------------------------------------------
 
@@ -542,7 +531,17 @@ INSERT INTO `tbl_face_verification_logs` (`log_id`, `student_id`, `student_name`
 (76, NULL, 'BARNEYUY', 'Success', '2025-08-07 00:39:50', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1),
 (77, NULL, 'ESTRA', 'Success', '2025-08-07 00:43:02', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1),
 (78, NULL, 'MEOW', 'Success', '2025-08-07 01:04:36', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1),
-(79, NULL, 'MEWOE', 'Success', '2025-08-07 01:06:56', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1);
+(79, NULL, 'MEWOE', 'Success', '2025-08-07 01:06:56', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1),
+(0, NULL, 'deploy', 'Success', '2025-08-15 15:14:07', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1),
+(0, NULL, 'APPLIED', 'Success', '2025-08-15 15:14:43', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 1),
+(0, NULL, 'alice', 'Success', '2025-08-15 15:50:07', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 25),
+(0, NULL, 'oppo', 'Success', '2025-08-16 02:39:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 24),
+(0, NULL, 'rabbit', 'Success', '2025-08-16 02:42:31', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 23),
+(0, NULL, 'thomas', 'Success', '2025-08-16 12:05:00', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 23),
+(0, NULL, 'BARNEYYYY', 'Success', '2025-08-16 12:06:37', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 23),
+(0, NULL, 'candice', 'Success', '2025-08-16 13:08:05', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 25),
+(0, NULL, 'NANA', 'Success', '2025-08-16 14:32:52', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 1, 23),
+(0, NULL, 'shojo', 'Success', '2025-08-16 17:28:27', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 24);
 
 -- --------------------------------------------------------
 
@@ -567,7 +566,8 @@ INSERT INTO `tbl_instructors` (`instructor_id`, `instructor_name`, `subject`, `c
 (6, 'alex', '', '2025-07-31 13:22:35', 2, NULL),
 (7, 'escall', '', '2025-07-31 13:50:50', 1, NULL),
 (8, 'ara', '', '2025-08-01 17:21:50', 1, NULL),
-(24, 'alex', '', '2025-08-06 11:54:02', 1, NULL);
+(24, 'alex', '', '2025-08-06 11:54:02', 1, NULL),
+(23, 'escall', '', '2025-08-16 04:00:35', 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -582,6 +582,17 @@ CREATE TABLE `tbl_instructor_subjects` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `school_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tbl_instructor_subjects`
+--
+
+INSERT INTO `tbl_instructor_subjects` (`id`, `instructor_id`, `subject_id`, `created_at`, `school_id`) VALUES
+(0, 0, 0, '2025-08-16 07:10:13', 1),
+(0, 0, 2, '2025-08-16 07:40:52', 1),
+(0, 0, 3, '2025-08-16 07:44:15', 1),
+(0, 0, 4, '2025-08-16 07:44:27', 1),
+(0, 0, 5, '2025-08-16 07:45:59', 1);
 
 -- --------------------------------------------------------
 
@@ -609,7 +620,8 @@ INSERT INTO `tbl_sections` (`section_id`, `section_name`, `user_id`, `school_id`
 (200, 'HUMANOIDS', 1, 1, '2025-08-06 16:40:20', NULL),
 (201, 'GUCCI PRADA', 25, 1, '2025-08-06 17:04:41', 34),
 (202, 'GUCCI', 1, 1, '2025-08-06 17:05:19', NULL),
-(203, 'VERSACE', 25, 1, '2025-08-06 17:07:08', 36);
+(203, 'VERSACE', 25, 1, '2025-08-06 17:07:08', 36),
+(0, '12 HUMANIDADES', 24, 2, '2025-08-16 09:28:32', 28);
 
 -- --------------------------------------------------------
 
@@ -639,13 +651,15 @@ INSERT INTO `tbl_student` (`tbl_student_id`, `student_name`, `course_section`, `
 (30, 'plattypus', 'BIKINI BOTTOM', 'BIKINI|BOTTOM|1', NULL, 'face_1754356692_68915bd487dd3.jpg', 2, 24),
 (39, 'open', 'ICT - 12', 'STU-24-2-840ffe22-4366d63f70194784', NULL, 'face_1754475914_68932d8a89768.jpg', 2, 24),
 (41, 'close', 'BSIT-402', 'STU-24-2-5b31f9b3-6241b5939f374e36', NULL, 'face_1754481876_689344d4c8b68.jpg', 2, 24),
-(42, 'BARNEY', 'HUMMS - 12 HUMANIDADES', 'STU-23-1-7581f785-d14c3fdf9b7d4a6b', NULL, 'face_1754482135_689345d74ddf3.jpg', 1, 23),
 (43, 'DINOSAUR', 'ICT - 11 AGHIMUAN', 'STU-23-1-51be2143-a3c4f622bc8b30f6', NULL, 'face_1754482252_6893464cef668.jpg', 1, 23),
 (45, 'PERRY', 'HUMMS - 12 HUMANIDADES', 'STU-24-2-62c1c135-6419d1d559b504fe', NULL, 'face_1754492441_68936e19530d3.jpg', 2, 24),
 (46, 'Harvey Flores', 'ICT - 11 AGHIMUAN', 'STU-24-2-41f23ec1-e556e0733a0f8edf', NULL, 'face_1754492673_68936f01571fb.jpg', 2, 24),
 (48, 'octo', 'STEM 12 - VERSI', 'STU-24-2-121e3d79-6458d7d6ebe40a8c', NULL, 'face_1754494172_689374dc40ed2.jpg', 2, 24),
-(49, 'BARNEYUY', '12 HUMMS - HUMANOIDS', 'STU-25-1-61d5dfdd-52e69d311fa72ec4', NULL, 'face_1754498394_6893855a94c49.jpg', 1, 25),
-(51, 'MEWOE', '12 GUCCI - VERSACE', 'STU-25-1-5bbda5e8-a69bde578ac5ad2c', NULL, 'face_1754500028_68938bbcee71a.jpg', 1, 25);
+(51, 'MEWOE', '12 GUCCI - VERSACE', 'STU-25-1-5bbda5e8-a69bde578ac5ad2c', NULL, 'face_1754500028_68938bbcee71a.jpg', 1, 25),
+(0, 'BARNEYYYY', 'ICT - 11 AGHIMUAN', 'STU-23-1-5c78fcc6-6c310c2aac20bceb', NULL, 'face_1755317201_68a003d11b85b.jpg', 1, 23),
+(0, 'candice', 'BSIT 302 - SIGALOT', 'STU-25-1-40593fe0-aef171722d487895', NULL, 'face_1755320889_68a01239bb179.jpg', 1, 25),
+(0, 'NANA', 'BSIT 302 - SIGALOT', 'STU-23-1-47eb359c-4e183ee5484254fd', NULL, 'face_1755325978_68a0261a52e6a.jpg', 1, 23),
+(0, 'shojo', 'HUMMS - 12 HUMANIDADES', 'STU-24-2-0b878762-f7bce6dd70fee87d', NULL, 'face_1755336512_68a04f400fb3c.jpg', 2, 24);
 
 -- --------------------------------------------------------
 
@@ -657,18 +671,20 @@ CREATE TABLE `tbl_subjects` (
   `subject_id` int(11) NOT NULL,
   `subject_name` varchar(100) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `school_id` int(11) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `school_id` int(11) DEFAULT 1,
+  `user_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tbl_subjects`
 --
 
-INSERT INTO `tbl_subjects` (`subject_id`, `subject_name`, `created_at`, `school_id`) VALUES
-(1, 'Business Math', '2025-06-21 07:25:54', 1),
-(3, 'Organizational Management', '2025-06-21 09:48:17', 1),
-(4, 'math', '2025-07-30 12:31:32', 1),
-(5, 'english', '2025-07-30 12:33:02', 1);
+INSERT INTO `tbl_subjects` (`subject_id`, `subject_name`, `created_at`, `school_id`, `user_id`) VALUES
+(1, 'NUCLEAR PHYSICS', '2025-08-16 07:24:30', 1, 23),
+(2, 'Physical Quantumine', '2025-08-16 07:40:52', 1, 23),
+(3, 'Networking', '2025-08-16 07:44:15', 2, 24),
+(4, 'Quantum Physics', '2025-08-16 07:44:27', 2, 24),
+(5, 'ATOMIC PHYSICS', '2025-08-16 07:45:59', 1, 25);
 
 -- --------------------------------------------------------
 
@@ -742,7 +758,11 @@ INSERT INTO `teacher_schedules` (`id`, `teacher_username`, `subject`, `section`,
 (0, 'alex', 'Web Tech', 'ICT 11 - AGHIMUAN', 'Monday', '09:00:00', '12:00:00', 'Computer Laboratory', 2, 24, '2025-08-11 03:03:45', '2025-08-11 03:04:29', 'inactive'),
 (0, 'escall', 'Web Tech', 'ICT 11 - AGHIMUAN', 'Monday', '12:00:00', '13:00:00', 'Computer Laboratory', 1, 23, '2025-08-11 03:07:10', '2025-08-11 03:07:22', 'inactive'),
 (0, 'alex', 'Networking', 'IT - CAPSTONE 1', 'Tuesday', '12:00:00', '13:00:00', 'Computer Laboratory', 2, 24, '2025-08-11 03:09:00', '2025-08-11 03:09:14', 'inactive'),
-(0, 'alex', 'Networking', 'ICT 11 - AGHIMUANANO', 'Saturday', '14:00:00', '17:00:00', 'Computer Laboratory', 2, 24, '2025-08-11 06:02:47', '2025-08-11 06:02:47', 'active');
+(0, 'alex', 'Networking', 'ICT 11 - AGHIMUANANO', 'Saturday', '14:00:00', '17:00:00', 'Computer Laboratory', 2, 24, '2025-08-11 06:02:47', '2025-08-11 06:02:47', 'active'),
+(0, 'alex', 'Quantum Physics', 'BSIT 402 - PERIPHALS', 'Wednesday', '15:00:00', '20:00:00', 'CANTEEN', 2, 24, '2025-08-11 11:38:21', '2025-08-11 11:38:21', 'active'),
+(0, 'escall', 'Physical Quantumine', 'BSIT 302 - SIGALOT', 'Saturday', '18:00:00', '21:00:00', '2ND FLOOR', 1, 23, '2025-08-11 11:39:46', '2025-08-11 11:39:46', 'active'),
+(0, 'escall', 'NUCLEAR PHYSICS', 'BSIT - 302', 'Saturday', '15:00:00', '17:30:00', 'NUCLEAR LAB', 1, 23, '2025-08-16 06:31:00', '2025-08-16 06:31:00', 'active'),
+(0, 'ara', 'ATOMIC PHYSICS', 'KINDER 202 - MAGALANG', 'Monday', '12:00:00', '14:00:00', 'ATOMIC SITE', 1, 25, '2025-08-16 07:45:53', '2025-08-16 07:45:53', 'active');
 
 --
 -- Triggers `teacher_schedules`
@@ -917,7 +937,11 @@ INSERT INTO `teacher_schedule_logs` (`id`, `schedule_id`, `action`, `old_values`
 (0, 0, 'UPDATE', '{\"teacher_username\": \"escall\", \"subject\": \"Web Tech\", \"section\": \"ICT 11 - AGHIMUAN\", \"day_of_week\": \"Monday\", \"start_time\": \"12:00:00\", \"end_time\": \"13:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 1}', '{\"teacher_username\": \"escall\", \"subject\": \"Web Tech\", \"section\": \"ICT 11 - AGHIMUAN\", \"day_of_week\": \"Monday\", \"start_time\": \"12:00:00\", \"end_time\": \"13:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 1}', 'root@localhost', '2025-08-11 03:07:22'),
 (0, 0, 'INSERT', NULL, '{\"teacher_username\": \"alex\", \"subject\": \"Networking\", \"section\": \"IT - CAPSTONE 1\", \"day_of_week\": \"Tuesday\", \"start_time\": \"12:00:00\", \"end_time\": \"13:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 2}', 'root@localhost', '2025-08-11 03:09:00'),
 (0, 0, 'UPDATE', '{\"teacher_username\": \"alex\", \"subject\": \"Networking\", \"section\": \"IT - CAPSTONE 1\", \"day_of_week\": \"Tuesday\", \"start_time\": \"12:00:00\", \"end_time\": \"13:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 2}', '{\"teacher_username\": \"alex\", \"subject\": \"Networking\", \"section\": \"IT - CAPSTONE 1\", \"day_of_week\": \"Tuesday\", \"start_time\": \"12:00:00\", \"end_time\": \"13:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 2}', 'root@localhost', '2025-08-11 03:09:14'),
-(0, 0, 'INSERT', NULL, '{\"teacher_username\": \"alex\", \"subject\": \"Networking\", \"section\": \"ICT 11 - AGHIMUANANO\", \"day_of_week\": \"Saturday\", \"start_time\": \"14:00:00\", \"end_time\": \"17:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 2}', 'root@localhost', '2025-08-11 06:02:47');
+(0, 0, 'INSERT', NULL, '{\"teacher_username\": \"alex\", \"subject\": \"Networking\", \"section\": \"ICT 11 - AGHIMUANANO\", \"day_of_week\": \"Saturday\", \"start_time\": \"14:00:00\", \"end_time\": \"17:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 2}', 'root@localhost', '2025-08-11 06:02:47'),
+(0, 0, 'INSERT', NULL, '{\"teacher_username\": \"alex\", \"subject\": \"Quantum Physics\", \"section\": \"BSIT 402 - PERIPHALS\", \"day_of_week\": \"Wednesday\", \"start_time\": \"15:00:00\", \"end_time\": \"20:00:00\", \"room\": \"CANTEEN\", \"school_id\": 2}', 'root@localhost', '2025-08-11 11:38:21'),
+(0, 0, 'INSERT', NULL, '{\"teacher_username\": \"escall\", \"subject\": \"Physical Quantumine\", \"section\": \"BSIT 302 - SIGALOT\", \"day_of_week\": \"Saturday\", \"start_time\": \"18:00:00\", \"end_time\": \"21:00:00\", \"room\": \"2ND FLOOR\", \"school_id\": 1}', 'root@localhost', '2025-08-11 11:39:46'),
+(0, 0, 'INSERT', NULL, '{\"teacher_username\": \"escall\", \"subject\": \"NUCLEAR PHYSICS\", \"section\": \"BSIT - 302\", \"day_of_week\": \"Saturday\", \"start_time\": \"15:00:00\", \"end_time\": \"17:30:00\", \"room\": \"NUCLEAR LAB\", \"school_id\": 1}', 'root@localhost', '2025-08-16 06:31:00'),
+(0, 0, 'INSERT', NULL, '{\"teacher_username\": \"ara\", \"subject\": \"ATOMIC PHYSICS\", \"section\": \"KINDER 202 - MAGALANG\", \"day_of_week\": \"Monday\", \"start_time\": \"12:00:00\", \"end_time\": \"14:00:00\", \"room\": \"ATOMIC SITE\", \"school_id\": 1}', 'root@localhost', '2025-08-16 07:45:53');
 
 -- --------------------------------------------------------
 
@@ -999,7 +1023,39 @@ ALTER TABLE `class_schedules`
 --
 ALTER TABLE `class_time_settings`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_school_time` (`school_id`),
   ADD KEY `idx_class_time_settings_school` (`school_id`);
+
+--
+-- Indexes for table `tbl_subjects`
+--
+ALTER TABLE `tbl_subjects`
+  ADD PRIMARY KEY (`subject_id`),
+  ADD UNIQUE KEY `uniq_subject_per_school` (`subject_name`,`school_id`),
+  ADD KEY `idx_tbl_subjects_user_id` (`user_id`);
+
+--
+-- Indexes for table `teacher_schedules`
+--
+ALTER TABLE `teacher_schedules`
+  ADD UNIQUE KEY `uniq_ts_per_user` (`school_id`,`user_id`,`subject`,`section`,`day_of_week`,`start_time`,`end_time`),
+  ADD KEY `idx_ts_user_scoped` (`school_id`,`user_id`,`status`,`day_of_week`,`start_time`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `class_time_settings`
+--
+ALTER TABLE `class_time_settings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+
+--
+-- AUTO_INCREMENT for table `tbl_subjects`
+--
+ALTER TABLE `tbl_subjects`
+  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

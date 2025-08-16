@@ -1,119 +1,184 @@
 <?php
+// Offline attendance sync handler
 session_start();
 include('../conn/db_connect.php');
 require_once('../includes/ActivityLogger.php');
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+header('Content-Type: application/json');
+
+// AuthZ: requires logged-in user and tenant context
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }
 
-// Check if request is POST and has JSON content
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit();
 }
 
-// Get JSON data
-$json_data = file_get_contents('php://input');
-$data = json_decode($json_data, true);
-
-if (!$data) {
+// Parse JSON payload
+$raw = file_get_contents('php://input');
+$items = json_decode($raw, true);
+if (!is_array($items)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
     exit();
 }
 
-$activity_logger = new ActivityLogger($conn_qr, $_SESSION['user_id']);
-$success = true;
-$errors = [];
+$userId = (int)$_SESSION['user_id'];
+$schoolId = (int)$_SESSION['school_id'];
+$instructorId = isset($_SESSION['current_instructor_id']) ? (int)$_SESSION['current_instructor_id'] : null;
+$subjectId = isset($_SESSION['current_subject_id']) ? (int)$_SESSION['current_subject_id'] : null;
 
-// Start transaction
+$activity = new ActivityLogger($conn_qr, $userId);
+
+// Transaction boundary covers the batch
 $conn_qr->begin_transaction();
 
+$synced = 0;
+$skipped = 0;
+$results = [];
+
 try {
-    foreach ($data as $attendance) {
-        // Insert attendance record
-        $sql = "INSERT INTO attendance (
-            student_id, 
-            date, 
-            time_in, 
-            time_out, 
-            status,
-            created_at
-        ) VALUES (?, ?, ?, ?, ?, ?)";
+    // Prepared statements reused in loop
+    $checkSql = "SELECT tbl_attendance_id FROM tbl_attendance
+                 WHERE tbl_student_id = ? AND DATE(time_in) = ?
+                   AND user_id = ? AND school_id = ?
+                   AND (
+                        (instructor_id IS NULL AND ? IS NULL) OR instructor_id = ?
+                   )
+                   AND (
+                        (subject_id IS NULL AND ? IS NULL) OR subject_id = ?
+                   )
+                 LIMIT 1";
+    $checkStmt = $conn_qr->prepare($checkSql);
 
-        $stmt = $conn_qr->prepare($sql);
-        $stmt->bind_param(
-            "isssss",
-            $attendance['student_id'],
-            $attendance['date'],
-            $attendance['time_in'],
-            $attendance['time_out'],
-            $attendance['status'],
-            $attendance['timestamp']
-        );
+    $insertSql = "INSERT INTO tbl_attendance
+                    (tbl_student_id, time_in, status, instructor_id, subject_id, user_id, school_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $insertStmt = $conn_qr->prepare($insertSql);
 
-        if (!$stmt->execute()) {
-            throw new Exception("Error inserting attendance record: " . $stmt->error);
+    foreach ($items as $idx => $attendance) {
+        // Basic validation per item
+        $studentId = isset($attendance['student_id']) ? (int)$attendance['student_id'] : 0;
+        $date = isset($attendance['date']) ? trim($attendance['date']) : '';
+        $timeIn = isset($attendance['time_in']) ? trim($attendance['time_in']) : '';
+        $status = isset($attendance['status']) ? trim($attendance['status']) : '';
+
+        if ($studentId <= 0 || $date === '') {
+            $results[] = ['index' => $idx, 'success' => false, 'error' => 'invalid_item'];
+            $skipped++;
+            continue;
         }
 
-        $attendance_id = $conn_qr->insert_id;
+        // Normalize time_in into full datetime (fallback to midnight if missing)
+        $timePart = $timeIn !== '' ? $timeIn : '00:00:00';
+        // Avoid invalid formats; rely on MySQL to parse standard 'Y-m-d H:i:s'
+        $timeInFull = $date . ' ' . $timePart;
 
-        // Log the activity
-        $activity_logger->log(
+        // Duplicate protection: same student + day + tenant (+ optional instructor/subject)
+        $dateOnly = $date; // already yyyy-mm-dd from client
+        $checkStmt->bind_param(
+            'isiiiiii',
+            $studentId,
+            $dateOnly,
+            $userId,
+            $schoolId,
+            $instructorId,
+            $instructorId,
+            $subjectId,
+            $subjectId
+        );
+        $checkStmt->execute();
+        $existing = $checkStmt->get_result()->fetch_assoc();
+
+        if ($existing) {
+            $results[] = ['index' => $idx, 'success' => true, 'duplicate' => true, 'tbl_attendance_id' => (int)$existing['tbl_attendance_id']];
+            $skipped++;
+            continue;
+        }
+
+        // Compute status if not provided
+        if ($status === '') {
+            // Try to use current class start time from session to derive status
+            $classStart = isset($_SESSION['class_start_time']) ? $_SESSION['class_start_time'] : (isset($_SESSION['class_start_time_formatted']) ? $_SESSION['class_start_time_formatted'] : '08:00:00');
+            if (strlen($classStart) === 5) { $classStart .= ':00'; }
+            $status = (strtotime($timeInFull) <= strtotime($date . ' ' . $classStart)) ? 'On Time' : 'Late';
+        }
+
+        $insInstructor = $instructorId !== null ? $instructorId : null;
+        $insSubject = $subjectId !== null ? $subjectId : null;
+
+        $insertStmt->bind_param(
+            'issiiii',
+            $studentId,
+            $timeInFull,
+            $status,
+            $insInstructor,
+            $insSubject,
+            $userId,
+            $schoolId
+        );
+
+        if (!$insertStmt->execute()) {
+            throw new Exception('Insert failed: ' . $insertStmt->error);
+        }
+
+        $newId = $conn_qr->insert_id;
+        $synced++;
+        $results[] = ['index' => $idx, 'success' => true, 'tbl_attendance_id' => $newId];
+
+        // Activity log per record (keep light; server-side batching still tracked below)
+        $activity->log(
             'attendance_scan',
-            "Synced offline attendance record for student ID: {$attendance['student_id']}",
-            'attendance',
-            $attendance_id,
+            'Synced offline attendance record',
+            'tbl_attendance',
+            $newId,
             [
-                'date' => $attendance['date'],
-                'time_in' => $attendance['time_in'],
-                'time_out' => $attendance['time_out'],
-                'status' => $attendance['status']
+                'student_id' => $studentId,
+                'time_in' => $timeInFull,
+                'status' => $status,
+                'instructor_id' => $insInstructor,
+                'subject_id' => $insSubject
             ]
         );
     }
 
-    // Commit transaction
     $conn_qr->commit();
 
-    // Log successful sync
-    $activity_logger->log(
+    // Batch summary log
+    $activity->log(
         'offline_sync',
-        "Successfully synced " . count($data) . " offline attendance records",
-        'attendance',
+        "Offline sync completed: synced={$synced}, skipped={$skipped}",
+        'tbl_attendance',
         null,
-        ['record_count' => count($data)]
+        ['synced' => $synced, 'skipped' => $skipped]
     );
 
     echo json_encode([
         'success' => true,
-        'message' => 'Successfully synced ' . count($data) . ' records'
+        'synced' => $synced,
+        'skipped' => $skipped,
+        'results' => $results
     ]);
-
 } catch (Exception $e) {
-    // Rollback transaction on error
     $conn_qr->rollback();
-    
-    // Log the error
-    $activity_logger->log(
+
+    // Error log and response
+    $activity->log(
         'offline_sync',
-        "Error syncing offline attendance records: " . $e->getMessage(),
-        'attendance',
+        'Error syncing offline attendance records: ' . $e->getMessage(),
+        'tbl_attendance',
         null,
         ['error' => $e->getMessage()]
     );
 
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error syncing data: ' . $e->getMessage()
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Error syncing data', 'error' => $e->getMessage()]);
 }
 
-$conn_qr->close();
-?> 
+// Do not close $conn_qr here; shared for request lifecycle
+?>
