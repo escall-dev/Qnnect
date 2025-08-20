@@ -276,8 +276,8 @@ $filteredSchedules = getFilteredSchedules(
     <title>QR Code Attendance System</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="<?php echo asset_url('css/bootstrap.min.css'); ?>">
-    <link rel="stylesheet" href="./styles/main.css">
-    <link rel="stylesheet" href="./styles/pagination.css">
+    <link rel="stylesheet" href="./styles/main.css?v=<?php echo @filemtime(__DIR__ . '/styles/main.css'); ?>">
+    <link rel="stylesheet" href="./styles/pagination.css?v=<?php echo @filemtime(__DIR__ . '/styles/pagination.css'); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="./functions/script.js"></script>
     <style>
@@ -1193,7 +1193,7 @@ $filteredSchedules = getFilteredSchedules(
         /* Unified Container Layout Styles (overrides earlier fixed flex sizing) */
         .unified-attendance-container {
             display: grid !important;
-            grid-template-columns: minmax(260px, clamp(280px, 28%, 360px)) 1fr;
+            grid-template-columns: minmax(260px, clamp(300px, 30%, 380px)) 1fr; /* slightly wider QR column */
             width: 100%;
             max-width: 100%;
             margin: 0;
@@ -1202,34 +1202,65 @@ $filteredSchedules = getFilteredSchedules(
             background: #f8f9fa;
             min-height: 600px;
             border: 1px solid rgba(9, 135, 68, 0.2);
-            align-items: start;
+            align-items: stretch; /* make columns equal height */
             gap: 0; /* adjacent border look */
         }
 
         .qr-section {
             width: 100%;
-            max-height: 90vh;
-            overflow: hidden;
+            height: 100%;
+            overflow: visible; /* allow child scrollbar to be fully visible */
             display: flex;
             flex-direction: column;
         }
 
-        .qr-container::-webkit-scrollbar {
-            width: 8px;
+        /* Global scrollbar theming to ensure consistency across which container scrolls */
+    html, body, .main, .attendance-wrapper-container, .unified-attendance-container,
+    .attendance-section, .attendance-list, .qr-section, .qr-container {
+            scrollbar-width: thin !important;             /* Firefox thickness */
+            scrollbar-color: #098744 #e9f9f0 !important;  /* Firefox colors */
         }
+        /* WebKit (Chrome/Edge/Safari) */
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        .main::-webkit-scrollbar,
+        .attendance-wrapper-container::-webkit-scrollbar,
+        .unified-attendance-container::-webkit-scrollbar,
+        .attendance-section::-webkit-scrollbar,
+        .attendance-list::-webkit-scrollbar,
+        .qr-section::-webkit-scrollbar,
+        .qr-container::-webkit-scrollbar { width: 10px !important; height: 10px !important; }
+        html::-webkit-scrollbar-track,
+        body::-webkit-scrollbar-track,
+        .main::-webkit-scrollbar-track,
+        .attendance-wrapper-container::-webkit-scrollbar-track,
+        .unified-attendance-container::-webkit-scrollbar-track,
+        .attendance-section::-webkit-scrollbar-track,
+        .attendance-list::-webkit-scrollbar-track,
+        .qr-section::-webkit-scrollbar-track,
+        .qr-container::-webkit-scrollbar-track { background: #e9f9f0 !important; border-radius: 6px !important; }
+        html::-webkit-scrollbar-thumb,
+        body::-webkit-scrollbar-thumb,
+        .main::-webkit-scrollbar-thumb,
+        .attendance-wrapper-container::-webkit-scrollbar-thumb,
+        .unified-attendance-container::-webkit-scrollbar-thumb,
+        .attendance-section::-webkit-scrollbar-thumb,
+        .attendance-list::-webkit-scrollbar-thumb,
+        .qr-section::-webkit-scrollbar-thumb,
+        .qr-container::-webkit-scrollbar-thumb { background-color: #098744 !important; border-radius: 6px !important; border: 2px solid #e9f9f0 !important; }
+        html::-webkit-scrollbar-thumb:hover,
+        body::-webkit-scrollbar-thumb:hover,
+        .main::-webkit-scrollbar-thumb:hover,
+        .attendance-wrapper-container::-webkit-scrollbar-thumb:hover,
+        .unified-attendance-container::-webkit-scrollbar-thumb:hover,
+        .attendance-section::-webkit-scrollbar-thumb:hover,
+        .attendance-list::-webkit-scrollbar-thumb:hover,
+        .qr-section::-webkit-scrollbar-thumb:hover,
+        .qr-container::-webkit-scrollbar-thumb:hover { background-color: #076630 !important; }
 
-        .qr-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .qr-container::-webkit-scrollbar-thumb {
-            background: #098744;
-            border-radius: 4px;
-        }
-
-        .qr-container::-webkit-scrollbar-thumb:hover {
-            background: #076a32;
-        }
+          /* Restore a stable gutter only inside the QR container so its scrollbar remains styled,
+              without reserving space on the page/body (prevents gray strip by the sidebar) */
+          .qr-container { scrollbar-gutter: stable; }
 
         .attendance-section {
             flex: 1;
@@ -1237,6 +1268,7 @@ $filteredSchedules = getFilteredSchedules(
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            height: 100%;
         }
 
         /* Update QR container styling */
@@ -1244,16 +1276,17 @@ $filteredSchedules = getFilteredSchedules(
             border-right: 3px solid #098744 !important;
             border-radius: 15px 0 0 15px !important;
             margin: 0 !important;
-            height: 100% !important;
+            height: 100% !important; /* fill column height to match attendance section */
             box-shadow: none !important;
             flex: 1 !important;
             display: flex !important;
             flex-direction: column !important;
-            max-height: 90vh;
-            overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: #098744 #f1f1f1;
+            overflow-y: scroll !important; /* force scrollbar so themed track/thumb are visible */
+            overflow-x: hidden !important;
+            /* Ensure consistent scrollbar styling without reserving extra gutter */
+            -ms-overflow-style: scrollbar; /* IE/Edge legacy */
+            scrollbar-width: thin; /* Firefox thickness */
+            scrollbar-color: #098744 #e9f9f0; /* Firefox: thumb color then track */
         }
 
         /* Update attendance list styling */
@@ -1270,11 +1303,11 @@ $filteredSchedules = getFilteredSchedules(
         /* Responsive behavior */
         @media (max-width: 1200px) {
             .attendance-wrapper-container { width: 100%; padding: 20px; }
-            .unified-attendance-container { grid-template-columns: minmax(240px, 300px) 1fr; }
+            .unified-attendance-container { grid-template-columns: minmax(260px, 320px) 1fr; }
         }
 
         @media (max-width: 1024px) {
-            .unified-attendance-container { grid-template-columns: minmax(230px, 280px) 1fr; }
+            .unified-attendance-container { grid-template-columns: minmax(240px, 300px) 1fr; }
         }
 
         @media (max-width: 768px) {
@@ -1508,7 +1541,7 @@ $filteredSchedules = getFilteredSchedules(
         @media (min-width: 800px){
             body:not(.responsive-collapse):not(.responsive-portrait) .unified-attendance-container{
                 display:grid !important;
-                grid-template-columns:minmax(260px,clamp(280px,28%,360px)) 1fr !important;
+                grid-template-columns:minmax(260px,clamp(300px,30%,380px)) 1fr !important;
                 align-items:start !important;
             }
             body:not(.responsive-collapse):not(.responsive-portrait) .qr-container{
@@ -1526,7 +1559,7 @@ $filteredSchedules = getFilteredSchedules(
             body.responsive-collapse .unified-attendance-container,
             body.responsive-portrait .unified-attendance-container{
                 display:grid !important;
-                grid-template-columns:minmax(260px,clamp(280px,28%,360px)) 1fr !important;
+                grid-template-columns:minmax(260px,clamp(300px,30%,380px)) 1fr !important;
             }
             body.responsive-collapse .qr-container,
             body.responsive-portrait .qr-container{

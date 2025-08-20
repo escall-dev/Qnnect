@@ -14,6 +14,21 @@ body {
     background-size: cover;
 }
 
+/* Global scrollbar theme to ensure consistency across all scrollable areas */
+:root {
+    --scrollbar-thumb: #098744;
+    --scrollbar-track: #e9f9f0;
+}
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+/* WebKit (Chrome/Edge/Safari) */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
+*::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 10px; border: 2px solid var(--scrollbar-track); }
+
 /* Main content area */
 .main {
     margin-left: 250px;
@@ -52,7 +67,75 @@ body {
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     height: fit-content;
     max-height: calc(100vh - 100px);
-    overflow-y: auto;
+    overflow-y: auto; /* show scrollbar only when needed */
+    scrollbar-gutter: stable; /* reserve local space so custom styling is visible */
+}
+
+/* Match QR panel scrollbar color to brand green (#098744) */
+/* Firefox */
+.qr-container {
+    scrollbar-width: thin;
+    scrollbar-color: #098744 #e9f9f0;
+}
+/* WebKit browsers (Chrome/Edge/Safari) */
+.qr-container::-webkit-scrollbar { width: 10px !important; }
+.qr-container::-webkit-scrollbar-track { background: #e9f9f0 !important; border-radius: 10px !important; }
+.qr-container::-webkit-scrollbar-thumb { background-color: #098744 !important; border-radius: 10px !important; border: 2px solid #e9f9f0 !important; }
+
+/* Ensure styled scrollbars if inner wrappers become the scroller */
+.qr-container-styled,
+.qr-section {
+    scrollbar-width: thin;
+    scrollbar-color: #098744 #e9f9f0;
+}
+.qr-container-styled::-webkit-scrollbar,
+.qr-section::-webkit-scrollbar { width: 10px !important; }
+.qr-container-styled::-webkit-scrollbar-track,
+.qr-section::-webkit-scrollbar-track { background: #e9f9f0 !important; border-radius: 10px !important; }
+.qr-container-styled::-webkit-scrollbar-thumb,
+.qr-section::-webkit-scrollbar-thumb { background-color: #098744 !important; border-radius: 10px !important; border: 2px solid #e9f9f0 !important; }
+
+/* Global scrollbar theming for all key scroll regions to ensure consistency */
+/* Firefox */
+html, body, #main, .attendance-wrapper-container, .unified-attendance-container,
+.attendance-list, .attendance-table-wrapper, .table-container {
+    scrollbar-width: thin;
+    scrollbar-color: #098744 #e9f9f0;
+}
+/* WebKit browsers */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#main::-webkit-scrollbar,
+.attendance-wrapper-container::-webkit-scrollbar,
+.unified-attendance-container::-webkit-scrollbar,
+.attendance-list::-webkit-scrollbar,
+.attendance-table-wrapper::-webkit-scrollbar,
+.table-container::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+#main::-webkit-scrollbar-track,
+.attendance-wrapper-container::-webkit-scrollbar-track,
+.unified-attendance-container::-webkit-scrollbar-track,
+.attendance-list::-webkit-scrollbar-track,
+.attendance-table-wrapper::-webkit-scrollbar-track,
+.table-container::-webkit-scrollbar-track {
+    background: #e9f9f0;
+    border-radius: 10px;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+#main::-webkit-scrollbar-thumb,
+.attendance-wrapper-container::-webkit-scrollbar-thumb,
+.unified-attendance-container::-webkit-scrollbar-thumb,
+.attendance-list::-webkit-scrollbar-thumb,
+.attendance-table-wrapper::-webkit-scrollbar-thumb,
+.table-container::-webkit-scrollbar-thumb {
+    background-color: #098744;
+    border-radius: 10px;
+    border: 2px solid #e9f9f0;
 }
 
 .attendance-list {
