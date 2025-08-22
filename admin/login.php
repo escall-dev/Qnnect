@@ -656,15 +656,22 @@ $schools = getSchools($conn);
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin: 5px;
+            margin: 5px 0 12px 0;
             min-width: 200px;
+            display: block;            /* make anchors fill full width */
+            text-align: center;        /* center text for anchors */
+            text-decoration: none;     /* remove underline on anchors */
         }
+        .btn-secondary:link, .btn-secondary:visited { text-decoration: none; color: white; }
 
-        .btn-secondary:hover {
+    .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.4);
             transform: translateY(-1px);
         }
+
+    /* Extra spacing for portal button to clear fixed footer */
+    .btn-portal { margin-bottom: 32px; }
 
         .forgot-password {
             color: rgba(255, 255, 255, 0.7);
@@ -827,6 +834,7 @@ $schools = getSchools($conn);
                         <button type="button" class="btn-secondary" onclick="window.location.href='registration.php'">
                             Create new account
                         </button>
+                        <a href="super_admin_login.php?force_pin=1" class="btn-secondary btn-portal">Super Admin Portal</a>
                         
                         <input type="hidden" id="selected_school_id" name="school_id">
                     </div>
@@ -864,6 +872,7 @@ $schools = getSchools($conn);
                         <button type="button" class="btn-secondary" onclick="window.location.href='registration.php'">
                             Create new account
                         </button>
+                        <a href="super_admin_login.php?force_pin=1" class="btn-secondary btn-portal">Super Admin portal</a>
                         
                         <input type="hidden" id="selected_user_id" name="selected_user_id">
                     </div>

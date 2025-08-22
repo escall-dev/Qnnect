@@ -121,8 +121,13 @@ function handleEdit() {
         $_SESSION['error'] = "An error occurred: " . $e->getMessage();
     }
     
-    // Correct the redirect path - remove 'admin/' since we're already in that directory
-    header("Location: users.php");
+    // Redirect back to source if provided
+    $redirect = $_POST['redirect'] ?? null;
+    if ($redirect) {
+        header("Location: " . $redirect);
+    } else {
+        header("Location: users.php");
+    }
     exit;
 }
 ?> 

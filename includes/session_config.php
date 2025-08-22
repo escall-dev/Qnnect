@@ -66,4 +66,4 @@ if (!isset($_SESSION['logging_out'])) {
     // Debug: Log session contents
     error_log('Session config loaded. Session contents: ' . print_r($_SESSION, true));
 }
-?>
+

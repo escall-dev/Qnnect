@@ -63,4 +63,4 @@ function recordUserLogout($conn, $username) {
     
     return $result;
 }
-?> 
+

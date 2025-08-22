@@ -7,6 +7,8 @@ $_SESSION['logging_out'] = true;
 // CRITICAL: Extract session data BEFORE any database operations
 $username = isset($_SESSION['username']) ? trim($_SESSION['username']) : null;
 $profile_image = isset($_SESSION['profile_image']) ? trim($_SESSION['profile_image']) : null;
+// Capture role early for redirect decision later
+$role_before_logout = isset($_SESSION['role']) ? $_SESSION['role'] : null;
 
 // Include database connection
 require_once "database.php";
@@ -202,7 +204,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-// Redirect to login page with cache-busting parameter
-header("Location: login.php?logout=1&t=" . time());
+// Redirect to appropriate login portal based on role captured before session was cleared
+$redirect = ($role_before_logout === 'super_admin') ? 'super_admin_login.php' : 'login.php';
+header("Location: " . $redirect . "?logout=1&t=" . time());
 exit();
-?>      
+     

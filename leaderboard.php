@@ -20,14 +20,14 @@ try {
         FROM tbl_student s
         LEFT JOIN tbl_attendance a ON s.tbl_student_id = a.tbl_student_id 
             AND a.school_id = ? AND a.user_id = ?
-        WHERE s.school_id = ?
+        WHERE s.school_id = ? AND s.user_id = ?
         GROUP BY s.tbl_student_id
         ORDER BY attendance_count DESC
         LIMIT 50
     ";
     
     $stmt = $conn_qr->prepare($query);
-    $stmt->bind_param("iii", $school_id, $user_id, $school_id);
+    $stmt->bind_param("iiii", $school_id, $user_id, $school_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     
