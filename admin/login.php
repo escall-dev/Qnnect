@@ -279,6 +279,28 @@ $schools = getSchools($conn);
             overflow: hidden;
         }
 
+        /* Top-left Back Arrow for steps 2/3 */
+        .back-top-btn {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            display: none; /* toggled via JS */
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .2s ease;
+            z-index: 10;
+        }
+
+        .back-top-btn:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.45); }
+        .back-top-btn i { font-size: 18px; }
+
         .login-container {
             width: 100%;
             max-width: 450px;
@@ -759,6 +781,9 @@ $schools = getSchools($conn);
 
         <!-- Right Section - Login Panel -->
         <div class="login-section">
+            <button type="button" id="backTopBtn" class="back-top-btn" aria-label="Back" onclick="backTopAction()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
             <div class="login-container">
                 <?php if(isset($error_message)): ?>
                     <div class='error-alert'><?php echo $error_message; ?></div>
@@ -865,7 +890,7 @@ $schools = getSchools($conn);
                             Continue
                         </button>
                         
-                        <button type="button" class="btn-secondary" onclick="prevStep(2)">
+                        <button type="button" id="backBtnStep2" class="btn-secondary" style="display:none;" onclick="prevStep(2)">
                             Back
                         </button>
                         
@@ -895,7 +920,7 @@ $schools = getSchools($conn);
                                 Log in
                             </button>
                             
-                            <button type="button" class="btn-secondary" onclick="prevStep(3)">
+                            <button type="button" id="backBtnStep3" class="btn-secondary" style="display:none;" onclick="prevStep(3)">
                                 Back to profiles
                             </button>
                             
@@ -1101,6 +1126,18 @@ $schools = getSchools($conn);
             // Show current step
             document.getElementById(`content${step}`).classList.add('active');
             currentStep = step;
+            // Toggle top-left back button visibility
+            const backTopBtn = document.getElementById('backTopBtn');
+            if (backTopBtn) backTopBtn.style.display = step > 1 ? 'flex' : 'none';
+        }
+
+        // Back arrow action
+        function backTopAction() {
+            if (currentStep === 3) {
+                showStep(2);
+            } else if (currentStep === 2) {
+                showStep(1);
+            }
         }
 
         // Load user profiles for selected school

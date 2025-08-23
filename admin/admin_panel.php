@@ -1,10 +1,16 @@
 <?php
-require_once '../includes/session_config.php';
+// Use isolated session for the Super Admin portal so it doesn't conflict with regular admin session
+require_once '../includes/session_config_superadmin.php';
 require_once '../includes/auth_functions.php';
 require_once 'database.php';
 
-// Require login
+// Require super admin access only
 requireLogin();
+if (!hasRole('super_admin')) {
+    $redirect = 'admin_panel.php';
+    header('Location: super_admin_login.php?force_pin=1&redirect=' . urlencode($redirect));
+    exit();
+}
 
 // Get user's role and school info
 $user_role = $_SESSION['role'] ?? 'admin';
@@ -193,13 +199,30 @@ if (isset($_POST['action'])) {
                 exit();
             }
             
+            // Uniqueness check (friendly error before attempting insert)
+            $stmtU = mysqli_prepare($conn, 'SELECT id, name, code FROM schools WHERE name = ? OR code = ? LIMIT 1');
+            mysqli_stmt_bind_param($stmtU, 'ss', $name, $code);
+            mysqli_stmt_execute($stmtU);
+            $resU = mysqli_stmt_get_result($stmtU);
+            $dup = $resU ? mysqli_fetch_assoc($resU) : null;
+            mysqli_stmt_close($stmtU);
+            if ($dup) {
+                $which = ($dup['name'] === $name) ? 'name' : 'code';
+                echo json_encode(['success' => false, 'message' => 'A school with this ' . $which . ' already exists']);
+                exit();
+            }
+
             $sql = "INSERT INTO schools (name, code, theme_color) VALUES (?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "sss", $name, $code, $theme);
-            
-            if (mysqli_stmt_execute($stmt)) {
+            $ok = @mysqli_stmt_execute($stmt);
+            $errno = mysqli_errno($conn);
+            mysqli_stmt_close($stmt);
+            if ($ok) {
                 logActivity($conn, 'SCHOOL_ADDED', "Name: {$name}, Code: {$code}");
                 echo json_encode(['success' => true, 'message' => 'School added successfully']);
+            } else if ($errno === 1062) {
+                echo json_encode(['success' => false, 'message' => 'A school with this name or code already exists']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Failed to add school']);
             }
@@ -382,6 +405,55 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             <div>
                 <div style="font-weight:600;"><?php echo htmlspecialchars($_SESSION['username']); ?></div>
                 <div style="font-size:14px;color:#666;"><?php echo $is_super_admin ? 'Super Administrator' : 'Administrator'; ?></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal (reusable) -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalTitle">Please Confirm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody">Are you sure?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmModalOkBtn">Yes, Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal (reusable) -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="successModalTitle">Success</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="successModalBody">Operation completed successfully.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal (reusable) -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="errorModalTitle">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="errorModalBody">Something went wrong.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
+                </div>
             </div>
         </div>
     </div>
@@ -869,6 +941,76 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Reusable confirm + success helpers
+        let _confirmModal, _successModal, _confirmResolve;
+        document.addEventListener('DOMContentLoaded', () => {
+            const cmEl = document.getElementById('confirmModal');
+            if (cmEl) _confirmModal = new bootstrap.Modal(cmEl);
+            const smEl = document.getElementById('successModal');
+            if (smEl) _successModal = new bootstrap.Modal(smEl);
+            const emEl = document.getElementById('errorModal');
+            if (emEl) window._errorModal = new bootstrap.Modal(emEl);
+            const okBtn = document.getElementById('confirmModalOkBtn');
+            if (okBtn) {
+                okBtn.addEventListener('click', () => {
+                    if (_confirmResolve) _confirmResolve(true);
+                    _confirmResolve = null;
+                    if (_confirmModal) _confirmModal.hide();
+                });
+            }
+            cmEl?.addEventListener('hidden.bs.modal', () => {
+                if (_confirmResolve) _confirmResolve(false);
+                _confirmResolve = null;
+            });
+        });
+
+        function showConfirm(options) {
+            const { title = 'Please Confirm', message = 'Are you sure?', confirmText = 'Yes, Continue' } = options || {};
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalBody').textContent = message;
+            document.getElementById('confirmModalOkBtn').textContent = confirmText;
+            if (_confirmModal) _confirmModal.show();
+            return new Promise(resolve => { _confirmResolve = resolve; });
+        }
+
+        function showSuccess(message, title = 'Success') {
+            document.getElementById('successModalTitle').textContent = title;
+            document.getElementById('successModalBody').textContent = message || 'Operation completed successfully.';
+            const el = document.getElementById('successModal');
+            if (_successModal && el) {
+                _successModal.show();
+                return new Promise(resolve => {
+                    el.addEventListener('hidden.bs.modal', () => resolve(true), { once: true });
+                });
+            }
+            return Promise.resolve(true);
+        }
+
+        function showError(message, title = 'Error') {
+            const t = document.getElementById('errorModalTitle'); if (t) t.textContent = title;
+            const b = document.getElementById('errorModalBody'); if (b) b.textContent = message || 'Something went wrong.';
+            const el = document.getElementById('errorModal');
+            if (window._errorModal && el) {
+                window._errorModal.show();
+                return new Promise(resolve => {
+                    el.addEventListener('hidden.bs.modal', () => resolve(true), { once: true });
+                });
+            }
+            alert(message || 'Something went wrong.');
+            return Promise.resolve(true);
+        }
+
+        async function postAndParseJson(url, body) {
+            const response = await fetch(url, { method: 'POST', body });
+            const raw = await response.text();
+            try {
+                return JSON.parse(raw);
+            } catch (err) {
+                console.error('Server returned non-JSON:', raw);
+                throw new Error(raw || 'Invalid server response');
+            }
+        }
+
         function showSection(sectionId, el) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             const sec = document.getElementById(sectionId);
@@ -912,40 +1054,41 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 body: `action=promote_user&user_id=${userId}&new_role=${newRole}`
             })
             .then(response => response.json())
-            .then(data => {
+            .then(async data => {
                 if (data.success) {
-                    alert(data.message);
+                    await showSuccess(data.message);
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    await showError('Error: ' + data.message);
                 }
             });
         }
 
         // Add School Form
-        document.getElementById('add_school_form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData();
-            formData.append('action', 'add_school');
-            formData.append('school_name', document.getElementById('school_name').value);
-            formData.append('school_code', document.getElementById('school_code').value);
-            formData.append('theme_color', document.getElementById('school_theme').value);
-            
-            fetch('admin_panel.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
+        (function() {
+            const addForm = document.getElementById('add_school_form');
+            if (!addForm) return;
+            addForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('action', 'add_school');
+                formData.append('school_name', document.getElementById('school_name').value);
+                formData.append('school_code', document.getElementById('school_code').value);
+                formData.append('theme_color', document.getElementById('school_theme').value);
+                try {
+                    const data = await postAndParseJson('admin_panel.php', formData);
+                    if (data && data.success) {
+                        await showSuccess(data.message || 'School added successfully.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + ((data && data.message) || 'Request failed'));
+                    }
+                } catch (err) {
+                    alert('Error adding school: ' + (err && err.message ? err.message : 'Unknown error'));
+                    console.error('Add school error:', err);
                 }
             });
-        });
+        })();
 
         // Theme Form
         document.getElementById('theme_form').addEventListener('submit', function(e) {
@@ -962,13 +1105,16 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 body: formData
             })
             .then(response => response.json())
-            .then(data => {
+            .then(async data => {
                 if (data.success) {
-                    alert(data.message);
+                    await showSuccess(data.message || 'Theme updated successfully.');
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    await showError('Error: ' + (data.message || 'Invalid or expired passkey'));
                 }
+            })
+            .catch(async err => {
+                await showError('Request failed: ' + (err && err.message ? err.message : 'Unknown error'));
             });
         });
 
@@ -987,13 +1133,16 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 body: formData
             })
             .then(response => response.json())
-            .then(data => {
+            .then(async data => {
                 if (data.success) {
                     document.getElementById('passkey_display').textContent = data.passkey;
                     document.getElementById('passkey_result').style.display = 'block';
                 } else {
-                    alert('Error: ' + data.message);
+                    await showError('Error: ' + (data.message || 'Failed to generate passkey'));
                 }
+            })
+            .catch(async err => {
+                await showError('Request failed: ' + (err && err.message ? err.message : 'Unknown error'));
             });
         });
         <?php endif; ?>
@@ -1123,8 +1272,13 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             });
         }
 
-        function deleteUser(userId) {
-            if (!confirm('Delete this user? This cannot be undone.')) return;
+        async function deleteUser(userId) {
+            const confirmed = await showConfirm({
+                title: 'Delete User',
+                message: 'Are you sure you want to delete this user? This action cannot be undone.',
+                confirmText: 'Yes, delete user'
+            });
+            if (!confirmed) return;
             const fd = new URLSearchParams();
             fd.append('action','delete_user');
             fd.append('user_id', userId);
@@ -1132,6 +1286,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             .then(r => r.json())
             .then(data => {
                 if (!data.success) { alert('Error: ' + (data.message || 'Delete failed')); return; }
+                showSuccess('User successfully deleted.');
                 refreshUsers();
             });
         }
@@ -1218,8 +1373,13 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             });
         }
 
-        function deleteSchool(id) {
-            if (!confirm('Delete this school? If it has linked records, it will be marked inactive.')) return;
+        async function deleteSchool(id) {
+            const confirmed = await showConfirm({
+                title: 'Delete School',
+                message: 'Are you sure you want to delete this school? If it has linked records, it will be marked inactive.',
+                confirmText: 'Yes, delete school'
+            });
+            if (!confirmed) return;
             const fd = new URLSearchParams();
             fd.append('action','delete_school');
             fd.append('school_id', id);
@@ -1227,7 +1387,8 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             .then(r => r.json())
             .then(data => {
                 if (!data.success) { alert('Error: ' + (data.message || 'Delete failed')); return; }
-                location.reload();
+                showSuccess('School successfully deleted or marked inactive.');
+                setTimeout(() => { location.reload(); }, 500);
             });
         }
     </script>

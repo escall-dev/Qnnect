@@ -193,12 +193,18 @@ function generateThemePasskey($conn, $school_id = null, $expires_hours = 24) {
 /**
  * Verify theme passkey
  */
-function verifyThemePasskey($conn, $passkey) {
+function verifyThemePasskey($conn, $passkey, $target_school_id = null) {
     $sql = "SELECT * FROM theme_passkeys WHERE used = FALSE AND (expires_at IS NULL OR expires_at > NOW())";
     $result = mysqli_query($conn, $sql);
     
     while ($row = mysqli_fetch_assoc($result)) {
         if (password_verify($passkey, $row['key_hash'])) {
+            // Enforce school binding: if passkey has a school_id, it must match the target school
+            $key_school = isset($row['school_id']) ? $row['school_id'] : null;
+            if ($key_school !== null && $target_school_id !== null && (int)$key_school !== (int)$target_school_id) {
+                // Not valid for this school
+                continue;
+            }
             // Mark as used
             $update_sql = "UPDATE theme_passkeys SET used = TRUE, used_at = NOW(), used_by = ? WHERE id = ?";
             $stmt = mysqli_prepare($conn, $update_sql);
@@ -218,7 +224,7 @@ function verifyThemePasskey($conn, $passkey) {
  * Update school theme
  */
 function updateSchoolTheme($conn, $school_id, $theme_color, $passkey) {
-    $passkey_data = verifyThemePasskey($conn, $passkey);
+    $passkey_data = verifyThemePasskey($conn, $passkey, $school_id);
     
     if (!$passkey_data) {
         return ['success' => false, 'message' => 'Invalid or expired passkey'];
