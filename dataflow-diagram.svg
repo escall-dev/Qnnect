@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040" role="img" aria-label="Qnnect Dataflow Diagram">
+  <defs>
+    <linearGradient id="gHeader" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0b6b3a" />
+      <stop offset="100%" stop-color="#098744" />
+    </linearGradient>
+    <linearGradient id="gServer" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.98" />
+      <stop offset="100%" stop-color="#f4fff9" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0b3f2a" />
+    </marker>
+    <style>
+      .lane { fill: #f6fff9; stroke: none; }
+      .box { fill: url(#gServer); stroke: #0b6b3a; stroke-width:1.6; rx:12; ry:12; filter:url(#shadow); }
+      .box-compact { fill: #ffffff; stroke: #0b6b3a; stroke-width:1.2; rx:10; ry:10; }
+      .h1 { font: 700 20px/1.1 'Segoe UI', Roboto, sans-serif; fill: #072; }
+      .h2 { font: 600 14px/1 'Segoe UI', Roboto, sans-serif; fill: #0b3f2a; }
+      .muted { font: 12px/1 'Segoe UI', Roboto, sans-serif; fill: #4b5b4b; }
+      .arrow { stroke: #0b3f2a; stroke-width:2.2; fill:none; marker-end:url(#arrow); }
+      .dashed { stroke-dasharray:8 6; }
+      .badge { fill:#0b6b3a; rx:6; ry:6; }
+      .small { font:11px/1 'Segoe UI', Roboto, sans-serif; fill:#2b3b2b; }
+    </style>
+  </defs>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="1600" height="72" fill="url(#gHeader)" />
+  <text x="28" y="46" class="h1">Qnnect — Dataflow Diagram (Polished)</text>
+  <text x="28" y="62" class="muted">Overview: face verification → QR scan → attendance store; admin &amp; logging flows</text>
+
+  <!-- Swimlanes -->
+  <rect x="24" y="96" width="370" height="840" class="lane" />
+  <text x="44" y="120" class="h2">Client / Device</text>
+
+  <rect x="410" y="96" width="580" height="420" class="lane" />
+  <text x="430" y="120" class="h2">Application Server (PHP)</text>
+
+  <rect x="410" y="536" width="580" height="400" class="lane" />
+  <text x="430" y="560" class="h2">Business Logic &amp; Services</text>
+
+  <rect x="1020" y="96" width="556" height="840" class="lane" />
+  <text x="1040" y="120" class="h2">Datastores &amp; Admin</text>
+
+  <!-- Client Boxes -->
+  <g transform="translate(48,140)">
+    <rect class="box-compact" x="0" y="0" width="320" height="120" />
+    <text x="18" y="26" class="h2">Face Verification (Browser)</text>
+    <text x="18" y="46" class="small">- page: face-verification.php</text>
+    <text x="18" y="64" class="small">- JS: functions/face-verification.js (BlazeFace / tfjs)</text>
+    <text x="18" y="82" class="small">- Stores verification via POST -> endpoint/store-verification.php</text>
+  </g>
+
+  <g transform="translate(48,280)">
+    <rect class="box-compact" x="0" y="0" width="320" height="100" />
+    <text x="18" y="26" class="h2">QR Scanner</text>
+    <text x="18" y="46" class="small">- page: index.php (Instascan)</text>
+    <text x="18" y="64" class="small">- Submits attendance -> endpoint/add-attendance.php</text>
+  </g>
+
+  <!-- Server / Endpoints -->
+  <g transform="translate(434,140)">
+    <rect class="box" x="0" y="0" width="520" height="120" />
+    <text x="18" y="28" class="h2">Endpoints &amp; Session</text>
+    <text x="18" y="50" class="small">- endpoint/add-attendance.php</text>
+    <text x="18" y="66" class="small">- endpoint/store-verification.php (writes to PHP session)</text>
+    <text x="18" y="82" class="small">- endpoint/verify-face.php (optional server-assisted)</text>
+  </g>
+
+  <g transform="translate(434,280)">
+    <rect class="box" x="0" y="0" width="520" height="160" />
+    <text x="18" y="28" class="h2">App Pages &amp; Logic</text>
+    <text x="18" y="50" class="small">- index.php (QR UI, class time, schedule selection)</text>
+    <text x="18" y="68" class="small">- face-verification.php (serves UI + client ML)</text>
+    <text x="18" y="86" class="small">- includes/session_config.php (session boot)</text>
+    <text x="18" y="104" class="small">- includes/activity_log_helper.php (audit logging)</text>
+    <text x="18" y="122" class="small">- api/validate-session.php (session health)</text>
+  </g>
+
+  <!-- Business Logic / Admin services -->
+  <g transform="translate(434,520)">
+    <rect class="box" x="0" y="0" width="520" height="200" />
+    <text x="18" y="28" class="h2">Admin &amp; Background</text>
+    <text x="18" y="50" class="small">- admin/admin_panel.php, admin/controller.php</text>
+    <text x="18" y="68" class="small">- settings.php (backup/restore, DB cleaner)</text>
+    <text x="18" y="86" class="small">- Various maintenance scripts (diagnostics, cleanup)</text>
+    <text x="18" y="104" class="small">- Activity logging writes to tbl_user_logs</text>
+  </g>
+
+  <!-- Datastores -->
+  <g transform="translate(1044,140)">
+    <rect class="box" x="0" y="0" width="472" height="120" />
+    <text x="18" y="26" class="h2">QR Attendance DB</text>
+    <text x="18" y="46" class="small">- Database: qr_attendance_db (conn/db_connect.php =&gt; $conn_qr)</text>
+    <text x="18" y="66" class="small">- Key tables: tbl_attendance, tbl_student, class_time_settings, teacher_schedules</text>
+  </g>
+
+  <g transform="translate(1044,280)">
+    <rect class="box" x="0" y="0" width="472" height="120" />
+    <text x="18" y="26" class="h2">Auth &amp; Admin DB</text>
+    <text x="18" y="46" class="small">- Database: login_register (users, schools, tbl_user_logs)</text>
+    <text x="18" y="66" class="small">- Used by admin panel and system-wide settings</text>
+  </g>
+
+  <!-- Arrows / Flows -->
+  <path d="M372 200 L434 190" class="arrow" />
+  <text x="300" y="190" class="small">Verified student -> store in PHP session</text>
+
+  <path d="M372 340 L434 300" class="arrow" />
+  <text x="260" y="325" class="small">QR scan → POST add-attendance.php</text>
+
+  <path d="M740 300 L940 420" class="arrow" />
+  <text x="780" y="360" class="small">add-attendance: validate session, class_start_time, insert tbl_attendance</text>
+
+  <path d="M940 420 L1044 420" class="arrow" />
+  <text x="960" y="440" class="small">Write attendance row → qr_attendance_db.tbl_attendance</text>
+
+  <path d="M760 220 L1044 220" class="arrow dashed" />
+  <text x="810" y="200" class="small">Optional: verify-face.php returns registered + temp images for client comparison</text>
+
+  <path d="M760 620 L1044 620" class="arrow" />
+  <text x="760" y="640" class="small">Admin changes (users, schools, themes) → login_register</text>
+
+  <path d="M740 420 L740 520 L1044 520" class="arrow" />
+  <text x="740" y="500" class="small">Activity logs &amp; audit writes → tbl_user_logs</text>
+
+  <!-- Legend / Notes panel -->
+  <g transform="translate(48,760)">
+    <rect x="0" y="0" width="1480" height="240" fill="#ffffff" stroke="#e6efe6" rx="10" ry="10" />
+  <text x="18" y="26" class="h2">Legend &amp; Notes</text>
+    <text x="18" y="48" class="small">- Solid arrows: primary request/response flows</text>
+    <text x="18" y="68" class="small">- Dashed arrows: optional/alternate flows</text>
+    <text x="18" y="88" class="small">- Session-based verification: client stores verification flags via endpoint/store-verification.php</text>
+    <text x="18" y="108" class="small">- Class times are read from class_time_settings and stored in $_SESSION for QR submission</text>
+    <text x="18" y="128" class="small">- For a printable, high-res export ask for a server-side export (Imagick) or export PNG from this page.</text>
+    <text x="800" y="48" class="small">Files referenced: <tspan font-family="monospace">index.php</tspan>, <tspan font-family="monospace">face-verification.php</tspan>, <tspan font-family="monospace">endpoint/add-attendance.php</tspan></text>
+    <text x="800" y="72" class="small">Also: <tspan font-family="monospace">endpoint/store-verification.php</tspan>, <tspan font-family="monospace">includes/activity_log_helper.php</tspan></text>
+  </g>
+
+  <!-- Footer path -->
+  <text x="28" y="1020" class="small">Saved: ./dataflow-diagram.svg — Open with browser for the interactive export page: dataflow-diagram.php</text>
+
+</svg>

@@ -370,7 +370,7 @@ if ($is_super_admin) {
        LEFT JOIN users u ON sl.user_id = u.id 
        LEFT JOIN schools s ON sl.school_id = s.id 
        ORDER BY sl.created_at DESC LIMIT 50";
-        $logs_result = mysqli_query($conn, $logs_sql);
+    $logs_result = mysqli_query($conn, $logs_sql);
     }
 } else {
     $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
@@ -442,6 +442,8 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         .section-indent:before { content: ''; position: absolute; left: 12px; top: 50%; width: 10px; height: 1px; background: rgba(0,0,0,0.15); }
         .muted-actions .btn { padding: .15rem .4rem; }
         .school-name-colored { font-weight: 600; }
+        .table thead th { position: sticky; top: 0; background: #ffffff; z-index: 1; }
+        .course-row:hover { filter: brightness(0.98); }
     </style>
 </head>
 <body>

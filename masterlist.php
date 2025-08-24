@@ -560,12 +560,34 @@ if ($column_result->num_rows == 0) {
                             <span class="mr-2" style="white-space: nowrap;">Filter By:</span>
                             <select class="form-control mx-2" id="filterBy" style="width: 150px;">
                                 <option value="">All Courses</option>
-                                <option value="BSIS-301">BSIS-301</option>
-                                <option value="BSIS-302">BSIS-302</option>
-                                <option value="BSIT-301">BSIT-301</option>
-                                <option value="BSIT-302">BSIT-302</option>
-                                <option value="BSIT-401">BSIT-401</option>
-                                <option value="BSIT-402">BSIT-402</option>
+                                <?php
+                                // Build account-specific course-section options.
+                                // Use the existing mysqli connection ($conn_qr) which is available earlier in the file.
+                                if (isset($user_id) && isset($school_id) && isset($conn_qr)) {
+                                    $combo_seen = array();
+                                    // Include records that belong to the current user/school or global entries (user_id = 1)
+                                    $fs_query = "SELECT DISTINCT c.course_name, s.section_name
+                                                 FROM tbl_sections s
+                                                 JOIN tbl_courses c ON s.course_id = c.course_id
+                                                 WHERE ((s.user_id = ? AND s.school_id = ?) OR s.user_id = 1)
+                                                 AND ((c.user_id = ? AND c.school_id = ?) OR c.user_id = 1)
+                                                 ORDER BY c.course_name, s.section_name";
+                                    if ($stmt_fs = $conn_qr->prepare($fs_query)) {
+                                        $stmt_fs->bind_param('iiii', $user_id, $school_id, $user_id, $school_id);
+                                        $stmt_fs->execute();
+                                        $res_fs = $stmt_fs->get_result();
+                                        while ($r = $res_fs->fetch_assoc()) {
+                                            $combo = trim($r['course_name']) . '-' . trim($r['section_name']);
+                                            if (!in_array($combo, $combo_seen)) {
+                                                $combo_seen[] = $combo;
+                                                $safe = htmlspecialchars($combo, ENT_QUOTES);
+                                                echo "<option value=\"{$safe}\">{$safe}</option>";
+                                            }
+                                        }
+                                        $stmt_fs->close();
+                                    }
+                                }
+                                ?>
                             </select>
                             <select class="form-control mx-2" id="sortBy" style="width: 150px;">
                                 <option value="">Sort By:</option>
