@@ -129,8 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_pin'])) {
         <div class="branding-section">
             <div class="top-logo"><img src="image/Qnnect-v1.2.png" alt="Qnnect Logo" class="spcpc-logo"></div>
             <div class="brand-content">
-                <h1 class="brand-title">Super Admin PIN</h1>
-                <p class="tagline">Additional security is required before entering the Super Admin portal.</p>
+                <h1 class="brand-title">Authority Begins Here.</h1>
+                <p class="tagline">Absolute Command, Qnnect</p>
             </div>
         </div>
         <div class="login-section">

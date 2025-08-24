@@ -180,8 +180,8 @@ if (isset($_POST['login'])) {
         <div class="branding-section">
             <div class="top-logo"><img src="image/Qnnect-v1.2.png" alt="Qnnect Logo" class="spcpc-logo"></div>
             <div class="brand-content">
-                <h1 class="brand-title">Track Attendance Seamlessly.</h1>
-                <p class="tagline">Scan in. Stay Synced.</p>
+                <h1 class="brand-title">Manage Monitor Qnnect.</h1>
+                <p class="tagline">One Access. Total Control.</p>
             </div>
         </div>
 
@@ -359,5 +359,7 @@ if (isset($_POST['login'])) {
         else { input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
     }
     </script>
+
+    
 </body>
 </html>

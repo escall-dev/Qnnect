@@ -276,7 +276,7 @@ error_log("Session data in sidebar-nav: " . print_r($_SESSION, true));
           <li><a class="link_name" href="#">Data Reports</a></li>
           <li><a href="<?php echo $baseUrl; ?>analytics.php">Attendance Analytics</a></li>
           <li><a href="<?php echo $baseUrl; ?>attendance_status.php">Attendance Status</a></li>
-          <li><a href="<?php echo $baseUrl; ?>attendance-grades.php">Attendance Grades</a></li>
+          <!-- <li><a href="<?php echo $baseUrl; ?>attendance-grades.php">Attendance Grades</a></li> -->
         </ul>
       </li>
       <li>

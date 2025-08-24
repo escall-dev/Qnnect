@@ -1445,7 +1445,7 @@ $schools = getSchools($conn);
         <span>A&nbsp;Capstone &nbsp;Project &nbsp;Developed by: &nbsp; &nbsp; San Pedro City Polytechnic College &nbsp; &nbsp; BSIT-402 &nbsp; &nbsp; Group - I</span>
         <span>Copyright © 2025</span>   
         <span>To God be the Glory</span>   
-        <span>Current Version: 1.3.0</span>
+        <span>Current Version: 1.3.3</span>
     </div>
 </body>
 </html>

@@ -3,6 +3,7 @@
 require_once '../includes/session_config_superadmin.php';
 require_once '../includes/auth_functions.php';
 require_once 'database.php';
+require_once '../conn/db_connect.php';
 
 // Require super admin access only
 requireLogin();
@@ -23,7 +24,7 @@ if (isset($_POST['action'])) {
     
     switch ($_POST['action']) {
         case 'get_users':
-            $users = getFilteredUsers($conn, $user_school_id);
+            $users = getFilteredUsers($conn, getEffectiveScopeSchoolId());
             echo json_encode(['success' => true, 'users' => $users]);
             exit();
         case 'get_user':
@@ -316,29 +317,67 @@ if (isset($_POST['action'])) {
             $result = updateSchoolTheme($conn, $school_id, $theme_color, $passkey);
             echo json_encode($result);
             exit();
+        case 'set_scope':
+            if (!$is_super_admin) {
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                exit();
+            }
+            $raw = $_POST['scope_school_id'] ?? '';
+            if ($raw === '' || $raw === 'all') {
+                unset($_SESSION['scope_school_id']);
+                echo json_encode(['success' => true]);
+                exit();
+            }
+            $sid = (int)$raw;
+            $stmt = mysqli_prepare($conn, 'SELECT id FROM schools WHERE id = ? LIMIT 1');
+            mysqli_stmt_bind_param($stmt, 'i', $sid);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            $exists = $res && mysqli_fetch_assoc($res);
+            mysqli_stmt_close($stmt);
+            if (!$exists) {
+                echo json_encode(['success' => false, 'message' => 'Invalid school id']);
+                exit();
+            }
+            $_SESSION['scope_school_id'] = $sid;
+            echo json_encode(['success' => true]);
+            exit();
     }
 }
 
 // Get data for display
 $user_school = getUserSchool($conn);
 $all_schools = $is_super_admin ? getAllSchools($conn) : [];
-$users = getFilteredUsers($conn, $user_school_id);
 
-// Get system logs
-$logs_sql = $is_super_admin 
-    ? "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
-       LEFT JOIN users u ON sl.user_id = u.id 
-       LEFT JOIN schools s ON sl.school_id = s.id 
-       ORDER BY sl.created_at DESC LIMIT 50"
-    : "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
+// Effective scope: SA may select a school; Admin fixed to own
+$effective_scope_id = getEffectiveScopeSchoolId();
+$users = getFilteredUsers($conn, $effective_scope_id);
+
+// Get system logs respecting scope
+if ($is_super_admin) {
+    if ($effective_scope_id) {
+        $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
        LEFT JOIN users u ON sl.user_id = u.id 
        LEFT JOIN schools s ON sl.school_id = s.id 
        WHERE sl.school_id = ? 
        ORDER BY sl.created_at DESC LIMIT 50";
-
-if ($is_super_admin) {
-    $logs_result = mysqli_query($conn, $logs_sql);
+        $stmt = mysqli_prepare($conn, $logs_sql);
+        mysqli_stmt_bind_param($stmt, "i", $effective_scope_id);
+        mysqli_stmt_execute($stmt);
+        $logs_result = mysqli_stmt_get_result($stmt);
+    } else {
+        $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
+       LEFT JOIN users u ON sl.user_id = u.id 
+       LEFT JOIN schools s ON sl.school_id = s.id 
+       ORDER BY sl.created_at DESC LIMIT 50";
+        $logs_result = mysqli_query($conn, $logs_sql);
+    }
 } else {
+    $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
+       LEFT JOIN users u ON sl.user_id = u.id 
+       LEFT JOIN schools s ON sl.school_id = s.id 
+       WHERE sl.school_id = ? 
+       ORDER BY sl.created_at DESC LIMIT 50";
     $stmt = mysqli_prepare($conn, $logs_sql);
     mysqli_stmt_bind_param($stmt, "i", $user_school_id);
     mysqli_stmt_execute($stmt);
@@ -393,6 +432,16 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         .role-admin { background: #e3f2fd; color:#1976d2; }
         .role-super_admin { background: #fff3e0; color:#f57c00; }
         .passkey-display { background:#f8f9fa; border:2px dashed #dee2e6; border-radius:8px; padding:15px; text-align:center; font-family: 'Courier New', monospace; font-size:18px; font-weight:bold; color: var(--primary-color); margin: 15px 0; }
+        /* Hierarchical table styling */
+        .course-row { background: #f9fafb; font-weight: 600; }
+        .course-row .badge-school { font-weight: 600; }
+        .course-row .toggle-btn { cursor: pointer; color: #495057; }
+        .section-row { background: #ffffff; }
+        .section-row td { border-top: none; }
+        .section-indent { padding-left: 28px; position: relative; }
+        .section-indent:before { content: ''; position: absolute; left: 12px; top: 50%; width: 10px; height: 1px; background: rgba(0,0,0,0.15); }
+        .muted-actions .btn { padding: .15rem .4rem; }
+        .school-name-colored { font-weight: 600; }
     </style>
 </head>
 <body>
@@ -463,6 +512,19 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             <div class="settings-title">
                 <h2><i class="fas fa-cog"></i> Admin Controls</h2>
                 <div class="ms-auto d-none d-md-flex" style="gap:8px;">
+                    <?php if ($is_super_admin): ?>
+                    <div class="d-flex align-items-center" style="gap:8px;">
+                        <label for="scope_school_id" class="form-label mb-0">School Scope:</label>
+                        <select id="scope_school_id" class="form-select form-select-sm" style="width:auto;">
+                            <option value="" <?php echo empty($effective_scope_id) ? 'selected' : ''; ?>>All Schools</option>
+                            <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>" <?php echo ($effective_scope_id == $school['id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($school['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
                     <a class="btn btn-sm btn-outline-danger" href="super_admin_login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
@@ -479,6 +541,12 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 <?php endif; ?>
                 <a href="#logs" data-section="logs"><i class="fas fa-list-alt"></i> System Logs</a>
                 <a href="#profile" data-section="profile"><i class="fas fa-user-cog"></i> Profile Settings</a>
+                <?php if ($is_super_admin): ?>
+                <a href="#students" data-section="students"><i class="fas fa-user-graduate"></i> Students</a>
+                <a href="#attendance" data-section="attendance"><i class="fas fa-check-square"></i> Attendance</a>
+                <a href="#schedules" data-section="schedules"><i class="fas fa-calendar"></i> Schedules</a>
+                <a href="#courses" data-section="courses"><i class="fas fa-book"></i> Courses & Sections</a>
+                <?php endif; ?>
             </div>
             <div class="settings-content">
 
@@ -939,6 +1007,286 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         </div>
     </div>
 
+    <?php if ($is_super_admin): ?>
+    <div class="settings-outer-container">
+        <div class="settings-container">
+            <div class="settings-content">
+    <div id="students" class="content-section">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Students</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" id="student_add_btn" type="button"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="students_refresh" type="button"><i class="fas fa-arrows-rotate"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm"><thead><tr><th>Name</th><th>Course/Section</th><th>School</th><th>Actions</th></tr></thead><tbody id="students_table_body"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="attendance" class="content-section">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Attendance Logs</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" id="attendance_add_btn" type="button"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="attendance_refresh" type="button"><i class="fas fa-arrows-rotate"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm"><thead><tr><th>Time In</th><th>Status</th><th>Student</th><th>Course/Section</th><th>School</th><th>Actions</th></tr></thead><tbody id="attendance_table_body"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="schedules" class="content-section">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Class Schedules</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" id="schedule_add_btn" type="button"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="schedules_refresh" type="button"><i class="fas fa-arrows-rotate"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm"><thead><tr><th>Subject</th><th>Instructor</th><th>Section</th><th>Day</th><th>Start</th><th>End</th><th>Room</th><th>Actions</th></tr></thead><tbody id="schedules_table_body"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="courses" class="content-section">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Courses & Sections</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" id="course_add_btn" type="button"><i class="fas fa-plus"></i> Add Course</button>
+                    <button class="btn btn-success btn-sm" id="section_add_btn" type="button"><i class="fas fa-plus"></i> Add Section</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="courses_refresh" type="button"><i class="fas fa-arrows-rotate"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle" id="courses_hier_table">
+                        <thead>
+                            <tr>
+                                <th style="width:36px;"></th>
+                                <th>Name</th>
+                                <th>School</th>
+                                <th style="width:120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courses_hier_tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+     <?php endif; ?>
+
+    <!-- CRUD Modals: Students, Attendance, Schedules, Courses, Sections -->
+    <?php if ($is_super_admin): ?>
+    <!-- Student Modal -->
+    <div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentModalTitle">Add Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="studentForm">
+                        <input type="hidden" id="student_id">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="student_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Course/Section</label>
+                            <input type="text" class="form-control" id="student_course_section" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">School</label>
+                            <select class="form-select" id="student_school_id" required>
+                                <option value="">Select School</option>
+                                <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="studentModalSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Modal -->
+    <div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="attendanceModalTitle">Add Attendance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="attendanceForm">
+                        <input type="hidden" id="attendance_id">
+                        <div class="mb-3">
+                            <label class="form-label">Student ID</label>
+                            <input type="number" class="form-control" id="attendance_student_id" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Time In</label>
+                            <input type="datetime-local" class="form-control" id="attendance_time_in" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="attendance_status">
+                                <option value="On Time">On Time</option>
+                                <option value="Late">Late</option>
+                                <option value="Absent">Absent</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">School</label>
+                            <select class="form-select" id="attendance_school_id" required>
+                                <option value="">Select School</option>
+                                <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="attendanceModalSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scheduleModalTitle">Add Schedule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="scheduleForm">
+                        <input type="hidden" id="schedule_id">
+                        <div class="mb-3"><label class="form-label">Subject</label><input type="text" class="form-control" id="schedule_subject" required></div>
+                        <div class="mb-3"><label class="form-label">Instructor</label><input type="text" class="form-control" id="schedule_teacher" required></div>
+                        <div class="mb-3"><label class="form-label">Section</label><input type="text" class="form-control" id="schedule_section" required></div>
+                        <div class="mb-3"><label class="form-label">Day of Week</label>
+                            <select class="form-select" id="schedule_day">
+                                <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+                                <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+                            </select>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6"><label class="form-label">Start</label><input type="time" class="form-control" id="schedule_start" required></div>
+                            <div class="col-6"><label class="form-label">End</label><input type="time" class="form-control" id="schedule_end" required></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Room</label><input type="text" class="form-control" id="schedule_room"></div>
+                        <div class="mb-3">
+                            <label class="form-label">School</label>
+                            <select class="form-select" id="schedule_school_id" required>
+                                <option value="">Select School</option>
+                                <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="scheduleModalSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Modal -->
+    <div class="modal fade" id="courseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="courseModalTitle">Add Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="courseForm">
+                        <input type="hidden" id="course_id">
+                        <div class="mb-3"><label class="form-label">Name</label><input type="text" class="form-control" id="course_name" required></div>
+                        <div class="mb-3">
+                            <label class="form-label">School</label>
+                            <select class="form-select" id="course_school_id" required>
+                                <option value="">Select School</option>
+                                <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="courseModalSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Modal -->
+    <div class="modal fade" id="sectionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sectionModalTitle">Add Section</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="sectionForm">
+                        <input type="hidden" id="section_id">
+                        <div class="mb-3"><label class="form-label">Name</label><input type="text" class="form-control" id="section_name" required></div>
+                        <div class="mb-3"><label class="form-label">Course</label>
+                            <select class="form-select" id="section_course_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">School</label>
+                            <select class="form-select" id="section_school_id" required>
+                                <option value="">Select School</option>
+                                <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="sectionModalSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Reusable confirm + success helpers
@@ -1038,6 +1386,26 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             const link = document.querySelector(`.settings-nav a[data-section="${target}"]`) || document.querySelector('.settings-nav a');
             if (link) {
                 showSection(link.getAttribute('data-section'), link);
+            }
+            const scopeSel = document.getElementById('scope_school_id');
+            if (scopeSel) {
+                scopeSel.addEventListener('change', async (e) => {
+                    const val = e.target.value || 'all';
+                    const fd = new URLSearchParams();
+                    fd.append('action','set_scope');
+                    fd.append('scope_school_id', val);
+                    try {
+                        const r = await fetch('admin_panel.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+                        const data = await r.json();
+                        if (data && data.success) {
+                            location.reload();
+                        } else {
+                            alert('Failed to update scope: ' + (data && data.message ? data.message : 'Unknown error'));
+                        }
+                    } catch (err) {
+                        alert('Request failed: ' + (err && err.message ? err.message : 'Unknown error'));
+                    }
+                });
             }
         });
 
@@ -1166,6 +1534,12 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             if (um) userModal = new bootstrap.Modal(um);
             const rm = document.getElementById('roleModal');
             if (rm) roleModal = new bootstrap.Modal(rm);
+            // New CRUD modals
+            const stm = document.getElementById('studentModal'); if (stm) window._studentModal = new bootstrap.Modal(stm);
+            const atm = document.getElementById('attendanceModal'); if (atm) window._attendanceModal = new bootstrap.Modal(atm);
+            const scm = document.getElementById('scheduleModal'); if (scm) window._scheduleModal = new bootstrap.Modal(scm);
+            const csm = document.getElementById('courseModal'); if (csm) window._courseModal = new bootstrap.Modal(csm);
+            const sem = document.getElementById('sectionModal'); if (sem) window._sectionModal = new bootstrap.Modal(sem);
         });
 
         function refreshUsers() {
@@ -1391,6 +1765,292 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 setTimeout(() => { location.reload(); }, 500);
             });
         }
+
+        <?php if ($is_super_admin): ?>
+        async function loadStudents() {
+            const params = new URLSearchParams();
+            params.append('action','get_students_scoped');
+            const r = await fetch('admin_students_api.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+            const data = await r.json();
+            const tbody = document.getElementById('students_table_body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!data.success) { tbody.innerHTML = '<tr><td colspan="4">Failed to load students</td></tr>'; return; }
+            data.students.forEach(s => {
+                const tr = document.createElement('tr');
+                const tdName = document.createElement('td'); tdName.textContent = s.student_name || '';
+                const tdCourse = document.createElement('td'); tdCourse.textContent = s.course_section || '';
+                const tdSchool = document.createElement('td'); tdSchool.textContent = s.school_name || '';
+                const tdAct = document.createElement('td');
+                const btnGrp = document.createElement('div'); btnGrp.className = 'btn-group btn-group-sm';
+                const btnEdit = document.createElement('button'); btnEdit.className = 'btn btn-outline-primary'; btnEdit.innerHTML = '<i class="fas fa-pen"></i>';
+                btnEdit.addEventListener('click', () => openStudentEdit(s.tbl_student_id, s.student_name || '', s.course_section || '', s.school_id || ''));
+                const btnDel = document.createElement('button'); btnDel.className = 'btn btn-outline-danger'; btnDel.innerHTML = '<i class="fas fa-trash"></i>';
+                btnDel.addEventListener('click', () => deleteStudent(s.tbl_student_id));
+                btnGrp.appendChild(btnEdit); btnGrp.appendChild(btnDel); tdAct.appendChild(btnGrp);
+                tr.appendChild(tdName); tr.appendChild(tdCourse); tr.appendChild(tdSchool); tr.appendChild(tdAct);
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('students_refresh')?.addEventListener('click', loadStudents);
+        document.addEventListener('DOMContentLoaded', loadStudents);
+        <?php endif; ?>
+
+        <?php if ($is_super_admin): ?>
+        // ---- Students CRUD ----
+        function openStudentCreate() {
+            document.getElementById('studentModalTitle').textContent = 'Add Student';
+            document.getElementById('student_id').value = '';
+            document.getElementById('student_name').value = '';
+            document.getElementById('student_course_section').value = '';
+            document.getElementById('student_school_id').value = '';
+            _studentModal?.show();
+            document.getElementById('studentModalSave').onclick = saveStudent;
+        }
+        function openStudentEdit(id, name, courseSection, schoolId) {
+            document.getElementById('studentModalTitle').textContent = 'Edit Student';
+            document.getElementById('student_id').value = id;
+            document.getElementById('student_name').value = name || '';
+            document.getElementById('student_course_section').value = courseSection || '';
+            document.getElementById('student_school_id').value = schoolId || '';
+            _studentModal?.show();
+            document.getElementById('studentModalSave').onclick = saveStudent;
+        }
+        async function saveStudent() {
+            const id = document.getElementById('student_id').value;
+            const name = document.getElementById('student_name').value.trim();
+            const courseSection = document.getElementById('student_course_section').value.trim();
+            const schoolId = document.getElementById('student_school_id').value;
+            if (!name || !courseSection || !schoolId) { await showError('Please fill all fields'); return; }
+            const params = new URLSearchParams();
+            params.append('op', id ? 'update' : 'create');
+            if (id) params.append('tbl_student_id', id);
+            params.append('student_name', name);
+            params.append('course_section', courseSection);
+            params.append('school_id', schoolId);
+            const res = await fetch('admin_students_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+            const data = await res.json();
+            if (!data.success) { await showError(data.message || 'Save failed'); return; }
+            _studentModal?.hide();
+            await showSuccess('Student saved successfully.');
+            loadStudents();
+        }
+        async function deleteStudent(id) {
+            const ok = await showConfirm({ title:'Delete Student', message:'Are you sure you want to delete this student?' });
+            if (!ok) return;
+            const params = new URLSearchParams(); params.append('op','delete'); params.append('tbl_student_id', id);
+            const res = await fetch('admin_students_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+            const data = await res.json(); if (!data.success) { await showError(data.message || 'Delete failed'); return; }
+            await showSuccess('Student deleted.'); loadStudents();
+        }
+
+        document.getElementById('student_add_btn')?.addEventListener('click', openStudentCreate);
+
+        // ---- Attendance CRUD ----
+        function openAttendanceCreate() {
+            document.getElementById('attendanceModalTitle').textContent = 'Add Attendance';
+            document.getElementById('attendance_id').value = '';
+            document.getElementById('attendance_student_id').value = '';
+            document.getElementById('attendance_time_in').value = '';
+            document.getElementById('attendance_status').value = 'On Time';
+            document.getElementById('attendance_school_id').value = '';
+            _attendanceModal?.show();
+            document.getElementById('attendanceModalSave').onclick = saveAttendance;
+        }
+        function openAttendanceEdit(id, studentId, timeIn, status, schoolId) {
+            document.getElementById('attendanceModalTitle').textContent = 'Edit Attendance';
+            document.getElementById('attendance_id').value = id;
+            document.getElementById('attendance_student_id').value = studentId || '';
+            document.getElementById('attendance_time_in').value = timeIn ? timeIn.replace(' ', 'T') : '';
+            document.getElementById('attendance_status').value = status || 'On Time';
+            document.getElementById('attendance_school_id').value = schoolId || '';
+            _attendanceModal?.show();
+            document.getElementById('attendanceModalSave').onclick = saveAttendance;
+        }
+        async function saveAttendance() {
+            const id = document.getElementById('attendance_id').value;
+            const studentId = document.getElementById('attendance_student_id').value;
+            const timeIn = document.getElementById('attendance_time_in').value;
+            const status = document.getElementById('attendance_status').value;
+            const schoolId = document.getElementById('attendance_school_id').value;
+            if (!studentId || !timeIn || !schoolId) { await showError('Please fill all fields'); return; }
+            const params = new URLSearchParams(); params.append('op', id ? 'update' : 'create');
+            if (id) params.append('id', id);
+            params.append('tbl_student_id', studentId); params.append('time_in', timeIn.replace('T',' ')); params.append('status', status); params.append('school_id', schoolId);
+            const res = await fetch('admin_attendance_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+            const data = await res.json(); if (!data.success) { await showError(data.message || 'Save failed'); return; }
+            _attendanceModal?.hide(); await showSuccess('Attendance saved.'); loadAttendance();
+        }
+        async function deleteAttendance(id) {
+            const ok = await showConfirm({ title:'Delete Attendance', message:'Are you sure you want to delete this entry?' }); if (!ok) return;
+            const p = new URLSearchParams(); p.append('op','delete'); p.append('id', id);
+            const res = await fetch('admin_attendance_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: p.toString() });
+            const data = await res.json(); if (!data.success) { await showError(data.message || 'Delete failed'); return; }
+            await showSuccess('Attendance deleted.'); loadAttendance();
+        }
+        document.getElementById('attendance_add_btn')?.addEventListener('click', openAttendanceCreate);
+
+        // ---- Schedules CRUD ----
+        function openScheduleCreate() {
+            document.getElementById('scheduleModalTitle').textContent = 'Add Schedule';
+            document.getElementById('schedule_id').value=''; document.getElementById('schedule_subject').value=''; document.getElementById('schedule_teacher').value=''; document.getElementById('schedule_section').value=''; document.getElementById('schedule_day').value='Monday'; document.getElementById('schedule_start').value=''; document.getElementById('schedule_end').value=''; document.getElementById('schedule_room').value=''; document.getElementById('schedule_school_id').value='';
+            _scheduleModal?.show(); document.getElementById('scheduleModalSave').onclick = saveSchedule;
+        }
+        function openScheduleEdit(id) {
+            // Minimal editor: ask user to retype fields for now (enhance later by fetching one row if needed)
+            document.getElementById('schedule_id').value=id; _scheduleModal?.show(); document.getElementById('scheduleModalSave').onclick = saveSchedule; document.getElementById('scheduleModalTitle').textContent = 'Edit Schedule';
+        }
+        async function saveSchedule() {
+            const id=document.getElementById('schedule_id').value; const subject=document.getElementById('schedule_subject').value.trim(); const teacher=document.getElementById('schedule_teacher').value.trim(); const section=document.getElementById('schedule_section').value.trim(); const day=document.getElementById('schedule_day').value; const start=document.getElementById('schedule_start').value; const end=document.getElementById('schedule_end').value; const room=document.getElementById('schedule_room').value.trim(); const schoolId=document.getElementById('schedule_school_id').value;
+            if (!subject || !section || !schoolId) { await showError('Please fill required fields'); return; }
+            const p=new URLSearchParams(); p.append('op', id ? 'update':'create'); if (id) p.append('id', id); p.append('subject', subject); p.append('teacher_username', teacher); p.append('section', section); p.append('day_of_week', day); p.append('start_time', start); p.append('end_time', end); p.append('room', room); p.append('school_id', schoolId);
+            const res = await fetch('admin_schedules_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString() }); const data = await res.json(); if (!data.success) { await showError(data.message || 'Save failed'); return; }
+            _scheduleModal?.hide(); await showSuccess('Schedule saved.'); loadSchedules();
+        }
+        async function deleteSchedule(id) { const ok = await showConfirm({ title:'Delete Schedule', message:'Proceed to delete schedule?' }); if (!ok) return; const p=new URLSearchParams(); p.append('op','delete'); p.append('id', id); const res=await fetch('admin_schedules_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Delete failed'); return;} await showSuccess('Schedule deleted.'); loadSchedules(); }
+        document.getElementById('schedule_add_btn')?.addEventListener('click', openScheduleCreate);
+
+        // ---- Courses CRUD ----
+        function populateCourseSelectForSections(courses) {
+            const sel = document.getElementById('section_course_id'); if (!sel) return; sel.innerHTML='';
+            courses.forEach(c => { const opt=document.createElement('option'); opt.value=c.course_id; opt.textContent=c.course_name; sel.appendChild(opt); });
+        }
+        function openCourseCreate() { document.getElementById('courseModalTitle').textContent='Add Course'; document.getElementById('course_id').value=''; document.getElementById('course_name').value=''; document.getElementById('course_school_id').value=''; _courseModal?.show(); document.getElementById('courseModalSave').onclick = saveCourse; }
+        function openCourseEdit(id, name, schoolId) { document.getElementById('courseModalTitle').textContent='Edit Course'; document.getElementById('course_id').value=id; document.getElementById('course_name').value=name||''; document.getElementById('course_school_id').value=schoolId||''; _courseModal?.show(); document.getElementById('courseModalSave').onclick = saveCourse; }
+        async function saveCourse() { const id=document.getElementById('course_id').value; const name=document.getElementById('course_name').value.trim(); const schoolId=document.getElementById('course_school_id').value; if(!name||!schoolId){ await showError('Please fill all fields'); return;} const p=new URLSearchParams(); p.append('entity','course'); p.append('op', id?'update':'create'); if(id)p.append('course_id', id); p.append('course_name', name); p.append('school_id', schoolId); const res=await fetch('admin_courses_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Save failed'); return;} _courseModal?.hide(); await showSuccess('Course saved.'); loadCoursesSections(); }
+        async function deleteCourse(id) { const ok=await showConfirm({title:'Delete Course', message:'Delete this course?' }); if(!ok) return; const p=new URLSearchParams(); p.append('entity','course'); p.append('op','delete'); p.append('course_id', id); const res=await fetch('admin_courses_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Delete failed'); return;} await showSuccess('Course deleted.'); loadCoursesSections(); }
+        document.getElementById('course_add_btn')?.addEventListener('click', openCourseCreate);
+
+        // ---- Sections CRUD ----
+        function openSectionCreate() { document.getElementById('sectionModalTitle').textContent='Add Section'; document.getElementById('section_id').value=''; document.getElementById('section_name').value=''; document.getElementById('section_course_id').value=''; document.getElementById('section_school_id').value=''; _sectionModal?.show(); document.getElementById('sectionModalSave').onclick = saveSection; }
+        function openSectionEdit(id, name, courseId, schoolId) { document.getElementById('sectionModalTitle').textContent='Edit Section'; document.getElementById('section_id').value=id; document.getElementById('section_name').value=name||''; document.getElementById('section_course_id').value=courseId||''; document.getElementById('section_school_id').value=schoolId||''; _sectionModal?.show(); document.getElementById('sectionModalSave').onclick = saveSection; }
+        async function saveSection() { const id=document.getElementById('section_id').value; const name=document.getElementById('section_name').value.trim(); const courseId=document.getElementById('section_course_id').value; const schoolId=document.getElementById('section_school_id').value; if(!name||!courseId||!schoolId){ await showError('Please fill all fields'); return;} const p=new URLSearchParams(); p.append('entity','section'); p.append('op', id?'update':'create'); if(id)p.append('section_id', id); p.append('section_name', name); p.append('course_id', courseId); p.append('school_id', schoolId); const res=await fetch('admin_courses_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Save failed'); return;} _sectionModal?.hide(); await showSuccess('Section saved.'); loadCoursesSections(); }
+        async function deleteSection(id) { const ok=await showConfirm({title:'Delete Section', message:'Delete this section?' }); if(!ok) return; const p=new URLSearchParams(); p.append('entity','section'); p.append('op','delete'); p.append('section_id', id); const res=await fetch('admin_courses_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Delete failed'); return;} await showSuccess('Section deleted.'); loadCoursesSections(); }
+        document.getElementById('section_add_btn')?.addEventListener('click', openSectionCreate);
+        async function loadAttendance() {
+            const r = await fetch('admin_attendance_api.php', { method:'POST' });
+            const data = await r.json();
+            const tbody = document.getElementById('attendance_table_body');
+            if (!tbody) return;
+            tbody.innerHTML='';
+            if (!data.success) { tbody.innerHTML = '<tr><td colspan="6">Failed to load</td></tr>'; return; }
+            data.attendance.forEach(a => {
+                const tr = document.createElement('tr');
+                const c1 = document.createElement('td'); c1.textContent = a.time_in || '';
+                const c2 = document.createElement('td'); c2.textContent = a.status || '';
+                const c3 = document.createElement('td'); c3.textContent = a.student_name || '';
+                const c4 = document.createElement('td'); c4.textContent = a.course_section || '';
+                const c5 = document.createElement('td'); c5.textContent = a.school_name || '';
+                const c6 = document.createElement('td');
+                const grp = document.createElement('div'); grp.className = 'btn-group btn-group-sm';
+                const eBtn = document.createElement('button'); eBtn.className = 'btn btn-outline-primary'; eBtn.innerHTML = '<i class="fas fa-pen"></i>';
+                eBtn.addEventListener('click', () => openAttendanceEdit(a.id, a.student_id || 0, a.time_in || '', a.status || '', a.school_id || 0));
+                const dBtn = document.createElement('button'); dBtn.className = 'btn btn-outline-danger'; dBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                dBtn.addEventListener('click', () => deleteAttendance(a.id));
+                grp.appendChild(eBtn); grp.appendChild(dBtn); c6.appendChild(grp);
+                tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tr.appendChild(c4); tr.appendChild(c5); tr.appendChild(c6);
+                tbody.appendChild(tr);
+            });
+        }
+        async function loadSchedules() {
+            const r = await fetch('admin_schedules_api.php', { method:'POST' });
+            const data = await r.json();
+            const tbody = document.getElementById('schedules_table_body');
+            if (!tbody) return;
+            tbody.innerHTML='';
+            if (!data.success) { tbody.innerHTML = '<tr><td colspan="8">Failed to load</td></tr>'; return; }
+            data.schedules.forEach(s => {
+                const tr = document.createElement('tr');
+                const tds = [s.subject||'', s.teacher_username||'', s.section||'', s.day_of_week||'', s.start_time||'', s.end_time||'', s.room||''];
+                tds.forEach(v => { const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+                const act = document.createElement('td'); const grp=document.createElement('div'); grp.className='btn-group btn-group-sm';
+                const e=document.createElement('button'); e.className='btn btn-outline-primary'; e.innerHTML='<i class="fas fa-pen"></i>'; e.addEventListener('click',()=>openScheduleEdit(s.id));
+                const d=document.createElement('button'); d.className='btn btn-outline-danger'; d.innerHTML='<i class="fas fa-trash"></i>'; d.addEventListener('click',()=>deleteSchedule(s.id));
+                grp.appendChild(e); grp.appendChild(d); act.appendChild(grp); tr.appendChild(act);
+                tbody.appendChild(tr);
+            });
+        }
+        async function loadCoursesSections() {
+            const r = await fetch('admin_courses_api.php', { method:'POST' });
+            const data = await r.json();
+            const tbody = document.getElementById('courses_hier_tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!data.success) { tbody.innerHTML = '<tr><td colspan="4">Failed to load</td></tr>'; return; }
+
+            // Build map courseId -> sections[] for quick grouping
+            const sectionsByCourse = {};
+            (data.sections||[]).forEach(sec => {
+                if (!sectionsByCourse[sec.course_id]) sectionsByCourse[sec.course_id] = [];
+                sectionsByCourse[sec.course_id].push(sec);
+            });
+
+            (data.courses||[]).forEach(c => {
+                const courseRow = document.createElement('tr');
+                courseRow.className = 'course-row';
+                const toggleTd = document.createElement('td');
+                const toggleBtn = document.createElement('button'); toggleBtn.className='btn btn-link p-0 toggle-btn'; toggleBtn.innerHTML='<i class="fas fa-chevron-right"></i>';
+                toggleTd.appendChild(toggleBtn);
+                const nameTd = document.createElement('td'); nameTd.textContent = c.course_name || '';
+                const schoolTd = document.createElement('td');
+                const schoolSpan = document.createElement('span'); schoolSpan.textContent = c.school_name || ''; schoolSpan.className='school-name-colored';
+                if (c.school_theme_color) { schoolSpan.style.color = c.school_theme_color; }
+                schoolTd.appendChild(schoolSpan);
+                const actTd = document.createElement('td'); actTd.className='muted-actions';
+                const grp=document.createElement('div'); grp.className='btn-group btn-group-sm';
+                const editBtn=document.createElement('button'); editBtn.className='btn btn-outline-primary'; editBtn.innerHTML='<i class="fas fa-pen"></i>'; editBtn.addEventListener('click',()=>openCourseEdit(c.course_id, c.course_name||'', c.school_id||0));
+                const delBtn=document.createElement('button'); delBtn.className='btn btn-outline-danger'; delBtn.innerHTML='<i class="fas fa-trash"></i>'; delBtn.addEventListener('click',()=>deleteCourse(c.course_id));
+                grp.appendChild(editBtn); grp.appendChild(delBtn); actTd.appendChild(grp);
+                courseRow.appendChild(toggleTd); courseRow.appendChild(nameTd); courseRow.appendChild(schoolTd); courseRow.appendChild(actTd);
+                tbody.appendChild(courseRow);
+
+                const secs = sectionsByCourse[c.course_id] || [];
+                secs.forEach(s => {
+                    const secRow = document.createElement('tr'); secRow.className='section-row'; secRow.style.display='none';
+                    const iconTd = document.createElement('td'); iconTd.innerHTML='';
+                    const nmTd = document.createElement('td'); nmTd.className='section-indent'; nmTd.textContent = s.section_name || '';
+                    const schTd = document.createElement('td'); const inherSpan=document.createElement('span'); inherSpan.textContent = c.school_name || ''; inherSpan.className='school-name-colored'; if (c.school_theme_color) inherSpan.style.color = c.school_theme_color; schTd.appendChild(inherSpan);
+                    const actS = document.createElement('td'); actS.className='muted-actions'; const g=document.createElement('div'); g.className='btn-group btn-group-sm';
+                    const e=document.createElement('button'); e.className='btn btn-outline-primary'; e.innerHTML='<i class="fas fa-pen"></i>'; e.addEventListener('click',()=>openSectionEdit(s.section_id, s.section_name||'', s.course_id||0, s.school_id||0));
+                    const d=document.createElement('button'); d.className='btn btn-outline-danger'; d.innerHTML='<i class="fas fa-trash"></i>'; d.addEventListener('click',()=>deleteSection(s.section_id));
+                    g.appendChild(e); g.appendChild(d); actS.appendChild(g);
+                    secRow.appendChild(iconTd); secRow.appendChild(nmTd); secRow.appendChild(schTd); secRow.appendChild(actS);
+                    tbody.appendChild(secRow);
+
+                    // Link toggle behavior
+                    toggleBtn.addEventListener('click', () => {
+                        const icon = toggleBtn.querySelector('i');
+                        const isHidden = secRow.style.display === 'none';
+                        document.querySelectorAll('#courses_hier_tbody tr.section-row').forEach(r => { if (r.previousSibling === courseRow || r.dataset.parent === String(c.course_id)) { /* placeholder */ } });
+                        const related = [];
+                        let cursor = courseRow.nextSibling;
+                        while (cursor && cursor.classList && cursor.classList.contains('section-row')) { related.push(cursor); cursor = cursor.nextSibling; }
+                        related.forEach(r => { r.style.display = isHidden ? '' : 'none'; });
+                        if (icon) icon.className = isHidden ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
+                    }, { once: false });
+                });
+            });
+
+            // Expand first course by default for hint
+            const firstToggle = document.querySelector('#courses_hier_tbody .toggle-btn');
+            if (firstToggle) firstToggle.click();
+        }
+        document.getElementById('attendance_refresh')?.addEventListener('click', loadAttendance);
+        document.getElementById('schedules_refresh')?.addEventListener('click', loadSchedules);
+        document.getElementById('courses_refresh')?.addEventListener('click', () => { loadCoursesSections(); });
+        // Keep section course select in sync with courses list
+        document.getElementById('courses_refresh')?.addEventListener('click', () => {
+            // After refresh, repopulate section course select
+            fetch('admin_courses_api.php', { method:'POST' })
+                .then(r=>r.json())
+                .then(d=>{ if (d && d.success) populateCourseSelectForSections(d.courses||[]); });
+        });
+        // Initial population for section course select
+        fetch('admin_courses_api.php', { method:'POST' })
+            .then(r=>r.json())
+            .then(d=>{ if (d && d.success) populateCourseSelectForSections(d.courses||[]); });
+        document.addEventListener('DOMContentLoaded', () => { loadAttendance(); loadSchedules(); loadCoursesSections(); });
+        <?php endif; ?>
     </script>
 </body>
 </html>

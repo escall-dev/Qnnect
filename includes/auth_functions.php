@@ -125,6 +125,21 @@ function getAllSchools($conn) {
 }
 
 /**
+ * Get effective scope school id for current user
+ * - Super Admin: returns selected scope in session or null for "All Schools"
+ * - Admin: returns their own school_id
+ */
+function getEffectiveScopeSchoolId() {
+    if (hasRole('super_admin')) {
+        if (isset($_SESSION['scope_school_id']) && $_SESSION['scope_school_id'] !== '') {
+            return (int)$_SESSION['scope_school_id'];
+        }
+        return null; // All Schools
+    }
+    return $_SESSION['school_id'] ?? null;
+}
+
+/**
  * Log system activity
  */
 function logActivity($conn, $action, $details = null, $school_id = null) {
@@ -252,11 +267,22 @@ function updateSchoolTheme($conn, $school_id, $theme_color, $passkey) {
  */
 function getFilteredUsers($conn, $school_id = null) {
     if (hasRole('super_admin')) {
-        // Super admins see all users
-        $sql = "SELECT u.*, s.name as school_name FROM users u 
+        // Super admins: filter if a scope school is provided; otherwise show all users
+        if ($school_id) {
+            $sql = "SELECT u.*, s.name as school_name FROM users u 
+                LEFT JOIN schools s ON u.school_id = s.id 
+                WHERE u.school_id = ? 
+                ORDER BY u.username";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $school_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        } else {
+            $sql = "SELECT u.*, s.name as school_name FROM users u 
                 LEFT JOIN schools s ON u.school_id = s.id 
                 ORDER BY u.username";
-        $result = mysqli_query($conn, $sql);
+            $result = mysqli_query($conn, $sql);
+        }
     } else {
         // Regular admins only see users from their school
         $user_school_id = $_SESSION['school_id'] ?? null;
