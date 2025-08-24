@@ -160,33 +160,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // STRICT student identification: only student QR (generated_code)
-        $studentData = null;
-        if (strpos($qrCode, 'STU-') === 0) {
-            $parts = explode('-', $qrCode);
-            if (count($parts) >= 5) {
-                $sel = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student WHERE generated_code=? AND user_id=? AND school_id=? LIMIT 1");
-                $sel->bind_param('sii', $qrCode, $user_id, $school_id); $sel->execute();
-                $studentData = $sel->get_result()->fetch_assoc();
+            // First try: dynamic token flow (student_qr_tokens)
+            $studentID = 0; $studentName = null; $usingDynamicToken = false;
+
+            // Heuristic: our token contains two base64url segments separated by '-'
+            if (preg_match('/^[A-Za-z0-9_-]{10,}\-[A-Za-z0-9_-]{6,}$/', $qrCode)) {
+                // Validate the token and mark it used atomically
+                // 1) Look up the token row, ensure not expired/used/revoked
+                $tokSel = $conn_qr->prepare("SELECT id, student_id FROM student_qr_tokens WHERE token = ? AND user_id = ? AND school_id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW() LIMIT 1");
+                if ($tokSel) {
+                    $tokSel->bind_param('sii', $qrCode, $user_id, $school_id);
+                    $tokSel->execute();
+                    $tokRow = $tokSel->get_result()->fetch_assoc();
+                    if ($tokRow) {
+                        $tokenId = (int)$tokRow['id'];
+                        $studentID = (int)$tokRow['student_id'];
+                        // 2) Mark as used (guarding against race)
+                        $tokUpd = $conn_qr->prepare("UPDATE student_qr_tokens SET used_at = NOW() WHERE id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW()");
+                        if ($tokUpd) {
+                            $tokUpd->bind_param('i', $tokenId);
+                            $tokUpd->execute();
+                            if ($tokUpd->affected_rows === 1) {
+                                $usingDynamicToken = true;
+                                // Resolve student name
+                                $selStud = $conn_qr->prepare("SELECT student_name FROM tbl_student WHERE tbl_student_id = ? AND user_id = ? AND school_id = ? LIMIT 1");
+                                if ($selStud) {
+                                    $selStud->bind_param('iii', $studentID, $user_id, $school_id);
+                                    $selStud->execute();
+                                    $rStud = $selStud->get_result()->fetch_assoc();
+                                    $studentName = $rStud ? $rStud['student_name'] : 'Student';
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!$usingDynamicToken) {
+                    // Token invalid or already used/expired/revoked
+                    $errorParams = http_build_query([
+                        'error'   => 'invalid_qr',
+                        'message' => 'QR code expired or already used',
+                        'details' => 'Please ask the student to open their QR again to refresh it.'
+                    ]);
+                    echo "<script>window.location.href='http://localhost/Qnnect/index.php?{$errorParams}';</script>"; exit();
+                }
             }
-        } else {
-            // Some deployments may print the generated_code as-is
-            $sel = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student WHERE generated_code=? AND user_id=? AND school_id=? LIMIT 1");
-            $sel->bind_param('sii', $qrCode, $user_id, $school_id); $sel->execute();
-            $studentData = $sel->get_result()->fetch_assoc();
-        }
 
-        if (!$studentData) {
-            $errorParams = http_build_query([
-                'error'=>'invalid_qr_format', 'message'=>'Invalid QR code for attendance',
-                'details'=>'This QR does not identify a student. Please scan the student QR generated from Masterlist.',
-                'timestamp'=>time()
-            ]);
-            echo "<script>window.location.href='http://localhost/Qnnect/index.php?{$errorParams}';</script>"; exit();
-        }
+            // Fallback: legacy static generated_code path
+            if (!$usingDynamicToken) {
+                $studentData = null;
+                if (strpos($qrCode, 'STU-') === 0) {
+                    $parts = explode('-', $qrCode);
+                    if (count($parts) >= 5) {
+                        $sel = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student WHERE generated_code=? AND user_id=? AND school_id=? LIMIT 1");
+                        $sel->bind_param('sii', $qrCode, $user_id, $school_id); $sel->execute();
+                        $studentData = $sel->get_result()->fetch_assoc();
+                    }
+                } else {
+                    $sel = $conn_qr->prepare("SELECT tbl_student_id, student_name FROM tbl_student WHERE generated_code=? AND user_id=? AND school_id=? LIMIT 1");
+                    $sel->bind_param('sii', $qrCode, $user_id, $school_id); $sel->execute();
+                    $studentData = $sel->get_result()->fetch_assoc();
+                }
 
-        $studentID = (int)$studentData['tbl_student_id'];
-        $studentName = $studentData['student_name'];
+                if (!$studentData) {
+                    $errorParams = http_build_query([
+                        'error'=>'invalid_qr_format', 'message'=>'Invalid QR code for attendance',
+                        'details'=>'This QR does not identify a student. Please scan the student QR from Masterlist.',
+                        'timestamp'=>time()
+                    ]);
+                    echo "<script>window.location.href='http://localhost/Qnnect/index.php?{$errorParams}';</script>"; exit();
+                }
+
+                $studentID = (int)$studentData['tbl_student_id'];
+                $studentName = $studentData['student_name'];
+            }
 
         // Compound duplicate rule: student + day + instructor + subject + tenant
         $conn_qr = ensureQrConnection();

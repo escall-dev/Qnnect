@@ -1570,6 +1570,9 @@ foreach ($result as $row) {
                             <!-- Body -->
                             <div style="padding: 20px; text-align: center;">
                                 <img id="qrModalImage" src="" alt="QR Code" style="width: 100%; max-width: 240px; display: block; margin: 0 auto;">
+                                <div id="qrExpiryInfo" style="margin-top: 10px; font-weight: 600; color: #098744; display: none;">
+                                    Expires in <span id="qrExpiryCountdown">60</span>s
+                                </div>
                             </div>
                             
                             <!-- Footer -->
@@ -1593,30 +1596,62 @@ foreach ($result as $row) {
                 });
             });
 
-            // Handle QR button clicks
+            let qrExpiryTimer = null;
+
+            function startQrCountdown(seconds) {
+                clearInterval(qrExpiryTimer);
+                let remaining = seconds;
+                $('#qrExpiryInfo').show();
+                $('#qrExpiryCountdown').text(remaining);
+                qrExpiryTimer = setInterval(() => {
+                    remaining -= 1;
+                    if (remaining <= 0) {
+                        clearInterval(qrExpiryTimer);
+                        $('#qrExpiryCountdown').text('0');
+                        // Optionally indicate expired
+                        $('#qrExpiryInfo').css('color', '#dc3545').text('QR expired');
+                    } else {
+                        $('#qrExpiryCountdown').text(remaining);
+                    }
+                }, 1000);
+            }
+
+            // Handle QR button clicks - always generate a fresh dynamic token
             $('.qr-button').on('click', function() {
+                const studentId = $(this).data('id');
                 const studentName = $(this).data('name');
-                const qrCode = $(this).data('qr');
                 
-                console.log('QR button clicked:', { studentName, qrCode });
-                console.log('Button element:', this);
-                console.log('Data attributes:', $(this).data());
-                
-                // Test if modal elements exist
-                console.log('Modal elements:', {
-                    title: $('#qrModalTitle').length,
-                    image: $('#qrModalImage').length,
-                    modal: $('#globalQrModal').length
-                });
-                
-                // Update modal content
                 $('#qrModalTitle').text(studentName + "'s QR Code");
-                $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
+                $('#qrModalImage').attr('src', '');
+                $('#qrExpiryInfo').hide().css('color', '#098744');
+                clearInterval(qrExpiryTimer);
+                
+                // Fetch a new expiring token
+                fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId), { cache: 'no-store' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.success) {
+                            $('#qrModalImage').attr('src', data.data.qr_image_url);
+                            // Compute seconds left from expires_at
+                            try {
+                                const expiresAt = new Date(data.data.expires_at.replace(' ', 'T') + '+08:00');
+                                const now = new Date();
+                                const diff = Math.max(0, Math.round((expiresAt.getTime() - now.getTime()) / 1000));
+                                startQrCountdown(diff || 60);
+                            } catch (e) {
+                                startQrCountdown(60);
+                            }
+                        } else {
+                            alert((data && data.message) ? data.message : 'Failed to generate QR');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('QR generation error', err);
+                        alert('Network error generating QR');
+                    });
                 
                 // Show modal
                 $('#globalQrModal').show();
-                
-                            console.log('Modal should be visible now');
             });
         
 
@@ -1624,6 +1659,7 @@ foreach ($result as $row) {
             // Close modal handlers
             $('#closeQrModal, #closeQrButton').on('click', function() {
                 $('#globalQrModal').hide();
+                clearInterval(qrExpiryTimer);
             });
             
             // Close when clicking outside
@@ -1909,14 +1945,36 @@ foreach ($result as $row) {
             function reattachQRListeners() {
                 console.log('Reattaching QR listeners to', $('.qr-button').length, 'buttons');
                 $('.qr-button').off('click').on('click', function() {
+                    const studentId = $(this).data('id');
                     const studentName = $(this).data('name');
-                    const qrCode = $(this).data('qr');
-                    
-                    console.log('QR button clicked (reattached):', { studentName, qrCode });
-                        
-                        $('#qrModalTitle').text(studentName + "'s QR Code");
-                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
-                        $('#globalQrModal').show();
+                    $('#qrModalTitle').text(studentName + "'s QR Code");
+                    $('#qrModalImage').attr('src', '');
+                    $('#qrExpiryInfo').hide().css('color', '#098744');
+                    clearInterval(qrExpiryTimer);
+
+                    fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId), { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.success) {
+                                $('#qrModalImage').attr('src', data.data.qr_image_url);
+                                try {
+                                    const expiresAt = new Date(data.data.expires_at.replace(' ', 'T') + '+08:00');
+                                    const now = new Date();
+                                    const diff = Math.max(0, Math.round((expiresAt.getTime() - now.getTime()) / 1000));
+                                    startQrCountdown(diff || 60);
+                                } catch (e) {
+                                    startQrCountdown(60);
+                                }
+                            } else {
+                                alert((data && data.message) ? data.message : 'Failed to generate QR');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('QR generation error', err);
+                            alert('Network error generating QR');
+                        });
+
+                    $('#globalQrModal').show();
                 });
             }
 
