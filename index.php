@@ -4992,8 +4992,11 @@ $filteredSchedules = getFilteredSchedules(
             // QR Scanner initialization
             var html5QrcodeScanner = new Html5QrcodeScanner(
                 "qr-reader", { fps: 10, qrbox: 250 });
+            var scanInProgress = false;
             
             function onScanSuccess(qrCodeMessage) {
+                if (scanInProgress) { return; }
+                scanInProgress = true;
                 // Stop the scanner
                 html5QrcodeScanner.clear();
                 
@@ -5119,6 +5122,7 @@ $filteredSchedules = getFilteredSchedules(
                             // Restart scanner after a delay to allow for more scans
                             setTimeout(function() {
                                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                                scanInProgress = false;
                             }, 3000);
                         } else {
                             // Handle duplicate and invalid QR via modals
@@ -5155,6 +5159,7 @@ $filteredSchedules = getFilteredSchedules(
                             // Restart scanner
                             setTimeout(function() {
                                 html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                                scanInProgress = false;
                             }, 3000);
                         }
                     },
@@ -5179,6 +5184,7 @@ $filteredSchedules = getFilteredSchedules(
                         // Restart scanner
                         setTimeout(function() {
                             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                            scanInProgress = false;
                         }, 3000);
                     }
                 });
@@ -5195,6 +5201,23 @@ $filteredSchedules = getFilteredSchedules(
                 const attendanceTableBody = document.querySelector('#attendanceTable tbody');
                 if (attendanceTableBody && response.data) {
                     const data = response.data;
+                    // Update the global lastAttendanceId cursor so the poller won't re-add this row
+                    try {
+                        if (typeof window !== 'undefined') {
+                            const newId = parseInt(data.attendance_id || data.tbl_attendance_id || 0, 10) || 0;
+                            if (!isNaN(newId) && newId > 0) {
+                                window.lastAttendanceId = Math.max(window.lastAttendanceId || 0, newId);
+                            }
+                        }
+                    } catch (e) { /* noop */ }
+                    // Avoid duplicate DOM rows when API is called multiple times for same scan
+                    if (data.attendance_id) {
+                        const dupBtn = attendanceTableBody.querySelector(`button.delete-button[onclick="deleteAttendance(${data.attendance_id})"]`);
+                        if (dupBtn) {
+                            console.log('Duplicate DOM insert prevented for attendance_id', data.attendance_id);
+                            return;
+                        }
+                    }
                     
                     // Format the time to match existing table format
                     const now = new Date();
@@ -5433,19 +5456,30 @@ $filteredSchedules = getFilteredSchedules(
             });
             
             // Real-time attendance table updates
-            let lastAttendanceId = 0;
+            // Share cursor globally so scan handler and poller stay in sync
+            window.lastAttendanceId = window.lastAttendanceId || 0;
             
             function initializeLastAttendanceId() {
-                // Numbering column removed; keep variable for compatibility with no-op init
-                lastAttendanceId = 0;
+                // Initialize from the highest id present in DOM to avoid re-adding existing rows
+                try {
+                    const ids = Array.from(document.querySelectorAll('#attendanceTable tbody button.delete-button'))
+                        .map(btn => {
+                            const m = btn.getAttribute('onclick')?.match(/deleteAttendance\((\d+)\)/);
+                            return m ? parseInt(m[1], 10) : 0;
+                        })
+                        .filter(n => !isNaN(n) && n > 0);
+                    if (ids.length > 0) {
+                        window.lastAttendanceId = Math.max(...ids, window.lastAttendanceId || 0);
+                    }
+                } catch (e) { /* noop */ }
             }
             
-            function checkForNewAttendance() {
+        function checkForNewAttendance() {
                 $.ajax({
                     url: 'api/get-latest-attendance.php',
                     type: 'GET',
                     data: {
-                        last_id: lastAttendanceId,
+            last_id: window.lastAttendanceId || 0,
                         school_id: <?php echo $school_id; ?>,
                         user_id: <?php echo $user_id; ?>
                     },
@@ -5453,8 +5487,8 @@ $filteredSchedules = getFilteredSchedules(
                     success: function(response) {
                         if (response.success && response.records && response.records.length > 0) {
                             response.records.forEach(function(record) {
-                                addAttendanceRow(record);
-                                lastAttendanceId = Math.max(lastAttendanceId, record.tbl_attendance_id);
+                addAttendanceRow(record);
+                window.lastAttendanceId = Math.max(window.lastAttendanceId || 0, record.tbl_attendance_id);
                             });
                             
                             // Show notification
@@ -5474,6 +5508,15 @@ $filteredSchedules = getFilteredSchedules(
                     : (record.status === 'Late'
                         ? `<span class='badge badge-warning'><i class='fas fa-clock'></i> Late</span>`
                         : `<span class='badge badge-secondary'><i class='fas fa-question-circle'></i> ${record.status || 'Unknown'}</span>`);
+                
+                // Dedupe: if a row with this attendance id already exists, skip
+                const tbody = document.querySelector('#attendanceTable tbody');
+                if (tbody) {
+                    const exists = tbody.querySelector(`button.delete-button[onclick="deleteAttendance(${record.tbl_attendance_id})"]`);
+                    if (exists) {
+                        return; // already present
+                    }
+                }
                 
                 const newRow = `
                     <tr style=\"background-color: #098744; color: white;\" data-new=\"true\">

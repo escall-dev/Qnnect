@@ -59,15 +59,17 @@ try {
     $studentName = $student['student_name'];
     $courseSection = $student['course_section'];
 
-    // Duplicate check for same day within tenant and optional instructor/subject
-    $dupSql = "SELECT tbl_attendance_id, time_in, status FROM tbl_attendance
-               WHERE tbl_student_id = ? AND DATE(time_in) = CURDATE()
-                 AND user_id = ? AND school_id = ?
-                 AND ( (instructor_id IS NULL AND ? IS NULL) OR instructor_id = ? )
-                 AND ( (subject_id IS NULL AND ? IS NULL) OR subject_id = ? )
-               LIMIT 1";
-    $dupStmt = $conn_qr->prepare($dupSql);
-    $dupStmt->bind_param('iiiiiii', $studentID, $user_id, $school_id, $instructorId, $instructorId, $subjectId, $subjectId);
+        // Duplicate check for same day within tenant and optional instructor/subject
+        // Use IFNULL to normalize NULL to 0 for comparison (consistent with generated columns + unique index)
+        $dupSql = "SELECT tbl_attendance_id, time_in, status FROM tbl_attendance
+                             WHERE tbl_student_id = ?
+                                 AND DATE(time_in) = CURDATE()
+                                 AND user_id = ? AND school_id = ?
+                                 AND IFNULL(instructor_id,0) = ?
+                                 AND IFNULL(subject_id,0) = ?
+                             LIMIT 1";
+        $dupStmt = $conn_qr->prepare($dupSql);
+        $dupStmt->bind_param('iiiii', $studentID, $user_id, $school_id, $instructorId, $subjectId);
     $dupStmt->execute();
     $existing = $dupStmt->get_result()->fetch_assoc();
 
@@ -94,10 +96,27 @@ try {
     $now = date('Y-m-d H:i:s');
     $status = (strtotime($now) <= strtotime(date('Y-m-d') . ' ' . $class_start_time)) ? 'On Time' : 'Late';
 
-    // Insert record
+    // Insert record (guard against race with unique index)
     $ins = $conn_qr->prepare("INSERT INTO tbl_attendance (tbl_student_id, time_in, status, instructor_id, subject_id, user_id, school_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $ins->bind_param('issiiii', $studentID, $now, $status, $instructorId, $subjectId, $user_id, $school_id);
     if (!$ins->execute()) {
+        // If duplicate key due to concurrent insert, surface as duplicate
+        if ($conn_qr->errno === 1062) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'duplicate_scan',
+                'message' => 'Attendance already recorded for today',
+                'data' => [
+                    'duplicate' => true,
+                    'student_name' => $studentName,
+                    'attendance_time' => date('h:i A'),
+                    'attendance_date' => date('M d, Y'),
+                    'attendance_status' => $status,
+                    'subject_name' => $subjectName
+                ]
+            ]);
+            exit;
+        }
         throw new Exception('Insert failed: ' . $ins->error);
     }
 
@@ -108,9 +127,12 @@ try {
         'message' => 'Attendance recorded successfully',
         'data' => [
             'attendance_id' => $attendanceId,
+            'student_id' => $studentID,
             'student_name' => $studentName,
             'course_section' => $courseSection,
-            'status' => $status
+            'status' => $status,
+            'instructor_id' => $instructorId,
+            'subject_id' => $subjectId
         ]
     ]);
 } catch (Throwable $e) {
