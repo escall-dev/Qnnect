@@ -702,9 +702,6 @@ foreach ($result as $row) {
             <button class="btn btn-success btn-sm qr-button" data-id="<?= $studentID ?>" data-name="<?= $studentName ?>" data-qr="<?= $qrCode ?>">
                 <i class="fas fa-qrcode"></i>
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="updateStudent(<?= $studentID ?>)">
-                <i class="fas fa-edit"></i>
-            </button>
             <button class="btn btn-danger btn-sm" onclick="deleteStudent(<?= $studentID ?>)">
                 <i class="fas fa-trash-alt"></i>
             </button>
@@ -1921,9 +1918,6 @@ foreach ($result as $row) {
                             <div class="action-button">
                                 <button class="btn btn-success btn-sm qr-button" data-id="${student.tbl_student_id}" data-name="${student.student_name}" data-qr="${student.generated_code}">
                                     <i class="fas fa-qrcode"></i>
-                                </button>
-                                <button class="btn btn-secondary btn-sm" onclick="updateStudent(${student.tbl_student_id})">
-                                    <i class="fas fa-edit"></i>
                                 </button>
                                 <button class="btn btn-danger btn-sm" onclick="deleteStudent(${student.tbl_student_id})">
                                     <i class="fas fa-trash-alt"></i>

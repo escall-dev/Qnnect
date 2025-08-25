@@ -1577,12 +1577,7 @@ if (!isset($_SESSION['school_year']) || !isset($_SESSION['semester'])) {
                             <a href="settings.php?tab=activity-logs" class="<?php echo $current_tab == 'activity-logs' ? 'active' : ''; ?>">
                                 <i class="fas fa-history"></i> Activity Logs
                             </a>
-                            <a href="settings.php?tab=backup" class="<?php echo $current_tab == 'backup' ? 'active' : ''; ?>">
-                                <i class="fas fa-database"></i> Backup & Restore
-                            </a>
-                            <a href="settings.php?tab=delete-data" class="<?php echo $current_tab == 'delete-data' ? 'active' : ''; ?>">
-                                <i class="fas fa-trash-alt"></i> Delete Data
-                            </a>
+                            <!-- Backup/Restore/Delete moved to Super Admin panel -->
                         </div>
 
                         <!-- Tab Content -->
@@ -2069,154 +2064,15 @@ if (!isset($_SESSION['school_year']) || !isset($_SESSION['semester'])) {
                                 <?php endforeach; ?>
                             
                             <?php elseif ($current_tab == 'backup'): ?>
-                                <!-- Backup & Restore Tab -->
-                                <h4><i class="fas fa-database"></i> Backup & Restore Database</h4>
-                                
-                                <?php if (!empty($backup_message)): ?>
-                                <div class="alert alert-success">
-                                    <p><?php echo $backup_message; ?></p>
-                                    <p>Download the backup files:</p>
-                                    <ul>
-                                        <li><a href="backup/<?php echo $loginBackup; ?>" class="btn btn-sm btn-primary">Login Database Backup</a></li>
-                                        <li><a href="backup/<?php echo $qrBackup; ?>" class="btn btn-sm btn-primary">QR Attendance Database Backup</a></li>
-                                    </ul>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($restore_message)): ?>
                                 <div class="alert alert-info">
-                                    <p><?php echo $restore_message; ?></p>
+                                    Backup & Restore has moved to the Super Admin panel under Admin Controls.
+                                    <a class="btn btn-sm btn-primary ml-2" href="admin/backup-restore.php">Open Super Admin Backup & Restore</a>
                                 </div>
-                                <?php endif; ?>
-                                
-                                <div class="row mb-4">
-                                    <div class="col-md-4">
-                                        <div class="card mb-4">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Backup Database</h5>
-                                                <p class="card-text">Create a backup of your current database.</p>
-                                                <a href="settings.php?tab=backup&action=backup" class="btn btn-success">
-                                                    <i class="fas fa-download"></i> Create Backup
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card mb-4">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Restore Database</h5>
-                                                <p class="card-text">Restore from a previous backup file.</p>
-                                                <form action="settings.php?tab=backup" method="POST" enctype="multipart/form-data">
-                                                    <div class="custom-file mb-3">
-                                                        <input type="file" class="custom-file-input" id="backup_file" name="backup_file" accept=".sql" required>
-                                                        <label class="custom-file-label" for="backup_file">Choose backup file...</label>
-                                                    </div>
-                                                    <button type="submit" name="restore_database" class="btn btn-warning" onclick="return confirm('Are you sure you want to restore the database? This will overwrite current data.')">
-                                                        <i class="fas fa-upload"></i> Restore Backup
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                
-                                <div class="alert alert-warning">
-                                    <h5><i class="fas fa-exclamation-triangle"></i> IMPORTANT NOTE:</h5>
-                                    <ul class="mb-0">
-                                        <li>Make sure to regularly backup your databases to prevent data loss.</li>
-                                        <li>No inputs should be made during the backup or restore process.</li>
-                                        <li>Make sure to download and save your backup files in a secure location.</li>
-                                        <li>Restoring a database will overwrite all current data with the data from the backup file.</li>
-                                        <li><strong>DELETE DATA:</strong> Permanently deletes ALL system data (students, instructors, courses, school info, attendance). This is a complete system reset. Always create a backup first!</li>
-                                    </ul>
-                                </div>
-                            
                             <?php elseif ($current_tab == 'delete-data'): ?>
-                                <!-- Delete Data Tab -->
-                                <h4><i class="fas fa-trash-alt"></i> Complete System Reset - Delete All Data</h4>
-                                
-                                <?php 
-                                // Get current table counts for delete tab
-                                if ($current_tab == 'delete-data') {
-                                    $cleaner = new DatabaseCleaner($db_host, $db_user, $db_pass, $qr_db_name);
-                                    $tableCounts = $cleaner->getTableCounts();
-                                }
-                                ?>
-                                
-                                <?php if($delete_message): ?>
-                                    <div class="alert alert-<?php echo $delete_result['success'] ? 'success' : 'danger'; ?>">
-                                        <strong><?php echo $delete_result['success'] ? 'Success!' : 'Error!'; ?></strong>
-                                        <p><?php echo htmlspecialchars($delete_message); ?></p>
-                                        
-                                        <?php if(isset($delete_result['deleted']) && !empty($delete_result['deleted'])): ?>
-                                            <div class="mt-3">
-                                                <h6>Tables Cleared:</h6>
-                                                <div style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa; border-radius: 5px; padding: 10px;">
-                                                    <?php foreach($delete_result['deleted'] as $table): ?>
-                                                        <div>✓ <?php echo htmlspecialchars($table); ?></div>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if(isset($delete_result['skipped']) && !empty($delete_result['skipped'])): ?>
-                                            <div class="mt-3">
-                                                <h6>Tables Skipped:</h6>
-                                                <div style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa; border-radius: 5px; padding: 10px;">
-                                                    <?php foreach($delete_result['skipped'] as $table): ?>
-                                                        <div>- <?php echo htmlspecialchars($table); ?></div>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="alert alert-danger">
-                                    <h5><i class="fas fa-exclamation-triangle"></i> COMPLETE SYSTEM RESET - DANGER ZONE</h5>
-                                    <p><strong>This action will permanently delete ALL data from the attendance system - this is a COMPLETE SYSTEM RESET!</strong></p>
-                                    <p>This deletes data from 15 tables including:</p>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <ul class="mb-0">
-                                                <li><strong>ALL STUDENT RECORDS</strong> (tbl_student)</li>
-                                                <li><strong>ALL INSTRUCTOR DATA</strong> (tbl_instructors, tbl_instructor_subjects)</li>
-                                                <li><strong>ALL COURSES & SUBJECTS</strong> (courses, tbl_subjects)</li>
-                                                <li><strong>SCHOOL INFORMATION</strong> (school_info)</li>
-                                            </ul>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <ul class="mb-0">
-                                                <li><strong>ALL ATTENDANCE DATA</strong> (tbl_attendance, attendance_logs, attendance_grades)</li>
-                                                <li><strong>FACE RECOGNITION DATA</strong> (tbl_face_recognition_logs, tbl_face_verification_logs)</li>
-                                                <li><strong>ACTIVITY LOGS & USER LOGS</strong> (activity_logs, tbl_user_logs)</li>
-                                                <li><strong>OFFLINE DATA & SESSIONS</strong> (offline_data, attendance_sessions)</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <p class="mt-2 mb-0"><strong>This is essentially starting fresh with an empty system! This action cannot be undone!</strong></p>
+                                <div class="alert alert-info">
+                                    Delete Data has moved to the Super Admin panel under Admin Controls.
+                                    <a class="btn btn-sm btn-danger ml-2" href="admin/delete_data.php">Open Super Admin Delete Data</a>
                                 </div>
-                                
-                                <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card">
-                                            <div class="card-header bg-info text-white">
-                                                <h5 class="mb-0"><i class="fas fa-table"></i> Current Database Status</h5>
-                                            </div>
-                                            <div class="card-body">
-                                                <?php if (isset($tableCounts)): ?>
-                                                    <?php foreach($tableCounts as $table => $count): ?>
-                                                        <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                                                            <span><?php echo htmlspecialchars($table); ?>:</span>
-                                                            <span class="badge badge-<?php echo $count > 0 ? 'primary' : 'secondary'; ?>">
-                                                                <?php echo htmlspecialchars($count); ?> records
-                                                            </span>
-                                                        </div>
-                                                    <?php endforeach; ?>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </div>
                                     <div class="col-md-6">
                                         <div class="alert alert-success mb-3">
                                             <h5><i class="fas fa-shield-alt"></i> WHAT'S PRESERVED</h5>

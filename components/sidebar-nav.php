@@ -78,6 +78,19 @@ error_log("Session data in sidebar-nav: " . print_r($_SESSION, true));
         align-items: center;
     }
 
+    .sidebar .logo-details img.logo-img {
+        height: 175px;
+        width: auto;
+        display: block !important;
+        z-index: 2;
+        pointer-events: none;
+        max-width: 130px;
+        object-fit: contain;
+    }
+    .sidebar.close .logo-details img.logo-img {
+        display: none !important;
+    }
+
     .sidebar .logo-details i.bx-menu {
         font-size: 30px;
         color: #fff;
@@ -208,9 +221,10 @@ error_log("Session data in sidebar-nav: " . print_r($_SESSION, true));
    </head>
 <body>
 <div class="sidebar close">
-    <div class="logo-details">
+    <div class="logo-details" style="position: relative;">
         <i class='bx bx-menu' role="button" title="Toggle Sidebar"></i>
-        <span class="logo_name">📚 QR Code Attendance</span>
+        <img src="<?php echo $baseUrl; ?>admin/image/Qnnect-v1.2.png" alt="Qnnect Logo" class="logo-img">
+        <span class="logo_name"></span>
     </div>
     <ul class="nav-links">
       <li>

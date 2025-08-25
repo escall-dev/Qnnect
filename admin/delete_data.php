@@ -1,11 +1,12 @@
 <?php
-// Use consistent session handling
-require_once '../includes/session_config.php';
+// Use super admin session handling (same as admin panel)
+require_once '../includes/session_config_superadmin.php';
+require_once '../includes/auth_functions.php';
 require_once "database.php";
 
-// Check if user is logged in
-if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
+// Check if user is logged in and has super admin role
+if (!isset($_SESSION['email']) || !hasRole('super_admin')) {
+    header("Location: super_admin_login.php");
     exit;
 }
 
@@ -161,11 +162,166 @@ class DatabaseCleaner {
         return $counts;
     }
     
+    public function deleteStudents() {
+        try {
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 0");
+            
+            $tablesToClear = ['tbl_student'];
+            $deletedTables = [];
+            
+            foreach ($tablesToClear as $table) {
+                $checkTable = $this->conn->query("SHOW TABLES LIKE '$table'");
+                if ($checkTable->num_rows > 0) {
+                    $countResult = $this->conn->query("SELECT COUNT(*) as count FROM `$table`");
+                    $rowCount = $countResult->fetch_assoc()['count'];
+                    
+                    if ($rowCount > 0) {
+                        if ($this->conn->query("DELETE FROM `$table`")) {
+                            $deletedTables[] = "$table ($rowCount rows deleted)";
+                            $this->conn->query("ALTER TABLE `$table` AUTO_INCREMENT = 1");
+                        }
+                    }
+                }
+            }
+            
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            
+            return [
+                'success' => true,
+                'message' => 'All student data deleted successfully!',
+                'deleted' => $deletedTables
+            ];
+            
+        } catch (Exception $e) {
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            return ['success' => false, 'message' => 'Error deleting students: ' . $e->getMessage()];
+        }
+    }
+    
+    public function deleteAttendance() {
+        try {
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 0");
+            
+            $tablesToClear = ['tbl_attendance', 'attendance_logs', 'attendance_grades', 'attendance_sessions'];
+            $deletedTables = [];
+            
+            foreach ($tablesToClear as $table) {
+                $checkTable = $this->conn->query("SHOW TABLES LIKE '$table'");
+                if ($checkTable->num_rows > 0) {
+                    $countResult = $this->conn->query("SELECT COUNT(*) as count FROM `$table`");
+                    $rowCount = $countResult->fetch_assoc()['count'];
+                    
+                    if ($rowCount > 0) {
+                        if ($this->conn->query("DELETE FROM `$table`")) {
+                            $deletedTables[] = "$table ($rowCount rows deleted)";
+                            $this->conn->query("ALTER TABLE `$table` AUTO_INCREMENT = 1");
+                        }
+                    }
+                }
+            }
+            
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            
+            return [
+                'success' => true,
+                'message' => 'All attendance data deleted successfully!',
+                'deleted' => $deletedTables
+            ];
+            
+        } catch (Exception $e) {
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            return ['success' => false, 'message' => 'Error deleting attendance: ' . $e->getMessage()];
+        }
+    }
+    
+    public function deleteSchedules() {
+        try {
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 0");
+            
+            $tablesToClear = ['tbl_instructors', 'tbl_instructor_subjects', 'tbl_subjects'];
+            $deletedTables = [];
+            
+            foreach ($tablesToClear as $table) {
+                $checkTable = $this->conn->query("SHOW TABLES LIKE '$table'");
+                if ($checkTable->num_rows > 0) {
+                    $countResult = $this->conn->query("SELECT COUNT(*) as count FROM `$table`");
+                    $rowCount = $countResult->fetch_assoc()['count'];
+                    
+                    if ($rowCount > 0) {
+                        if ($this->conn->query("DELETE FROM `$table`")) {
+                            $deletedTables[] = "$table ($rowCount rows deleted)";
+                            $this->conn->query("ALTER TABLE `$table` AUTO_INCREMENT = 1");
+                        }
+                    }
+                }
+            }
+            
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            
+            return [
+                'success' => true,
+                'message' => 'All schedule data deleted successfully!',
+                'deleted' => $deletedTables
+            ];
+            
+        } catch (Exception $e) {
+            $this->conn->query("SET FOREIGN_KEY_CHECKS = 1");
+            return ['success' => false, 'message' => 'Error deleting schedules: ' . $e->getMessage()];
+        }
+    }
+    
     public function __destruct() {
         // Safely close the connection
         if (isset($this->conn) && $this->conn instanceof mysqli && @$this->conn->ping()) {
             $this->conn->close();
         }
+    }
+}
+
+// Handle AJAX API requests
+if (isset($_POST['action']) && $_POST['action'] === 'delete') {
+    // Use super admin session handling (same as admin panel)
+    require_once '../includes/session_config_superadmin.php';
+    require_once '../includes/auth_functions.php';
+
+    // Check authentication for API requests
+    if (!isset($_SESSION['email']) || !hasRole('super_admin')) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Not authenticated or insufficient permissions']);
+        exit;
+    }
+
+    header('Content-Type: application/json');
+    
+    $type = $_POST['type'] ?? '';
+    
+    try {
+        $cleaner = new DatabaseCleaner($db_host, $db_user, $db_pass, $qr_db_name);
+        
+        switch ($type) {
+            case 'students':
+                $result = $cleaner->deleteStudents();
+                break;
+            case 'attendance':
+                $result = $cleaner->deleteAttendance();
+                break;
+            case 'schedules':
+                $result = $cleaner->deleteSchedules();
+                break;
+            case 'all':
+                $result = $cleaner->deleteAllData();
+                break;
+            default:
+                echo json_encode(['success' => false, 'message' => 'Invalid delete type']);
+                exit;
+        }
+        
+        echo json_encode($result);
+        exit;
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
     }
 }
 

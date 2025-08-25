@@ -1,11 +1,269 @@
 <?php
-// Use consistent session handling
-require_once '../includes/session_config.php';
+// Handle AJAX API requests first (before any output)
+if (isset($_POST['action']) || isset($_GET['action'])) {
+    // Use super admin session handling (same as admin panel)
+    require_once '../includes/session_config_superadmin.php';
+    require_once '../includes/auth_functions.php';
+    require_once "database.php";
+
+    // Check if user is logged in for API requests
+    if (!isset($_SESSION['email']) || !hasRole('super_admin')) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Not authenticated or insufficient permissions']);
+        exit;
+    }
+
+    header('Content-Type: application/json');
+    
+    // Database configuration
+    $db_host = "localhost";
+    $db_user = "root";
+    $db_pass = "";
+    $db_name = "login_register";
+    $qr_db_name = "qr_attendance_db";
+    
+    $action = $_POST['action'] ?? $_GET['action'];
+    
+    try {
+        switch ($action) {
+            case 'backup':
+                $database = $_POST['database'] ?? 'login_register';
+                
+                // Include the backup class here
+                class backup_restore_api {
+                    private $host;
+                    private $username;
+                    private $passwd;
+                    private $dbName;
+                    private $conn;
+                    private $backupDir;
+                    private $backupFile;
+                    
+                    public function __construct($host, $dbName, $username, $passwd) {
+                        $this->host = $host;
+                        $this->dbName = $dbName;
+                        $this->username = $username;
+                        $this->passwd = $passwd;
+                        $this->conn = $this->connectDB();
+                        $this->backupDir = __DIR__ . '/backup/';
+                        $this->backupFile = 'database_'.$this->dbName.'_'.date('Y-m-d_H-i-s').'.sql';
+                        
+                        if (!file_exists($this->backupDir)) {
+                            mkdir($this->backupDir, 0777, true);
+                        }
+                    }
+                    
+                    protected function connectDB() {
+                        try {
+                            $conn = new mysqli($this->host, $this->username, $this->passwd, $this->dbName);
+                            $conn->set_charset('utf8');
+                            
+                            if ($conn->connect_error) {
+                                throw new Exception('Error connecting to database: ' . $conn->connect_error);
+                            }
+                            
+                            return $conn;
+                        } catch (Exception $e) {
+                            throw new Exception($e->getMessage());
+                        }
+                    }
+                    
+                    public function backup() {
+                        try {
+                            $this->conn->query("SET NAMES 'utf8'");
+                            
+                            $tables = array();
+                            $result = $this->conn->query("SHOW TABLES");
+                            while ($row = $result->fetch_row()) {
+                                $tables[] = $row[0];
+                            }
+                            
+                            $sqlScript = "-- Database Backup for ".$this->dbName." - ".date('Y-m-d H:i:s')."\n\n";
+                            $sqlScript .= "SET FOREIGN_KEY_CHECKS=0;\n";
+                            $sqlScript .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+                            $sqlScript .= "SET time_zone = \"+00:00\";\n\n";
+                            
+                            foreach ($tables as $table) {
+                                $result = $this->conn->query("SHOW CREATE TABLE $table");
+                                $row = $result->fetch_row();
+                                
+                                $sqlScript .= "\n\n-- Table structure for table `$table`\n\n";
+                                $sqlScript .= "DROP TABLE IF EXISTS `$table`;\n";
+                                $sqlScript .= $row[1].";\n\n";
+                                
+                                $result = $this->conn->query("SELECT * FROM $table");
+                                if ($result->num_rows > 0) {
+                                    $sqlScript .= "-- Dumping data for table `$table`\n\n";
+                                    
+                                    while ($row = $result->fetch_row()) {
+                                        $sqlScript .= "INSERT INTO `$table` VALUES(";
+                                        for ($j = 0; $j < count($row); $j++) {
+                                            $row[$j] = $row[$j] ? addslashes($row[$j]) : '';
+                                            if (isset($row[$j])) {
+                                                $sqlScript .= '"'.$row[$j].'"';
+                                            } else {
+                                                $sqlScript .= '""';
+                                            }
+                                            if ($j < (count($row) - 1)) {
+                                                $sqlScript .= ',';
+                                            }
+                                        }
+                                        $sqlScript .= ");\n";
+                                    }
+                                }
+                                $sqlScript .= "\n";
+                            }
+                            
+                            $sqlScript .= "SET FOREIGN_KEY_CHECKS=1;\n";
+                            
+                            $backupFilePath = $this->backupDir . $this->backupFile;
+                            file_put_contents($backupFilePath, $sqlScript);
+                            
+                            return $this->backupFile;
+                        } catch (Exception $e) {
+                            throw new Exception("Backup failed: " . $e->getMessage());
+                        }
+                    }
+                }
+                
+                $backup = new backup_restore_api($db_host, $database, $db_user, $db_pass);
+                $result = $backup->backup();
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Backup created successfully',
+                    'filename' => $result
+                ]);
+                exit;
+                
+            case 'list':
+                $backupDir = __DIR__ . '/backup/';
+                $files = [];
+                
+                if (is_dir($backupDir)) {
+                    $fileList = scandir($backupDir);
+                    foreach ($fileList as $file) {
+                        if ($file !== '.' && $file !== '..' && pathinfo($file, PATHINFO_EXTENSION) === 'sql') {
+                            $filePath = $backupDir . $file;
+                            $files[] = [
+                                'name' => $file,
+                                'database' => (strpos($file, 'qr_attendance') !== false) ? 'qr_attendance_db' : 'login_register',
+                                'date' => date('Y-m-d H:i:s', filemtime($filePath)),
+                                'size' => number_format(filesize($filePath) / 1024, 2) . ' KB'
+                            ];
+                        }
+                    }
+                }
+                
+                echo json_encode(['success' => true, 'files' => $files]);
+                exit;
+                
+            case 'delete':
+                $filename = $_POST['filename'] ?? '';
+                if (empty($filename)) {
+                    echo json_encode(['success' => false, 'message' => 'No filename provided']);
+                    exit;
+                }
+                
+                $backupDir = __DIR__ . '/backup/';
+                $filePath = $backupDir . basename($filename); // basename for security
+                
+                if (file_exists($filePath) && pathinfo($filePath, PATHINFO_EXTENSION) === 'sql') {
+                    if (unlink($filePath)) {
+                        echo json_encode(['success' => true, 'message' => 'Backup file deleted successfully']);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Failed to delete backup file']);
+                    }
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Backup file not found']);
+                }
+                exit;
+                
+            case 'download':
+                $filename = $_GET['file'] ?? '';
+                if (empty($filename)) {
+                    echo json_encode(['success' => false, 'message' => 'No filename provided']);
+                    exit;
+                }
+                
+                $backupDir = __DIR__ . '/backup/';
+                $filePath = $backupDir . basename($filename);
+                
+                if (file_exists($filePath) && pathinfo($filePath, PATHINFO_EXTENSION) === 'sql') {
+                    header('Content-Type: application/octet-stream');
+                    header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+                    header('Content-Length: ' . filesize($filePath));
+                    readfile($filePath);
+                    exit;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Backup file not found']);
+                    exit;
+                }
+                
+            case 'restore':
+                if (!isset($_FILES['backup_file'])) {
+                    echo json_encode(['success' => false, 'message' => 'No backup file uploaded']);
+                    exit;
+                }
+                
+                $database = $_POST['database'] ?? 'login_register';
+                
+                // Simple restore functionality
+                try {
+                    $uploadedFile = $_FILES['backup_file'];
+                    if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
+                        throw new Exception('File upload error');
+                    }
+                    
+                    $sqlContent = file_get_contents($uploadedFile['tmp_name']);
+                    if ($sqlContent === false) {
+                        throw new Exception('Could not read uploaded file');
+                    }
+                    
+                    // Connect to database
+                    $conn = new mysqli($db_host, $db_user, $db_pass, $database);
+                    if ($conn->connect_error) {
+                        throw new Exception('Database connection failed: ' . $conn->connect_error);
+                    }
+                    
+                    // Execute SQL
+                    if ($conn->multi_query($sqlContent)) {
+                        // Process all results
+                        do {
+                            if ($result = $conn->store_result()) {
+                                $result->free();
+                            }
+                        } while ($conn->next_result());
+                        
+                        echo json_encode(['success' => true, 'message' => 'Backup restored successfully']);
+                    } else {
+                        throw new Exception('Error executing SQL: ' . $conn->error);
+                    }
+                    
+                    $conn->close();
+                } catch (Exception $e) {
+                    echo json_encode(['success' => false, 'message' => 'Restore failed: ' . $e->getMessage()]);
+                }
+                exit;
+                
+            default:
+                echo json_encode(['success' => false, 'message' => 'Invalid action']);
+                exit;
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
+}
+
+// Use super admin session handling (same as admin panel)
+require_once '../includes/session_config_superadmin.php';
+require_once '../includes/auth_functions.php';
 require_once "database.php";
 
-// Check if user is logged in
-if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
+// Check if user is logged in and has super admin role
+if (!isset($_SESSION['email']) || !hasRole('super_admin')) {
+    header("Location: super_admin_login.php");
     exit;
 }
 

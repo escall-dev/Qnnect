@@ -671,90 +671,7 @@ foreach ($teacher_schedules as $schedule) {
                 <button class="btn btn-primary" id="exportWord"><i class="fas fa-file-word"></i> Word</button>
                 <button class="btn btn-secondary" id="printSchedule"><i class="fas fa-print"></i> Print</button>
             </div>
-            <div class="calendar-section">
-                <div class="calendar-container">
-                    <button class="btn btn-outline-info" id="calendarToggleBtn"><i class="fas fa-calendar-alt"></i> Calendar</button>
-                    
-                    <!-- Mini Month Calendar - Popup -->
-                    <div class="mini-month-calendar" id="miniCalendar">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <form method="get" class="form-inline">
-                                <input type="month" name="month" value="<?= htmlspecialchars($current_month) ?>" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
-                            </form>
-                            <button class="btn btn-outline-success btn-sm" id="addEventBtn" style="font-size: 0.8rem;"><i class="fas fa-plus"></i> Event</button>
-                        </div>
-                        <table class="table table-bordered text-center" style="font-size: 0.65rem; margin: 0;">
-                            <thead>
-                                <tr>
-                                    <th style="padding: 1px; font-size: 0.6rem;">M</th>
-                                    <th style="padding: 1px; font-size: 0.6rem;">T</th>
-                                    <th style="padding: 1px; font-size: 0.6rem;">W</th>
-                                    <th style="padding: 1px; font-size: 0.6rem;">T</th>
-                                    <th style="padding: 1px; font-size: 0.6rem;">F</th>
-                                    <th style="padding: 1px; font-size: 0.6rem;">S</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            $firstDayOfMonth = date('N', strtotime("$current_year-$current_month_num-01")); // 1=Mon
-                            $daysInMonth = count($monthDays);
-                            $day = 1;
-                            $printed = 0;
-                            for ($row = 0; $row < 6 && $day <= $daysInMonth; $row++) {
-                                echo '<tr>';
-                                for ($col = 1; $col <= 6; $col++) {
-                                    if (($row === 0 && $col < $firstDayOfMonth) || $day > $daysInMonth) {
-                                        echo '<td style="padding: 1px;"></td>';
-                                    } else {
-                                        $dateStr = sprintf('%04d-%02d-%02d', $current_year, $current_month_num, $day);
-                                        $isHoliday = in_array($dateStr, $holidays);
-                                        $isNationalHoliday = in_array($dateStr, $nationalHolidays);
-                                        $currentDate = date('Y-m-d');
-                                        $isToday = ($dateStr === $currentDate);
-                                        $style = 'padding: 1px; cursor: pointer; font-size: 0.7rem;';
-                                        
-                                        if ($isNationalHoliday) {
-                                            $holidayName = $nationalHolidayNames[$dateStr] ?? 'National Holiday';
-                                            $style .= 'background-color: #ffebee; color: #d32f2f; font-weight: bold; border: 2px solid #d32f2f;';
-                                            echo '<td style="'.$style.'" class="holiday-date national-holiday" data-date="'.$dateStr.'" data-holiday="'.htmlspecialchars($holidayName).'" title="'.htmlspecialchars($holidayName).'">'. $day .'<div class="holiday-tooltip">🇵🇭 '.htmlspecialchars($holidayName).'</div></td>';
-                                        } elseif ($isHoliday) {
-                                            $holidayName = $holiday_names[$dateStr] ?? 'Holiday';
-                                            $style .= 'background-color: #fff3e0; color: #f57c00; font-weight: bold; border: 1px solid #f57c00;';
-                                            echo '<td style="'.$style.'" class="holiday-date" data-date="'.$dateStr.'" data-holiday="'.htmlspecialchars($holidayName).'" title="'.htmlspecialchars($holidayName).'">'. $day .'<div class="holiday-tooltip">🎉 '.htmlspecialchars($holidayName).'</div></td>';
-                                        } elseif ($isToday) {
-                                            $style .= 'background-color: #e3f2fd; font-weight: bold; border: 2px solid #2196f3;';
-                                            echo '<td style="'.$style.'" class="calendar-date today" data-date="'.$dateStr.'" title="Click to add schedule">'. $day .'</td>';
-                                        } else {
-                                            echo '<td style="'.$style.'" class="calendar-date" data-date="'.$dateStr.'" title="Click to add schedule">'. $day .'</td>';
-                                        }
-                                        $day++;
-                                    }
-                                    $printed++;
-                                }
-                                echo '</tr>';
-                            }
-                            ?>
-                            </tbody>
-                        </table>
-                        
-                        <!-- Holiday Legend -->
-                        <div class="holiday-legend">
-                            <div class="legend-item">
-                                <span class="legend-color" style="background-color: #ffebee; border-color: #d32f2f;"></span>
-                                <span>🇵🇭 National Holiday</span>
-                    </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background-color: #fff3e0; border-color: #f57c00;"></span>
-                                <span>🎉 School Holiday</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background-color: #e3f2fd; border-color: #2196f3;"></span>
-                                <span>📅 Today</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
         </div>
         
         <!-- Week Grid View -->
@@ -1167,138 +1084,24 @@ $(document).ready(function() {
         });
     });
 
-    // Calendar toggle button
-    $('#calendarToggleBtn').on('click', function() {
-        var calendar = $('#miniCalendar');
-        
-        if (calendar.is(':visible')) {
-            calendar.hide();
-        } else {
-            calendar.show();
-        }
-    });
+    // Calendar UI removed
 
     // Calendar date click functionality
 
 
-    // Event date click functionality
-    $(document).on('click', '.holiday-date', function() {
-        var date = $(this).data('date');
-        var eventName = $(this).data('holiday');
-        var isNational = $(this).hasClass('national-holiday');
-        var eventType = isNational ? 'National Holiday' : 'Holiday';
-        console.log('Event clicked:', date, 'Name:', eventName, 'Type:', eventType);
-        showEventDetails(date, eventName, eventType);
-    });
+    // Holiday/event UI removed
 
-    // Add event button functionality
-    $('#addEventBtn').on('click', function() {
-        $('#eventModal').modal('show');
-    });
+    // Event modal UI removed
 
-    // Event form submission
-    $('#eventForm').on('submit', function(e) {
-        e.preventDefault();
-        var formData = $(this).serialize();
-        
-        $.ajax({
-            url: 'api/manage-holidays.php',
-            type: 'POST',
-            data: formData + '&action=add',
-            success: function(response) {
-                try {
-                    var data = JSON.parse(response);
-                    if (data.success) {
-                        alert('Event added successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                } catch (e) {
-                    alert('Error processing response');
-                }
-            },
-            error: function() {
-                alert('Error adding event');
-            }
-        });
-    });
+    // Event submission removed
     
-    // Calendar date click handler (for adding schedules)
-    $(document).on('click', '.calendar-date', function() {
-        var date = $(this).data('date');
-        var dayOfWeek = getDayOfWeek(date);
-        openScheduleModal({ day: dayOfWeek });
-    });
+    // Calendar date handler removed
     
-    // Holiday date click handler
-    $(document).on('click', '.holiday-date', function() {
-        var date = $(this).data('date');
-        var holidayName = $(this).data('holiday');
-        var isNational = $(this).hasClass('national-holiday');
-        
-        // Show holiday details in modal
-        showHolidayDetails(date, holidayName, isNational);
-    });
+    // Holiday date handler removed
     
-    // Enhanced holiday hover effects
-    $(document).on('mouseenter', '.holiday-date', function() {
-        $(this).addClass('holiday-hover');
-    });
+    // Holiday hover effects removed
     
-    $(document).on('mouseleave', '.holiday-date', function() {
-        $(this).removeClass('holiday-hover');
-    });
-    
-    // Add Holiday button
-    $('#addHolidayBtn').on('click', function() {
-        $('#holidayModal').modal('show');
-    });
-    // Handle holiday form
-    $('#holidayForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        var holidayDate = $('#holidayDate').val();
-        var holidayName = $('#holidayName').val();
-        
-        console.log('Submitting holiday:', holidayDate, holidayName);
-        
-        if (!holidayDate || !holidayName) {
-            alert('Please fill in all fields');
-            return;
-        }
-        
-        $.ajax({
-            url: 'api/manage-holidays.php',
-            type: 'POST',
-            data: JSON.stringify({
-                action: 'add',
-                holiday_date: holidayDate,
-                holiday_name: holidayName
-            }),
-            contentType: 'application/json',
-            success: function(response) {
-                console.log('Holiday save response:', response);
-                try {
-                    var data = JSON.parse(response);
-                    if (data.success) {
-                        alert('Holiday added successfully!');
-                        $('#holidayModal').modal('hide');
-                        location.reload(); // Refresh to show new holiday
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                } catch (e) {
-                    console.error('Error parsing holiday response:', e);
-                    alert('Error processing response');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Holiday save error:', status, error);
-                alert('Error saving holiday');
-            }
-        });
-    });
+    // Holiday creation UI removed
 });
 
 function openScheduleModal(data) {

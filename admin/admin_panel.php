@@ -548,6 +548,8 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 <a href="#attendance" data-section="attendance"><i class="fas fa-check-square"></i> Attendance</a>
                 <a href="#schedules" data-section="schedules"><i class="fas fa-calendar"></i> Schedules</a>
                 <a href="#courses" data-section="courses"><i class="fas fa-book"></i> Courses & Sections</a>
+                <a href="#backup-restore" data-section="backup-restore" class="text-danger"><i class="fas fa-database"></i> Backup & Restore</a>
+                <a href="#delete-data" data-section="delete-data" class="text-danger"><i class="fas fa-trash-alt"></i> Delete Data</a>
                 <?php endif; ?>
             </div>
             <div class="settings-content">
@@ -1084,6 +1086,186 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                         </thead>
                         <tbody id="courses_hier_tbody"></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backup & Restore Section -->
+    <div id="backup-restore" class="content-section">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-database"></i> Backup & Restore</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6><i class="fas fa-download"></i> Create Backup</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Create a backup of your database.</p>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Database:</label>
+                                    <select class="form-select" id="backup_database">
+                                        <option value="login_register">User Database</option>
+                                        <option value="qr_attendance_db">Attendance Database</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-success" id="create_backup_btn">
+                                    <i class="fas fa-download"></i> Create Backup
+                                </button>
+                                <div id="backup_progress" class="mt-3" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                                    </div>
+                                    <small class="text-muted">Creating backup...</small>
+                                </div>
+                                <div id="backup_result" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h6><i class="fas fa-upload"></i> Restore Backup</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Restore from a backup file.</p>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Backup File:</label>
+                                    <input type="file" class="form-control" id="restore_file" accept=".sql">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Target Database:</label>
+                                    <select class="form-select" id="restore_database">
+                                        <option value="login_register">User Database</option>
+                                        <option value="qr_attendance_db">Attendance Database</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-warning" id="restore_backup_btn">
+                                    <i class="fas fa-upload"></i> Restore Backup
+                                </button>
+                                <div id="restore_progress" class="mt-3" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 100%"></div>
+                                    </div>
+                                    <small class="text-muted">Restoring backup...</small>
+                                </div>
+                                <div id="restore_result" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-history"></i> Available Backups</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>File Name</th>
+                                                <th>Database</th>
+                                                <th>Date Created</th>
+                                                <th>Size</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="backup_files_list">
+                                            <tr>
+                                                <td colspan="5" class="text-center">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Data Section -->
+    <div id="delete-data" class="content-section">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5><i class="fas fa-trash-alt"></i> Delete Data</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> These operations are irreversible. Make sure you have backups before proceeding.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-users"></i> Student Data</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Delete all student records and related data.</p>
+                                <button class="btn btn-danger" id="delete_students_btn">
+                                    <i class="fas fa-trash"></i> Delete All Students
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-check-square"></i> Attendance Data</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Delete all attendance records.</p>
+                                <button class="btn btn-danger" id="delete_attendance_btn">
+                                    <i class="fas fa-trash"></i> Delete All Attendance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-calendar"></i> Schedule Data</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Delete all class schedules.</p>
+                                <button class="btn btn-danger" id="delete_schedules_btn">
+                                    <i class="fas fa-trash"></i> Delete All Schedules
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-database"></i> All Data</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Delete ALL data from the system.</p>
+                                <button class="btn btn-danger" id="delete_all_data_btn">
+                                    <i class="fas fa-trash-alt"></i> DELETE EVERYTHING
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div id="delete_result" class="mt-3"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2053,6 +2235,266 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             .then(d=>{ if (d && d.success) populateCourseSelectForSections(d.courses||[]); });
         document.addEventListener('DOMContentLoaded', () => { loadAttendance(); loadSchedules(); loadCoursesSections(); });
         <?php endif; ?>
+        
+        // Backup & Restore functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create backup
+            document.getElementById('create_backup_btn')?.addEventListener('click', async function() {
+                const database = document.getElementById('backup_database').value;
+                const btn = this;
+                const progress = document.getElementById('backup_progress');
+                const result = document.getElementById('backup_result');
+                
+                btn.disabled = true;
+                progress.style.display = 'block';
+                result.innerHTML = '';
+                
+                try {
+                    const response = await fetch('backup-restore.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `action=backup&database=${database}`
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        result.innerHTML = `<div class="alert alert-success">Backup created successfully: ${data.filename}</div>`;
+                        window.loadBackupFiles();
+                    } else {
+                        result.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
+                    }
+                } catch (error) {
+                    result.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                } finally {
+                    btn.disabled = false;
+                    progress.style.display = 'none';
+                }
+            });
+            
+            // Restore backup
+            document.getElementById('restore_backup_btn')?.addEventListener('click', async function() {
+                const file = document.getElementById('restore_file').files[0];
+                const database = document.getElementById('restore_database').value;
+                
+                if (!file) {
+                    await showError('Please select a backup file');
+                    return;
+                }
+                
+                const confirmed = await showConfirm({
+                    title: 'Restore Backup',
+                    message: 'Are you sure you want to restore this backup? This will overwrite existing data.',
+                    confirmText: 'Yes, restore backup'
+                });
+                
+                if (!confirmed) return;
+                
+                const btn = this;
+                const progress = document.getElementById('restore_progress');
+                const result = document.getElementById('restore_result');
+                
+                btn.disabled = true;
+                progress.style.display = 'block';
+                result.innerHTML = '';
+                
+                const formData = new FormData();
+                formData.append('action', 'restore');
+                formData.append('database', database);
+                formData.append('backup_file', file);
+                
+                try {
+                    const response = await fetch('backup-restore.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        result.innerHTML = `<div class="alert alert-success">Backup restored successfully</div>`;
+                        await showSuccess('Backup restored successfully');
+                    } else {
+                        result.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
+                    }
+                } catch (error) {
+                    result.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                } finally {
+                    btn.disabled = false;
+                    progress.style.display = 'none';
+                }
+            });
+            
+            // Load backup files list
+            window.loadBackupFiles = async function() {
+                try {
+                    const response = await fetch('backup-restore.php?action=list');
+                    const data = await response.json();
+                    const tbody = document.getElementById('backup_files_list');
+                    
+                    if (data.success && data.files) {
+                        tbody.innerHTML = '';
+                        data.files.forEach(file => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${file.name}</td>
+                                <td>${file.database}</td>
+                                <td>${file.date}</td>
+                                <td>${file.size}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="backup-restore.php?action=download&file=${file.name}" class="btn btn-outline-primary">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                        <button class="btn btn-outline-danger" onclick="deleteBackupFile('${file.name}')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No backup files found</td></tr>';
+                    }
+                } catch (error) {
+                    document.getElementById('backup_files_list').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading backup files</td></tr>';
+                }
+            }
+            
+            // Load backup files on page load
+            if (document.getElementById('backup_files_list')) {
+                window.loadBackupFiles();
+            }
+        });
+        
+        // Delete Data functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Delete students
+            document.getElementById('delete_students_btn')?.addEventListener('click', async function() {
+                const confirmed = await showConfirm({
+                    title: 'Delete All Students',
+                    message: 'Are you sure you want to delete ALL student data? This action cannot be undone.',
+                    confirmText: 'Yes, delete all students'
+                });
+                
+                if (!confirmed) return;
+                
+                await executeDeleteOperation('students', this);
+            });
+            
+            // Delete attendance
+            document.getElementById('delete_attendance_btn')?.addEventListener('click', async function() {
+                const confirmed = await showConfirm({
+                    title: 'Delete All Attendance',
+                    message: 'Are you sure you want to delete ALL attendance data? This action cannot be undone.',
+                    confirmText: 'Yes, delete all attendance'
+                });
+                
+                if (!confirmed) return;
+                
+                await executeDeleteOperation('attendance', this);
+            });
+            
+            // Delete schedules
+            document.getElementById('delete_schedules_btn')?.addEventListener('click', async function() {
+                const confirmed = await showConfirm({
+                    title: 'Delete All Schedules',
+                    message: 'Are you sure you want to delete ALL schedule data? This action cannot be undone.',
+                    confirmText: 'Yes, delete all schedules'
+                });
+                
+                if (!confirmed) return;
+                
+                await executeDeleteOperation('schedules', this);
+            });
+            
+            // Delete all data
+            document.getElementById('delete_all_data_btn')?.addEventListener('click', async function() {
+                const confirmed = await showConfirm({
+                    title: 'DELETE EVERYTHING',
+                    message: 'Are you sure you want to delete ALL DATA from the system? This action cannot be undone and will destroy everything.',
+                    confirmText: 'YES, DELETE EVERYTHING'
+                });
+                
+                if (!confirmed) return;
+                
+                // Double confirmation for delete all
+                const doubleConfirmed = await showConfirm({
+                    title: 'FINAL WARNING',
+                    message: 'This is your final warning. This will permanently delete ALL data. Are you absolutely sure?',
+                    confirmText: 'YES, I UNDERSTAND'
+                });
+                
+                if (!doubleConfirmed) return;
+                
+                await executeDeleteOperation('all', this);
+            });
+            
+            async function executeDeleteOperation(type, button) {
+                const result = document.getElementById('delete_result');
+                
+                button.disabled = true;
+                result.innerHTML = '<div class="alert alert-info">Processing deletion...</div>';
+                
+                try {
+                    const response = await fetch('delete_data.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `action=delete&type=${type}`
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        result.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                        await showSuccess(data.message);
+                        
+                        // Refresh relevant sections
+                        if (typeof loadStudents === 'function') loadStudents();
+                        if (typeof loadAttendance === 'function') loadAttendance();
+                        if (typeof loadSchedules === 'function') loadSchedules();
+                    } else {
+                        result.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
+                    }
+                } catch (error) {
+                    result.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                } finally {
+                    button.disabled = false;
+                }
+            }
+        });
+        
+        // Global function for deleting backup files
+        async function deleteBackupFile(filename) {
+            const confirmed = await showConfirm({
+                title: 'Delete Backup File',
+                message: `Are you sure you want to delete ${filename}?`,
+                confirmText: 'Yes, delete file'
+            });
+            
+            if (!confirmed) return;
+            
+            try {
+                const response = await fetch('backup-restore.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=delete&filename=${filename}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await showSuccess('Backup file deleted successfully');
+                    // Reload backup files list
+                    window.loadBackupFiles();
+                } else {
+                    await showError(data.message || 'Failed to delete backup file');
+                }
+            } catch (error) {
+                await showError('Error deleting backup file: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
