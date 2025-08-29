@@ -5,7 +5,16 @@ require_once '../conn/db_connect.php';
 
 header('Content-Type: application/json');
 
-if (!hasRole('super_admin')) { echo json_encode(['success'=>false,'message'=>'Access denied']); exit(); }
+// Ensure session is started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check authentication - must be super admin
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'super_admin') {
+	echo json_encode(['success' => false, 'message' => 'Access denied - super admin role required']);
+	exit();
+}
 $scopeSchoolId = getEffectiveScopeSchoolId();
 $conn_qr = $GLOBALS['conn_qr'] ?? null;
 $conn_login = $GLOBALS['conn_login'] ?? null;
@@ -19,7 +28,19 @@ if ($op !== 'list') {
 		if ($op === 'create') {
 			$name = trim($_POST['course_name'] ?? '');
 			$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : ($scopeSchoolId ?? null);
-			$user_id = $_SESSION['user_id'] ?? 1;
+			
+			// Get the school's admin user_id instead of super admin's user_id
+			$user_id = 1; // Default fallback
+			if ($conn_login && $school_id) {
+				$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+				mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+				mysqli_stmt_execute($stmt_user);
+				$res_user = mysqli_stmt_get_result($stmt_user);
+				if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+					$user_id = (int)$user_data['id'];
+				}
+				mysqli_stmt_close($stmt_user);
+			}
 			if ($name === '' || !$school_id) { echo json_encode(array('success'=>false,'message'=>'Missing fields')); exit(); }
 			$stmt = mysqli_prepare($conn_qr, 'INSERT INTO tbl_courses (course_name, user_id, school_id) VALUES (?,?,?)');
 			mysqli_stmt_bind_param($stmt, 'sii', $name, $user_id, $school_id);
@@ -51,7 +72,19 @@ if ($op !== 'list') {
 			$name = trim($_POST['section_name'] ?? '');
 			$course_id = (int)($_POST['course_id'] ?? 0);
 			$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : ($scopeSchoolId ?? null);
-			$user_id = $_SESSION['user_id'] ?? 1;
+			
+			// Get the school's admin user_id instead of super admin's user_id
+			$user_id = 1; // Default fallback
+			if ($conn_login && $school_id) {
+				$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+				mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+				mysqli_stmt_execute($stmt_user);
+				$res_user = mysqli_stmt_get_result($stmt_user);
+				if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+					$user_id = (int)$user_data['id'];
+				}
+				mysqli_stmt_close($stmt_user);
+			}
 			if ($name === '' || $course_id<=0 || !$school_id) { echo json_encode(array('success'=>false,'message'=>'Missing fields')); exit(); }
 			$stmt = mysqli_prepare($conn_qr, 'INSERT INTO tbl_sections (section_name, course_id, user_id, school_id) VALUES (?,?,?,?)');
 			mysqli_stmt_bind_param($stmt, 'siii', $name, $course_id, $user_id, $school_id);

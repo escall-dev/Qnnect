@@ -20,12 +20,29 @@ if ($op === 'create') {
 	$start = $_POST['start_time'] ?? '08:00:00';
 	$end = $_POST['end_time'] ?? '09:00:00';
 	$room = trim($_POST['room'] ?? '');
-	$teacher = trim($_POST['teacher_username'] ?? ($_SESSION['username'] ?? 'system'));
+	$teacher = trim($_POST['teacher_username'] ?? '');
 	$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : ($scopeSchoolId ?? null);
-	if ($subject === '' || $section === '' || !$school_id) { echo json_encode(['success'=>false,'message'=>'Missing fields']); exit(); }
-	$sql = "INSERT INTO teacher_schedules (subject, section, day_of_week, start_time, end_time, room, teacher_username, school_id, status) VALUES (?,?,?,?,?,?,?,?,'active')";
+	if ($subject === '' || $section === '' || $teacher === '' || !$school_id) { echo json_encode(['success'=>false,'message'=>'Missing required fields: subject, section, instructor, and school']); exit(); }
+	
+	// Validate that the teacher username exists in the users table and get user_id
+	$user_id = null;
+	if ($conn_login) {
+		$stmt_check = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE username = ? AND school_id = ? LIMIT 1');
+		mysqli_stmt_bind_param($stmt_check, 'si', $teacher, $school_id);
+		mysqli_stmt_execute($stmt_check);
+		$res_check = mysqli_stmt_get_result($stmt_check);
+		$user_data = $res_check ? mysqli_fetch_assoc($res_check) : null;
+		if (!$user_data) {
+			mysqli_stmt_close($stmt_check);
+			echo json_encode(['success'=>false,'message'=>'Invalid instructor username for this school']);
+			exit();
+		}
+		$user_id = (int)$user_data['id'];
+		mysqli_stmt_close($stmt_check);
+	}
+	$sql = "INSERT INTO teacher_schedules (subject, section, day_of_week, start_time, end_time, room, teacher_username, school_id, user_id, status) VALUES (?,?,?,?,?,?,?,?,?,'active')";
 	$stmt = mysqli_prepare($conn_qr, $sql);
-	mysqli_stmt_bind_param($stmt, 'sssssssi', $subject, $section, $day, $start, $end, $room, $teacher, $school_id);
+	mysqli_stmt_bind_param($stmt, 'sssssssii', $subject, $section, $day, $start, $end, $room, $teacher, $school_id, $user_id);
 	$ok = mysqli_stmt_execute($stmt);
 	mysqli_stmt_close($stmt);
 	echo json_encode(['success'=>$ok]);

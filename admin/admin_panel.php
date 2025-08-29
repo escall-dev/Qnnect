@@ -55,6 +55,11 @@ $is_super_admin = hasRole('super_admin');
 
 // Handle AJAX requests
 if (isset($_POST['action'])) {
+    // Clean output buffer and set JSON header
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    ob_start();
     header('Content-Type: application/json');
     
     switch ($_POST['action']) {
@@ -267,7 +272,7 @@ if (isset($_POST['action'])) {
             if (!$is_super_admin) { echo json_encode(['success' => false, 'message' => 'Access denied']); exit(); }
             $sid = isset($_POST['school_id']) ? (int)$_POST['school_id'] : 0;
             if ($sid <= 0) { echo json_encode(['success' => false, 'message' => 'Invalid school id']); exit(); }
-            $stmt = mysqli_prepare($conn, 'SELECT id, name, code, theme_color, status, created_at FROM schools WHERE id = ? LIMIT 1');
+            $stmt = mysqli_prepare($conn, 'SELECT s.id, s.name, s.code, s.status, s.created_at, u.profile_image as logo_path FROM schools s LEFT JOIN users u ON s.id = u.school_id AND u.role = \'admin\' WHERE s.id = ? LIMIT 1');
             mysqli_stmt_bind_param($stmt, 'i', $sid);
             mysqli_stmt_execute($stmt);
             $res = mysqli_stmt_get_result($stmt);
@@ -299,6 +304,91 @@ if (isset($_POST['action'])) {
             if ($ok) { logActivity($conn, 'SCHOOL_UPDATED', 'School ID: ' . $sid); echo json_encode(['success' => true, 'message' => 'School updated']); }
             else { echo json_encode(['success' => false, 'message' => 'Update failed']); }
             exit();
+            
+        case 'upload_school_logo':
+            if (!$is_super_admin) {
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                exit();
+            }
+            
+            $school_id = isset($_POST['school_id']) ? (int)$_POST['school_id'] : 0;
+            if ($school_id <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid school ID']);
+                exit();
+            }
+            
+            if (!isset($_FILES['logo']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error']);
+                exit();
+            }
+            
+            $file = $_FILES['logo'];
+            $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            $max_size = 5 * 1024 * 1024; // 5MB
+            
+            if (!in_array($file['type'], $allowed_types)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid file type. Only JPEG, PNG, and GIF allowed']);
+                exit();
+            }
+            
+            if ($file['size'] > $max_size) {
+                echo json_encode(['success' => false, 'message' => 'File too large. Maximum 5MB allowed']);
+                exit();
+            }
+            
+            // Create upload directory if it doesn't exist
+            $upload_dir = 'uploads/school_logos/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            
+            // Generate unique filename
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = 'school_logo_' . $school_id . '_' . time() . '.' . $extension;
+            $filepath = $upload_dir . $filename;
+            
+            if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                // Find the admin user for this school and update their profile_image
+                $stmt = mysqli_prepare($conn, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+                mysqli_stmt_bind_param($stmt, 'i', $school_id);
+                mysqli_stmt_execute($stmt);
+                $result = mysqli_stmt_get_result($stmt);
+                $admin_user = mysqli_fetch_assoc($result);
+                mysqli_stmt_close($stmt);
+                
+                if ($admin_user) {
+                    // Update the admin user's profile image (which serves as school logo)
+                    $stmt = mysqli_prepare($conn, 'UPDATE users SET profile_image = ? WHERE id = ?');
+                    mysqli_stmt_bind_param($stmt, 'si', $filepath, $admin_user['id']);
+                    $success = mysqli_stmt_execute($stmt);
+                    mysqli_stmt_close($stmt);
+                    
+                    if ($success) {
+                        // Also update the school_info table in QR database if it exists
+                        try {
+                            require_once '../conn/db_connect_pdo.php';
+                            $stmt_qr = $conn_qr->prepare("UPDATE school_info SET school_logo_path = ?, updated_at = NOW() WHERE school_id = ?");
+                            $stmt_qr->execute([$filepath, $school_id]);
+                        } catch (Exception $e) {
+                            // Log the error but don't fail the main operation
+                            error_log("Failed to update school_info table: " . $e->getMessage());
+                        }
+                        
+                        logActivity($conn, 'SCHOOL_LOGO_UPDATED', "School ID: {$school_id}, Logo: {$filepath}");
+                        echo json_encode(['success' => true, 'message' => 'Logo uploaded successfully', 'logo_path' => $filepath]);
+                    } else {
+                        unlink($filepath); // Delete uploaded file if database update fails
+                        echo json_encode(['success' => false, 'message' => 'Failed to update database']);
+                    }
+                } else {
+                    unlink($filepath); // Delete uploaded file
+                    echo json_encode(['success' => false, 'message' => 'No admin user found for this school']);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to upload file']);
+            }
+            exit();
+            
         case 'delete_school':
             if (!$is_super_admin) { echo json_encode(['success' => false, 'message' => 'Access denied']); exit(); }
             $sid = isset($_POST['school_id']) ? (int)$_POST['school_id'] : 0;
@@ -353,30 +443,39 @@ if (isset($_POST['action'])) {
             echo json_encode($result);
             exit();
         case 'set_scope':
-            if (!$is_super_admin) {
-                echo json_encode(['success' => false, 'message' => 'Access denied']);
-                exit();
-            }
-            $raw = $_POST['scope_school_id'] ?? '';
-            if ($raw === '' || $raw === 'all') {
-                unset($_SESSION['scope_school_id']);
+            try {
+                if (!$is_super_admin) {
+                    echo json_encode(['success' => false, 'message' => 'Access denied']);
+                    exit();
+                }
+                $raw = $_POST['scope_school_id'] ?? '';
+                if ($raw === '' || $raw === 'all') {
+                    unset($_SESSION['scope_school_id']);
+                    echo json_encode(['success' => true]);
+                    exit();
+                }
+                $sid = (int)$raw;
+                $stmt = mysqli_prepare($conn, 'SELECT id FROM schools WHERE id = ? LIMIT 1');
+                if (!$stmt) {
+                    echo json_encode(['success' => false, 'message' => 'Database error']);
+                    exit();
+                }
+                mysqli_stmt_bind_param($stmt, 'i', $sid);
+                mysqli_stmt_execute($stmt);
+                $res = mysqli_stmt_get_result($stmt);
+                $exists = $res && mysqli_fetch_assoc($res);
+                mysqli_stmt_close($stmt);
+                if (!$exists) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid school id']);
+                    exit();
+                }
+                $_SESSION['scope_school_id'] = $sid;
                 echo json_encode(['success' => true]);
                 exit();
-            }
-            $sid = (int)$raw;
-            $stmt = mysqli_prepare($conn, 'SELECT id FROM schools WHERE id = ? LIMIT 1');
-            mysqli_stmt_bind_param($stmt, 'i', $sid);
-            mysqli_stmt_execute($stmt);
-            $res = mysqli_stmt_get_result($stmt);
-            $exists = $res && mysqli_fetch_assoc($res);
-            mysqli_stmt_close($stmt);
-            if (!$exists) {
-                echo json_encode(['success' => false, 'message' => 'Invalid school id']);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
                 exit();
             }
-            $_SESSION['scope_school_id'] = $sid;
-            echo json_encode(['success' => true]);
-            exit();
     }
 }
 
@@ -880,7 +979,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                                 <tr>
                                     <th>Name</th>
                                     <th>Code</th>
-                                    <th>Theme</th>
+                                    <th>Logo</th>
                                     <th>Status</th>
                                     <th>Created</th>
                                                                         <th style="width:140px;">Actions</th>
@@ -892,8 +991,13 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                                     <td><?php echo htmlspecialchars($school['name']); ?></td>
                                     <td><?php echo htmlspecialchars($school['code']); ?></td>
                                     <td>
-                                        <div style="width: 30px; height: 20px; background: <?php echo $school['theme_color']; ?>; border-radius: 4px; display: inline-block;"></div>
-                                        <?php echo $school['theme_color']; ?>
+                                        <?php if (!empty($school['logo_path']) && file_exists($school['logo_path'])): ?>
+                                            <img src="<?php echo htmlspecialchars($school['logo_path']); ?>" alt="School Logo" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px;">
+                                        <?php else: ?>
+                                            <div style="width: 40px; height: 40px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <i class="fas fa-school"></i>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                                                                 <span class="badge <?php echo ($school['status'] ?? 'active') === 'inactive' ? 'bg-secondary' : 'bg-success'; ?>"><?php echo ucfirst($school['status']); ?></span>
@@ -930,9 +1034,13 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                                                 <label class="form-label">Code</label>
                                                 <input type="text" class="form-control" id="ed_school_code" required>
                                         </div>
+                                        
                                         <div class="mb-3">
-                                                <label class="form-label">Theme Color</label>
-                                                <input type="color" class="form-control" id="ed_theme_color">
+                                                <label class="form-label">School Logo</label>
+                                                <input type="file" class="form-control" id="ed_school_logo" accept="image/*">
+                                                <div class="mt-2" id="ed_logo_preview" style="display: none;">
+                                                    <img id="ed_logo_image" src="" alt="School Logo" style="max-width: 100px; max-height: 100px; border-radius: 8px;">
+                                                </div>
                                         </div>
                                         <div class="mb-3">
                                                 <label class="form-label">Status</label>
@@ -1186,9 +1294,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>Courses & Sections</h5>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-success btn-sm" id="course_add_btn" type="button"><i class="fas fa-plus"></i> Add Course</button>
-                    <button class="btn btn-success btn-sm" id="section_add_btn" type="button"><i class="fas fa-plus"></i> Add Section</button>
-                    <button class="btn btn-outline-secondary btn-sm" id="courses_refresh" type="button"><i class="fas fa-arrows-rotate"></i> Refresh</button>
+                    <type="button"><i class="fas fa-arrows-rotate"></i> Refresh</type=>
                 </div>
             </div>
             <div class="card-body">
@@ -1496,7 +1602,35 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                     <form id="scheduleForm">
                         <input type="hidden" id="schedule_id">
                         <div class="mb-3"><label class="form-label">Subject</label><input type="text" class="form-control" id="schedule_subject" required></div>
-                        <div class="mb-3"><label class="form-label">Instructor</label><input type="text" class="form-control" id="schedule_teacher" required></div>
+                        <div class="mb-3">
+                            <label class="form-label">Instructor</label>
+                            <select class="form-select" id="schedule_teacher" required>
+                                <option value="">Select Instructor</option>
+                                <?php 
+                                // Get all users for instructor dropdown
+                                $instructor_users = [];
+                                if ($is_super_admin) {
+                                    if ($effective_scope_id) {
+                                        $stmt = mysqli_prepare($conn, "SELECT username, email FROM users WHERE school_id = ? AND username IS NOT NULL AND username != '' ORDER BY username");
+                                        mysqli_stmt_bind_param($stmt, 'i', $effective_scope_id);
+                                    } else {
+                                        $stmt = mysqli_prepare($conn, "SELECT username, email FROM users WHERE username IS NOT NULL AND username != '' ORDER BY username");
+                                    }
+                                    mysqli_stmt_execute($stmt);
+                                    $result = mysqli_stmt_get_result($stmt);
+                                    while ($row = mysqli_fetch_assoc($result)) {
+                                        $instructor_users[] = $row;
+                                    }
+                                    mysqli_stmt_close($stmt);
+                                }
+                                ?>
+                                <?php foreach ($instructor_users as $instructor): ?>
+                                <option value="<?php echo htmlspecialchars($instructor['username']); ?>">
+                                    <?php echo htmlspecialchars($instructor['username']); ?> (<?php echo htmlspecialchars($instructor['email']); ?>)
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                         <div class="mb-3"><label class="form-label">Section</label><input type="text" class="form-control" id="schedule_section" required></div>
                         <div class="mb-3"><label class="form-label">Day of Week</label>
                             <select class="form-select" id="schedule_day">
@@ -2050,6 +2184,27 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         document.addEventListener('DOMContentLoaded', () => {
             const sm = document.getElementById('schoolModal');
             if (sm) schoolModal = new bootstrap.Modal(sm);
+            
+            // Handle logo file selection and preview
+            const logoInput = document.getElementById('ed_school_logo');
+            if (logoInput) {
+                logoInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    const preview = document.getElementById('ed_logo_preview');
+                    const image = document.getElementById('ed_logo_image');
+                    
+                    if (file && preview && image) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            image.src = e.target.result;
+                            preview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    } else if (preview) {
+                        preview.style.display = 'none';
+                    }
+                });
+            }
         });
 
         function openEditSchool(id) {
@@ -2064,35 +2219,77 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 document.getElementById('ed_school_id').value = s.id;
                 document.getElementById('ed_school_name').value = s.name || '';
                 document.getElementById('ed_school_code').value = s.code || '';
-                document.getElementById('ed_theme_color').value = s.theme_color || '#098744';
                 document.getElementById('ed_status').value = s.status || 'active';
+                
+                // Handle logo preview
+                const logoPreview = document.getElementById('ed_logo_preview');
+                const logoImage = document.getElementById('ed_logo_image');
+                if (s.logo_path && logoPreview && logoImage) {
+                    logoImage.src = s.logo_path;
+                    logoPreview.style.display = 'block';
+                } else if (logoPreview) {
+                    logoPreview.style.display = 'none';
+                }
+                
                 if (schoolModal) schoolModal.show();
             });
         }
 
         const schoolSaveBtn = document.getElementById('schoolModalSave');
         if (schoolSaveBtn) {
-            schoolSaveBtn.addEventListener('click', () => {
+            schoolSaveBtn.addEventListener('click', async () => {
                 const id = document.getElementById('ed_school_id').value;
                 const name = document.getElementById('ed_school_name').value.trim();
                 const code = document.getElementById('ed_school_code').value.trim();
-                const theme = document.getElementById('ed_theme_color').value;
                 const status = document.getElementById('ed_status').value;
+                const logoFile = document.getElementById('ed_school_logo').files[0];
+                
                 if (!name || !code) { alert('Please fill in name and code'); return; }
+                
+                // First update the school basic info
                 const fd = new URLSearchParams();
                 fd.append('action','update_school');
                 fd.append('school_id', id);
                 fd.append('school_name', name);
                 fd.append('school_code', code);
-                fd.append('theme_color', theme);
                 fd.append('status', status);
-                fetch('admin_panel.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() })
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.success) { alert('Error: ' + (data.message || 'Update failed')); return; }
+                
+                try {
+                    const response = await fetch('admin_panel.php', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
+                        body: fd.toString() 
+                    });
+                    const data = await response.json();
+                    
+                    if (!data.success) { 
+                        alert('Error: ' + (data.message || 'Update failed')); 
+                        return; 
+                    }
+                    
+                    // If there's a logo file, upload it
+                    if (logoFile) {
+                        const logoFormData = new FormData();
+                        logoFormData.append('action', 'upload_school_logo');
+                        logoFormData.append('school_id', id);
+                        logoFormData.append('logo', logoFile);
+                        
+                        const logoResponse = await fetch('admin_panel.php', {
+                            method: 'POST',
+                            body: logoFormData
+                        });
+                        const logoData = await logoResponse.json();
+                        
+                        if (!logoData.success) {
+                            alert('School updated but logo upload failed: ' + (logoData.message || 'Unknown error'));
+                        }
+                    }
+                    
                     if (schoolModal) schoolModal.hide();
                     location.reload();
-                });
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
             });
         }
 
@@ -2242,7 +2439,15 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         // ---- Schedules CRUD ----
         function openScheduleCreate() {
             document.getElementById('scheduleModalTitle').textContent = 'Add Schedule';
-            document.getElementById('schedule_id').value=''; document.getElementById('schedule_subject').value=''; document.getElementById('schedule_teacher').value=''; document.getElementById('schedule_section').value=''; document.getElementById('schedule_day').value='Monday'; document.getElementById('schedule_start').value=''; document.getElementById('schedule_end').value=''; document.getElementById('schedule_room').value=''; document.getElementById('schedule_school_id').value='';
+            document.getElementById('schedule_id').value=''; 
+            document.getElementById('schedule_subject').value=''; 
+            document.getElementById('schedule_teacher').value=''; 
+            document.getElementById('schedule_section').value=''; 
+            document.getElementById('schedule_day').value='Monday'; 
+            document.getElementById('schedule_start').value=''; 
+            document.getElementById('schedule_end').value=''; 
+            document.getElementById('schedule_room').value=''; 
+            document.getElementById('schedule_school_id').value='';
             _scheduleModal?.show(); document.getElementById('scheduleModalSave').onclick = saveSchedule;
         }
         function openScheduleEdit(id) {
@@ -2251,7 +2456,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         }
         async function saveSchedule() {
             const id=document.getElementById('schedule_id').value; const subject=document.getElementById('schedule_subject').value.trim(); const teacher=document.getElementById('schedule_teacher').value.trim(); const section=document.getElementById('schedule_section').value.trim(); const day=document.getElementById('schedule_day').value; const start=document.getElementById('schedule_start').value; const end=document.getElementById('schedule_end').value; const room=document.getElementById('schedule_room').value.trim(); const schoolId=document.getElementById('schedule_school_id').value;
-            if (!subject || !section || !schoolId) { await showError('Please fill required fields'); return; }
+            if (!subject || !teacher || !section || !schoolId) { await showError('Please fill all required fields including instructor'); return; }
             const p=new URLSearchParams(); p.append('op', id ? 'update':'create'); if (id) p.append('id', id); p.append('subject', subject); p.append('teacher_username', teacher); p.append('section', section); p.append('day_of_week', day); p.append('start_time', start); p.append('end_time', end); p.append('room', room); p.append('school_id', schoolId);
             const res = await fetch('admin_schedules_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString() }); const data = await res.json(); if (!data.success) { await showError(data.message || 'Save failed'); return; }
             _scheduleModal?.hide(); await showSuccess('Schedule saved.'); loadSchedules();

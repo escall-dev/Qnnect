@@ -103,8 +103,18 @@ function getUserSchool($conn) {
         return null;
     }
     
-    $sql = "SELECT * FROM schools WHERE id = ? AND status = 'active'";
+    $sql = "SELECT s.*, u.profile_image as logo_path FROM schools s LEFT JOIN users u ON s.id = u.school_id AND u.role = 'admin' WHERE s.id = ? AND s.status = 'active'";
     $stmt = mysqli_prepare($conn, $sql);
+    
+    if (!$stmt) {
+        // Fallback to simple query if JOIN fails
+        $sql = "SELECT * FROM schools WHERE id = ? AND status = 'active'";
+        $stmt = mysqli_prepare($conn, $sql);
+        if (!$stmt) {
+            return null;
+        }
+    }
+    
     mysqli_stmt_bind_param($stmt, "i", $school_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
@@ -120,8 +130,17 @@ function getAllSchools($conn) {
         return [];
     }
     
-    $sql = "SELECT * FROM schools WHERE status = 'active' ORDER BY name";
+    $sql = "SELECT s.*, u.profile_image as logo_path FROM schools s LEFT JOIN users u ON s.id = u.school_id AND u.role = 'admin' WHERE s.status = 'active' ORDER BY s.name";
     $result = mysqli_query($conn, $sql);
+    
+    if (!$result) {
+        // Fallback to simple query if JOIN fails
+        $sql = "SELECT * FROM schools WHERE status = 'active' ORDER BY name";
+        $result = mysqli_query($conn, $sql);
+        if (!$result) {
+            return [];
+        }
+    }
     
     $schools = [];
     while ($row = mysqli_fetch_assoc($result)) {

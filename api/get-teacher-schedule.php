@@ -29,10 +29,10 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     
     $sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, status, created_at 
             FROM teacher_schedules 
-            WHERE id = ? AND teacher_username = ? AND school_id = ? AND status = 'active'";
+            WHERE id = ? AND ((teacher_username = ? AND school_id = ?) OR (user_id = (SELECT id FROM users WHERE username = ? AND school_id = ?))) AND status = 'active'";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isi", $schedule_id, $teacher_username, $school_id);
+    $stmt->bind_param("isisi", $schedule_id, $teacher_username, $school_id, $teacher_username, $school_id);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -48,13 +48,13 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 // Get all schedules for the teacher
 $sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, status, created_at 
         FROM teacher_schedules 
-        WHERE teacher_username = ? AND school_id = ? AND status = 'active'
+        WHERE ((teacher_username = ? AND school_id = ?) OR (user_id = (SELECT id FROM users WHERE username = ? AND school_id = ?))) AND status = 'active'
         ORDER BY 
             FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'),
             start_time";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("si", $teacher_username, $school_id);
+$stmt->bind_param("sisi", $teacher_username, $school_id, $teacher_username, $school_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

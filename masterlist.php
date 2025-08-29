@@ -614,8 +614,8 @@ if ($column_result->num_rows == 0) {
                                     <option value="1m">1 min (high security)</option>
                                     <option value="5m">5 mins (balanced)</option>
                                     <option value="15m">15 mins (low security, faster flow)</option>
-                                    <option value="1d">1 day</option>
-                                    <option value="no_expiry">No expiry (for comsite users)</option>
+                                    <option value="1d">1 day (low security, slower flow)</option>
+                                   
                                 </select>
                             </div>
                             <button class="btn" style="background-color: #098744; color: white; min-width: 140px; font-weight: 500;" data-toggle="modal" data-target="#addStudentModal">

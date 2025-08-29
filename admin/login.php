@@ -12,9 +12,13 @@ function sanitize_input($data) {
     return $data;
 }
 
-// Get schools for dropdown
+// Get schools for dropdown with logos
 function getSchools($conn) {
-    $sql = "SELECT id, name, code, theme_color FROM schools WHERE status = 'active' ORDER BY name";
+    $sql = "SELECT s.id, s.name, s.code, s.theme_color, u.profile_image as logo_path 
+            FROM schools s 
+            LEFT JOIN users u ON s.id = u.school_id AND u.role = 'admin' 
+            WHERE s.status = 'active' 
+            ORDER BY s.name";
     $result = mysqli_query($conn, $sql);
     $schools = [];
     while ($row = mysqli_fetch_assoc($result)) {
@@ -1012,13 +1016,19 @@ $schools = getSchools($conn);
                                         <div class="school-item" onclick="handleSchoolClick(<?php echo $school['id']; ?>)">
                                             <div class="school-logo">
                                                 <?php 
-                                                // Use appropriate logo based on school name or ID
-                                                $logoFile = 'SPCPC-logo-trans.png'; // Default
-                                                if (stripos($school['name'], 'computer site') !== false || stripos($school['name'], 'comsite') !== false || $school['id'] == 2) {
-                                                    $logoFile = 'comsite-logo-trans.png';
+                                                // Use database logo if available, otherwise fallback to default
+                                                if (!empty($school['logo_path']) && file_exists($school['logo_path'])) {
+                                                    $logoSrc = $school['logo_path'];
+                                                } else {
+                                                    // Fallback to hardcoded logic for existing schools
+                                                    $logoFile = 'SPCPC-logo-trans.png'; // Default
+                                                    if (stripos($school['name'], 'computer site') !== false || stripos($school['name'], 'comsite') !== false || $school['id'] == 2) {
+                                                        $logoFile = 'comsite-logo-trans.png';
+                                                    }
+                                                    $logoSrc = 'image/' . $logoFile;
                                                 }
                                                 ?>
-                                                <img src="image/<?php echo $logoFile; ?>" alt="<?php echo htmlspecialchars($school['name']); ?>">
+                                                <img src="<?php echo htmlspecialchars($logoSrc); ?>" alt="<?php echo htmlspecialchars($school['name']); ?>">
                                             </div>
                                             <div class="school-name"><?php echo htmlspecialchars($school['name']); ?></div>
                                         </div>
@@ -1707,7 +1717,7 @@ $schools = getSchools($conn);
     
 
     <span class="flex-spacer" aria-hidden="true"></span>
-    <span class="app-version" title="Application Version">Current Version: 1.3.4</span>
+    <span class="app-version" title="Application Version">Current Version: 1.3.5</span>
 
   </footer>
 

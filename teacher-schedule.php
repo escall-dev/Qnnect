@@ -129,12 +129,10 @@ try {
 // Get teacher's schedules (fixed weekly schedule) - filtered by user
 $teacher_schedules = [];
 try {
-    $stmt = $pdo->prepare("
+        $stmt = $pdo->prepare("
         SELECT * FROM teacher_schedules 
-        WHERE teacher_username = ? 
-        AND school_id = ? 
-        AND user_id = ?
-        AND status = 'active'
+        WHERE ((teacher_username = ? AND school_id = ?) OR (user_id = ? AND user_id IS NOT NULL))
+        AND status = 'active' 
         ORDER BY FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'), start_time
     ");
     $stmt->execute([$teacher_username, $school_id, $user_id]);
@@ -148,9 +146,7 @@ $teacher_subjects = [];
 try {
     $stmt = $pdo->prepare("
         SELECT DISTINCT subject FROM teacher_schedules 
-        WHERE teacher_username = ? 
-        AND school_id = ? 
-        AND user_id = ?
+        WHERE ((teacher_username = ? AND school_id = ?) OR (user_id = ? AND user_id IS NOT NULL))
         AND status = 'active'
     ");
     $stmt->execute([$teacher_username, $school_id, $user_id]);

@@ -5,8 +5,20 @@ require_once '../conn/db_connect.php';
 
 header('Content-Type: application/json');
 
-if (!hasRole('super_admin')) {
-	echo json_encode(['success' => false, 'message' => 'Access denied']);
+// Ensure session is started and properly configured
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Additional session validation
+if (!isset($_SESSION) || empty($_SESSION)) {
+    echo json_encode(['success' => false, 'message' => 'Session not initialized']);
+    exit();
+}
+
+// Check authentication - must be super admin
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'super_admin') {
+	echo json_encode(['success' => false, 'message' => 'Access denied - super admin role required']);
 	exit();
 }
 
@@ -27,7 +39,19 @@ if ($op === 'create') {
 	$name = trim($_POST['student_name'] ?? '');
 	$course_section = trim($_POST['course_section'] ?? '');
 	$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : ($scopeSchoolId ?? null);
-	$user_id = $_SESSION['user_id'] ?? 1;
+	
+	// Get a teacher/admin user_id for this school instead of using super admin's user_id
+	$user_id = 1; // Default fallback
+	if ($conn_login && $school_id) {
+		$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+		mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+		mysqli_stmt_execute($stmt_user);
+		$res_user = mysqli_stmt_get_result($stmt_user);
+		if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+			$user_id = (int)$user_data['id'];
+		}
+		mysqli_stmt_close($stmt_user);
+	}
 	if ($name === '' || $course_section === '' || !$school_id) { echo json_encode(['success'=>false,'message'=>'Missing required fields']); exit(); }
 	$sql = "INSERT INTO tbl_student (student_name, course_section, user_id, school_id) VALUES (?,?,?,?)";
 	$stmt = mysqli_prepare($conn_qr, $sql);
@@ -47,7 +71,20 @@ if ($op === 'update') {
 	$fields = [];$types = '';$params = [];
 	if ($name !== null) { $fields[]='student_name=?'; $types.='s'; $params[]=$name; }
 	if ($course_section !== null) { $fields[]='course_section=?'; $types.='s'; $params[]=$course_section; }
-	if ($school_id !== null) { $fields[]='school_id=?'; $types.='i'; $params[]=$school_id; }
+	if ($school_id !== null) { 
+		$fields[]='school_id=?'; $types.='i'; $params[]=$school_id; 
+		// Also update user_id to match the school's admin
+		if ($conn_login) {
+			$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+			mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+			mysqli_stmt_execute($stmt_user);
+			$res_user = mysqli_stmt_get_result($stmt_user);
+			if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+				$fields[]='user_id=?'; $types.='i'; $params[]=(int)$user_data['id'];
+			}
+			mysqli_stmt_close($stmt_user);
+		}
+	}
 	if (!$fields) { echo json_encode(['success'=>false,'message'=>'No changes']); exit(); }
 	$types.='i'; $params[]=$id;
 	$sql = 'UPDATE tbl_student SET '.implode(',', $fields).' WHERE tbl_student_id = ?';
