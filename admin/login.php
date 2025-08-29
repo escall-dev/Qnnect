@@ -730,7 +730,7 @@ $schools = getSchools($conn);
     padding: 12px 16px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     gap: 18px;
     z-index: 1000;
     box-shadow: 0 -4px 18px rgba(0,0,0,0.25);
