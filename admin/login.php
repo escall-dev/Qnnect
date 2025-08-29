@@ -787,7 +787,8 @@ $schools = getSchools($conn);
   .hover-modal:hover {
     display: block;
   }
-
+  
+  
   /* Overlay modal (large full content on click) */
   .overlay {
     display: none;
@@ -881,6 +882,44 @@ $schools = getSchools($conn);
     footer a:hover + .modal-overlay + .hover-modal {
       display: block;
     }
+
+
+    /* Left column */
+.hover-modal .left {
+    text-align:center;
+  flex: 1;
+  font-size: 22px;
+  line-height: 1.6;
+  color:Black;
+}
+.hover-modal .left strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: black;
+}
+
+/* Separator */
+.hover-modal .separator {
+  width: 1px;
+  background: #cbd5e1;
+  align-self: stretch;
+}
+
+/* Right column */
+.hover-modal .right {
+    
+    margin-top:10px;
+    
+  font-size: 18px;
+  color: #475569;
+  text-align: center;
+}
+.hover-modal .right strong {
+  display:inline;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
     
   /* Responsive */
   @media (max-width: 560px) {
@@ -1622,6 +1661,24 @@ $schools = getSchools($conn);
         <p>To maintain fairness and integrity, all users are expected to follow proper guidelines when using the QR Attendance Monitoring System. This includes scanning attendance honestly, respecting the privacy of others, and avoiding any actions that may disrupt the accuracy of records. The system is designed to promote accountability and transparency, and every member of the community is encouraged to uphold these values. Respectful use of the system ensures a reliable and trustworthy attendance record for everyone.</p>
       </div>
     </span>
+
+    <span class="policy-item" tabindex="0">
+        <a href="#" class="footer-link" data-key="community">About Us</a>
+        <div class="hover-modal" role="tooltip">
+            <div class="left">
+            <strong>CAPSTONE DEVELOPED BY:</strong>
+            San Pedro Polytechnic School <br>
+            BSIT-402 | GROUP 1
+            </div>
+            <div class="separator"></div>
+            <div class="right">
+            Copyright © 2025  
+            | To God be the Glory <br>
+            Current version: 1.3.3
+            </div>
+        </div>
+    </span>
+
   </footer>
 
   <!-- Overlay for click (pop-up full content) -->
