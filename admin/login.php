@@ -727,7 +727,7 @@ $schools = getSchools($conn);
     width: 100%;
     background: var(--bg);
     color: #fff;
-    padding: 12px 16px;
+    
     display: flex;
     align-items: center;
     justify-content: start;
