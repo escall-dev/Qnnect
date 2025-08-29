@@ -719,30 +719,183 @@ $schools = getSchools($conn);
         }
 
         /* Add footer styles */
+        
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 8px 0;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            text-align: left;
-            font-size: 15px;
-            color: rgba(255, 255, 255, 0.8);
-            z-index: 100;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    z-index: 1000;
+    box-shadow: 0 -4px 18px rgba(0,0,0,0.25);
+  }
 
-        .footer span {
-            margin: 0 10px;
-            padding: 0 10px;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-        }
+  /* Each policy item must be position:relative for absolute child */
+  .policy-item {
+    position: relative;          /* important */
+    display: inline-block;
+    margin: 0 6px;
+  }
 
-        .footer span:last-child {
-            border-right: none;
-        }
+  .footer a.footer-link {
+    color: #dfe6ee;
+    text-decoration: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    font-weight: 600;
+  }
+  .footer a.footer-link:hover,
+  .footer a.footer-link:focus {
+    color: #fff;
+    background: rgba(255,255,255,0.04);
+    outline: none;
+  }
+
+  /* Small hover modal (tooltip-like) */
+  ..hover-modal {
+  display: none;
+  position: fixed; /* covers full screen */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 420px;
+  max-width: 90%;
+  background: linear-gradient(145deg, #ffffff, #f9fafc);
+  color: #333;
+  padding: 28px 24px;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  text-align: left;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+  animation: fadeIn 0.25s ease-in-out;
+}
+  
+
+  /* show hover modal when the policy-item or the modal itself is hovered or focused */
+  .policy-item:hover .hover-modal,
+  .policy-item:focus-within .hover-modal,
+  .hover-modal:hover {
+    display: block;
+  }
+
+  /* Overlay modal (large full content on click) */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 20px;
+    
+  }
+  .overlay.active { display: flex; }
+
+  .overlay-panel {
+    background: var(--panel);
+    color: #111;
+    max-width: 880px;
+    width: 100%;
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+    max-height: 86vh;
+    overflow: auto;
+    position: relative;
+  }
+
+  .overlay .close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  .overlay h2 { margin-top: 0; margin-bottom: 8px; }
+  .overlay .body-text { color:#333; line-height:1.6; font-size:14px; }
+
+   .modal {
+      display: none;
+      position: fixed;  /* Fixed to viewport */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%); /* Center horizontally & vertically */
+      background: #fff;
+      color: #333;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 20px rgba(0,0,0,0.3);
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      z-index: 1000;
+    }
+    .hover-modal {
+      display: none;
+      position: fixed; /* covers full screen */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+       width: 450px;
+      max-width: 90%;
+      background-color:lightgreen;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      text-align: left;
+    }
+    .hover-modal p{
+        font-size:20px;
+        color:black;
+        
+        
+        line-spacing:1px;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+     footer a:hover + .modal-overlay,
+    footer a:hover + .modal-overlay + .hover-modal {
+      display: block;
+    }
+    
+  /* Responsive */
+  @media (max-width: 560px) {
+    .hover-modal { width: 260px; }
+    .footer { padding: 12px; gap: 10px; }
+  } 
+
+
+/* small screen adjustments */
+@media (max-width: 600px) {
+    .footer { font-size: 13px; padding: 10px; }
+    .hover-tooltip { left: 50%; transform: translateX(-50%); min-width: 200px; max-width: 260px; }
+    .overlay .overlay-content { padding: 16px; }
+}
+
 
         @media (max-width: 768px) {
             .main-container {
@@ -1439,13 +1592,46 @@ $schools = getSchools($conn);
                 });
             }
         });
+
+        
     </script>
     <!-- Add footer -->
-    <div class="footer">
-        <span>A&nbsp;Capstone &nbsp;Project &nbsp;Developed by: &nbsp; &nbsp; San Pedro City Polytechnic College &nbsp; &nbsp; BSIT-402 &nbsp; &nbsp; Group - I</span>
-        <span>Copyright © 2025</span>   
-        <span>To God be the Glory</span>   
-        <span>Current Version: 1.3.3</span>
+        <!-- FOOTER HTML -->
+           
+ <footer class="footer" role="contentinfo" aria-label="Footer">
+    <span class="policy-item" tabindex="0">
+      <a href="#" class="footer-link" data-key="privacy">Privacy Policy</a>
+      <div class="hover-modal" role="tooltip">
+       <!-- Privacy Policy -->
+        <p>The system collects only necessary information such as name, ID number, and attendance logs for the sole purpose of monitoring and recording attendance. All personal data is stored securely and will not be shared with third parties without consent, except when required by law. Users are assured that their information will be used responsibly and strictly for administrative purposes related to attendance tracking.</p>
+      </div>
+    </span>
+
+    <span class="policy-item" tabindex="0">
+      <a href="#" class="footer-link" data-key="terms">Terms &amp; Policies</a>
+      <div class="hover-modal" role="tooltip">
+       <!-- Terms &amp; Policies -->
+        <p>Users agree to provide accurate information when registering or scanning their QR code. Any misuse of the system, such as attempting to scan on behalf of another individual or providing false details, is strictly prohibited. The administration reserves the right to review, suspend, or revoke access to the system in cases of policy violations. Continued use of the system signifies acceptance of these terms and conditions, which are subject to updates as needed to improve the service.</p>
+      </div>
+    </span>
+
+    <span class="policy-item" tabindex="0">
+      <a href="#" class="footer-link" data-key="community">Community Standards</a>
+      <div class="hover-modal" role="tooltip">
+        <!-- Community Standards -->
+        <p>To maintain fairness and integrity, all users are expected to follow proper guidelines when using the QR Attendance Monitoring System. This includes scanning attendance honestly, respecting the privacy of others, and avoiding any actions that may disrupt the accuracy of records. The system is designed to promote accountability and transparency, and every member of the community is encouraged to uphold these values. Respectful use of the system ensures a reliable and trustworthy attendance record for everyone.</p>
+      </div>
+    </span>
+  </footer>
+
+  <!-- Overlay for click (pop-up full content) -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="overlay-panel" role="document">
+      <button class="close-btn" id="overlayClose" aria-label="Close">&times;</button>
+      <h2 id="overlayTitle">Title</h2>
+      <div id="overlayBody" class="body-text"></div>
     </div>
+  </div>
+
 </body>
 </html>
