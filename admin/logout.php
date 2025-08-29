@@ -189,8 +189,9 @@ if (ini_get("session.use_cookies")) {
         $params["secure"], $params["httponly"]
     );
     
-    // Also clear the QR_ATTENDANCE_SESSION cookie specifically
+    // Also clear the admin & super admin session cookies specifically
     setcookie('QR_ATTENDANCE_SESSION', '', time() - 42000, '/', '', false, true);
+    setcookie('QR_ATTENDANCE_SA_SESSION', '', time() - 42000, '/', '', false, true);
 }
 
 // Destroy the session

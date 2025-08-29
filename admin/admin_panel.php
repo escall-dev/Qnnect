@@ -1,4 +1,6 @@
 <?php
+// Flag this script as super admin context before loading auth helpers
+define('SUPER_ADMIN_CONTEXT', true);
 // Use isolated session for the Super Admin portal so it doesn't conflict with regular admin session
 require_once '../includes/session_config_superadmin.php';
 require_once '../includes/auth_functions.php';
@@ -12,6 +14,39 @@ if (!hasRole('super_admin')) {
     header('Location: super_admin_login.php?force_pin=1&redirect=' . urlencode($redirect));
     exit();
 }
+
+// Extra gate: require a fresh PIN verification
+$pin_verified = !empty($_SESSION['superadmin_pin_verified']);
+$pin_age_ok = true;
+if (isset($_SESSION['superadmin_pin_verified_at'])) {
+    $pin_age_ok = (time() - (int)$_SESSION['superadmin_pin_verified_at']) <= (15 * 60); // 15 min TTL
+}
+if (!$pin_verified || !$pin_age_ok) {
+    unset($_SESSION['superadmin_pin_verified']);
+    unset($_SESSION['superadmin_pin_verified_at']);
+    header('Location: super_admin_pin.php?reverify=1');
+    exit();
+}
+
+// Strict super admin session hardening
+$now = time();
+$idle_limit = 5 * 60;           // 5 minutes idle timeout
+$absolute_limit = 30 * 60;      // 30 minutes absolute lifetime
+if (!isset($_SESSION['super_admin_logged_in_at'])) {
+    // Missing marker -> force re-login
+    header('Location: super_admin_login.php?relogin=1');
+    exit();
+}
+if (($now - ($_SESSION['super_admin_logged_in_at'] ?? 0)) > $absolute_limit) {
+    // Absolute session expired
+    header('Location: super_admin_logout.php?timeout=absolute');
+    exit();
+}
+if (isset($_SESSION['super_admin_last_activity']) && ($now - $_SESSION['super_admin_last_activity']) > $idle_limit) {
+    header('Location: super_admin_logout.php?timeout=idle');
+    exit();
+}
+$_SESSION['super_admin_last_activity'] = $now;
 
 // Get user's role and school info
 $user_role = $_SESSION['role'] ?? 'admin';
@@ -598,7 +633,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                         </select>
                     </div>
                     <?php endif; ?>
-                    <a class="btn btn-sm btn-outline-danger" href="super_admin_login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a class="btn btn-sm btn-outline-danger" href="super_admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
             <div class="settings-nav" id="ap_nav">

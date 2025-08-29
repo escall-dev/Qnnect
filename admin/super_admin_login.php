@@ -1,4 +1,5 @@
 <?php
+define('SUPER_ADMIN_CONTEXT', true);
 require_once '../includes/session_config_superadmin.php';
 require_once '../includes/auth_functions.php';
 require_once 'database.php';
@@ -101,6 +102,11 @@ if (isset($_POST['login'])) {
             $_SESSION['role'] = 'super_admin';
             $_SESSION['school_id'] = $user['school_id'] ?? null;
             $_SESSION['login_recorded'] = false;
+            // Mark fresh super admin auth context
+            session_regenerate_id(true);
+            $_SESSION['super_admin_logged_in_at'] = time();
+            $_SESSION['super_admin_last_activity'] = time();
+            $_SESSION['super_admin_session_version'] = bin2hex(random_bytes(8));
             $log_id = recordUserLogin($conn, $_SESSION['username'], $_SESSION['email'], 'Super Admin');
             if ($log_id) { $_SESSION['log_id'] = $log_id; }
             logActivity($conn, 'SUPER_ADMIN_LOGIN', 'Super admin logged in');

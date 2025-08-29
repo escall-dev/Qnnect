@@ -54,7 +54,14 @@ function canAccessSchool($school_id) {
  */
 function requireLogin() {
     if (!isLoggedIn()) {
-        // Determine the correct path to login
+        // Determine correct login portal
+        // If the calling script explicitly defines SUPER_ADMIN_CONTEXT we always go to super admin login
+        if (defined('SUPER_ADMIN_CONTEXT') && SUPER_ADMIN_CONTEXT) {
+            header('Location: super_admin_login.php');
+            exit();
+        }
+
+        // Fallback legacy behavior (regular admin)
         $login_path = 'admin/login.php';
         if (strpos($_SERVER['REQUEST_URI'], '/admin/') !== false) {
             $login_path = 'login.php';

@@ -1,4 +1,5 @@
 <?php
+define('SUPER_ADMIN_CONTEXT', true);
 require_once '../includes/session_config_superadmin.php';
 require_once 'database.php';
 
@@ -39,6 +40,13 @@ function upsert_setting($conn, $key, $value){
 }
 
 $PIN_KEY = 'super_admin_pin_hash';
+
+// If user still has a super admin session with role set but PIN not validated, force full cleanup
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin' && empty($_SESSION['superadmin_pin_verified'])) {
+    // Inconsistent state -> logout
+    header('Location: super_admin_logout.php?fix_state=1');
+    exit();
+}
 $pin_hash = get_setting($conn, $PIN_KEY);
 
 $error_message = null; $success_message = null;
