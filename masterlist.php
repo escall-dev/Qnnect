@@ -98,19 +98,6 @@ if ($column_result->num_rows == 0) {
             }
         }
 
-        /* Ensure QR buttons are visible */
-        .qr-button {
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        
-        .action-button {
-            display: flex !important;
-            gap: 5px;
-            align-items: center;
-        }
-
         @media (max-width: 768px) {
             .sidebar {
                 width: 260px;
@@ -617,9 +604,24 @@ if ($column_result->num_rows == 0) {
                                 <i class="fas fa-print"></i> Print
                             </button>
                         </div>
-                        <button class="btn" style="background-color: #098744; color: white; min-width: 140px; font-weight: 500;" data-toggle="modal" data-target="#addStudentModal">
-                            <i class="fas fa-user-plus"></i> Add Student
-                        </button>
+                        <div class="d-flex align-items-center">
+                            <!-- QR Code Expiry Time Dropdown -->
+                            <div class="me-3" style="margin-right: 8px;">
+                                <label for="qrExpirySelect" class="form-label mb-1" style="color: #098744; font-weight: 500; font-size: 0.9rem;">
+                                    <i class="fas fa-clock"></i> QR Expiry Time
+                                </label>
+                                <select id="qrExpirySelect" class="form-select form-select-sm" style="min-width: 200px; border: 2px solid #098744; border-radius: 6px; background-color: white; color: #098744; font-weight: 500; box-shadow: 0 2px 4px rgba(9, 135, 68, 0.1);">
+                                    <option value="1m">1 min (high security)</option>
+                                    <option value="5m">5 mins (balanced)</option>
+                                    <option value="15m">15 mins (low security, faster flow)</option>
+                                    <option value="1d">1 day</option>
+                                    <option value="no_expiry">No expiry (for comsite users)</option>
+                                </select>
+                            </div>
+                            <button class="btn" style="background-color: #098744; color: white; min-width: 140px; font-weight: 500;" data-toggle="modal" data-target="#addStudentModal">
+                                <i class="fas fa-user-plus"></i> Add Student
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="table-container table-responsive">
@@ -658,8 +660,6 @@ $allStudents = $allStudentsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Store all students in a hidden input for JavaScript
 echo '<input type="hidden" id="allStudentsData" value="' . htmlspecialchars(json_encode($allStudents)) . '">';
-echo '<!-- Debug: All students data -->';
-echo '<script>console.log("All students data:", ' . json_encode($allStudents) . ');</script>';
 
 // Regular pagination for initial display (filtered by school_id AND user_id)
 $limit = 10;
@@ -690,9 +690,6 @@ foreach ($result as $row) {
     $studentName = $row["student_name"];
     $studentCourse = $row["course_section"];
     $qrCode = $row["generated_code"];
-    
-    // Debug output
-    echo "<!-- Debug: Student ID: $studentID, Name: $studentName, QR: $qrCode -->";
 ?>
                             <tr class="student-row">
     <td id="studentName-<?= $studentID ?>"><?= $studentName ?></td>
@@ -831,9 +828,10 @@ foreach ($result as $row) {
                             <label for="customCourseSection"><i class="fas fa-pen"></i> Enter Custom Course & Section</label>
                             <input type="text" class="form-control" id="customCourseSection" name="custom_course_section" 
                                    placeholder="Enter Course-Section (e.g. BSCS-101, BSIT-2A)"
-                                   minlength="3">
+                                   minlength="5" maxlength="20" pattern="[A-Za-z0-9- ]{5,20}">
                             <small class="form-text text-muted">Format: Course-Section (e.g. BSCS-101, BSIT-2A)</small>
                         </div>
+                        
                         <!-- Hidden field to store the final course-section value -->
                         <input type="hidden" id="finalCourseSection" name="course_section" value="">
                         
@@ -887,53 +885,43 @@ foreach ($result as $row) {
                                     dropdown.innerHTML = '<option value="" disabled selected>Error loading course-sections</option>';
                                 });
                         }
-                        
-                        // Toggle custom course-section input visibility
-                        function toggleCustomCourseSection() {
-                            const courseSelect = document.getElementById('courseSectionDropdown');
-                            const customGroup = document.getElementById('customCourseSectionGroup');
-                            const customInput = document.getElementById('customCourseSection');
+
+
+
+                        // Handle dropdown selection
+                        function handleDropdownSelection() {
+                            const courseSectionDropdown = document.getElementById('courseSectionDropdown');
+                            const completeCourseSection = document.getElementById('completeCourseSection');
                             
-                            if (courseSelect.value === 'custom') {
-                                customGroup.style.display = 'block';
-                                customInput.required = true;
-                                customInput.focus();
-                            } else {
-                                customGroup.style.display = 'none';
-                                customInput.required = false;
+                            if (courseSectionDropdown.value === 'custom') {
+                                // Show custom input and hide dropdown
+                                completeCourseSection.style.display = 'block';
+                                completeCourseSection.focus();
+                                completeCourseSection.required = true;
+                            } else if (courseSectionDropdown.value) {
+                                // Clear direct entry when using dropdown
+                                completeCourseSection.value = '';
+                                completeCourseSection.style.display = 'none';
+                                completeCourseSection.required = false;
                             }
                         }
-                        
-                        // Update the final field with selected or custom value
-                        function updateFinalField() {
-                            const courseSelect = document.getElementById('courseSectionDropdown');
-                            const customInput = document.getElementById('customCourseSection');
-                            const finalField = document.getElementById('finalCourseSection');
-                            
-                            if (courseSelect.value === 'custom') {
-                                finalField.value = customInput.value.trim();
-                            } else {
-                                finalField.value = courseSelect.value;
-                            }
-                        }
-                        
-                        // Add event listeners
+
+                        // Initialize when DOM is loaded
                         document.addEventListener('DOMContentLoaded', function() {
-                            // Load course-sections when page loads
+                            // Load course-sections from teacher schedules
                             loadCourseSections();
                             
-                            // Add change event listener to dropdown
-                            const courseSelect = document.getElementById('courseSectionDropdown');
-                            courseSelect.addEventListener('change', function() {
-                                toggleCustomCourseSection();
-                                updateFinalField();
-                            });
+                            // Add event listeners
+                            const courseSectionDropdown = document.getElementById('courseSectionDropdown');
+                            const completeCourseSection = document.getElementById('completeCourseSection');
                             
-                            // Add input event listener to custom input
-                            const customInput = document.getElementById('customCourseSection');
-                            customInput.addEventListener('input', function() {
-                                updateFinalField();
-                            });
+                            if (courseSectionDropdown) {
+                                courseSectionDropdown.addEventListener('change', handleDropdownSelection);
+                            }
+                            
+                            if (completeCourseSection) {
+                                completeCourseSection.addEventListener('input', handleDirectEntry);
+                            }
                         });
                         </script>
                                 
@@ -1061,7 +1049,7 @@ foreach ($result as $row) {
     
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
 
@@ -1568,9 +1556,83 @@ foreach ($result as $row) {
 
     <!-- QR Modal Fix Script -->
     <script>
+        // Helper function to format time in human-readable format (global scope)
+        function formatTime(seconds) {
+            if (seconds < 60) {
+                return seconds + 's';
+            } else if (seconds < 3600) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return minutes + 'm ' + remainingSeconds + 's';
+            } else if (seconds < 86400) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                return hours + 'h ' + minutes + 'm';
+            } else {
+                const days = Math.floor(seconds / 86400);
+                const hours = Math.floor((seconds % 86400) / 3600);
+                return days + 'd ' + hours + 'h';
+            }
+        }
+        
+        // Function to reset modal state and clear countdown
+        function resetModalState() {
+            // Clear any existing countdown timers
+            if (window.qrCountdownTimer) {
+                cancelAnimationFrame(window.qrCountdownTimer);
+                window.qrCountdownTimer = null;
+            }
+            
+            // Reset modal info
+            const $expiryInfo = $('#qrExpiryInfo');
+            if ($expiryInfo.length) {
+                $expiryInfo.css('color', '#6c757d');
+            }
+        }
+        
         // Custom QR code modal implementation
         $(document).ready(function() {
             console.log('Document ready, initializing QR functionality...');
+            console.log('Current localStorage qr_expiry_option:', localStorage.getItem('qr_expiry_option'));
+            
+            // Initialize page QR expiry from session default if no local preference
+            try {
+                const sel = document.getElementById('qrExpirySelect');
+                const savedValue = localStorage.getItem('qr_expiry_option');
+                
+                if (sel && !savedValue) {
+                    // No saved preference, get from server
+                    fetch('endpoint/get-qr-default.php')
+                        .then(r => r.json())
+                        .then(d => { if (d && d.success && d.value) sel.value = d.value; })
+                        .catch(()=>{});
+                } else if (sel && savedValue) {
+                    // Check if saved value is valid (not an old timed value when no_expiry is selected)
+                    if (savedValue === 'no_expiry' || ['1m', '5m', '15m', '1d'].includes(savedValue)) {
+                        sel.value = savedValue;
+                    } else {
+                        // Invalid saved value, clear it
+                        localStorage.removeItem('qr_expiry_option');
+                        console.log('Cleared invalid localStorage value:', savedValue);
+                    }
+                }
+            } catch (e) {}
+            
+            // Ensure QR expiry dropdown change handler is bound
+            const qrExpirySelect = document.getElementById('qrExpirySelect');
+            if (qrExpirySelect && !qrExpirySelect.dataset.bound) {
+                qrExpirySelect.addEventListener('change', function() {
+                    console.log('QR expiry changed to:', this.value);
+                    if (this.value === 'no_expiry') {
+                        // Clear any old timed values from localStorage
+                        localStorage.removeItem('qr_expiry_option');
+                        console.log('Cleared localStorage for no_expiry option');
+                    } else {
+                        localStorage.setItem('qr_expiry_option', this.value);
+                    }
+                });
+                qrExpirySelect.dataset.bound = '1';
+            }
             
             // Add global QR modal to the page
             $('body').append(`
@@ -1602,18 +1664,6 @@ foreach ($result as $row) {
                     </div>
                 </div>
             `);
-            
-            console.log('QR modal added to page');
-            console.log('Initial QR buttons found:', $('.qr-button').length);
-            
-            // Debug: Check if QR buttons have data attributes
-            $('.qr-button').each(function(index) {
-                console.log(`QR button ${index}:`, {
-                    element: this,
-                    data: $(this).data(),
-                    html: $(this).html()
-                });
-            });
 
             let qrExpiryTimer = null;
 
@@ -1635,45 +1685,74 @@ foreach ($result as $row) {
                 }, 1000);
             }
 
-            // Handle QR button clicks - always generate a fresh dynamic token
+            // Handle QR button clicks with expiry option support
             $('.qr-button').on('click', function() {
                 const studentId = $(this).data('id');
                 const studentName = $(this).data('name');
+                const qrCode = $(this).data('qr');
+                const expiryOption = $('#qrExpirySelect').val() || '1m';
                 
+                console.log('QR button clicked:', { studentName, qrCode, expiryOption });
+                
+                // Update modal content
                 $('#qrModalTitle').text(studentName + "'s QR Code");
-                $('#qrModalImage').attr('src', '');
-                $('#qrExpiryInfo').hide().css('color', '#098744');
-                clearInterval(qrExpiryTimer);
+                const $expiryInfo = $('#qrExpiryInfo');
                 
-                // Fetch a new expiring token
-                fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId), { cache: 'no-store' })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data && data.success) {
-                            $('#qrModalImage').attr('src', data.data.qr_image_url);
-                            // Compute seconds left from expires_at
-                            try {
-                                const expiresAt = new Date(data.data.expires_at.replace(' ', 'T') + '+08:00');
-                                const now = new Date();
-                                const diff = Math.max(0, Math.round((expiresAt.getTime() - now.getTime()) / 1000));
-                                startQrCountdown(diff || 60);
-                            } catch (e) {
-                                startQrCountdown(60);
+                if (expiryOption === 'no_expiry') {
+                    console.log('Using NO EXPIRY logic');
+                    // Reset modal state and clear any cached data
+                    resetModalState();
+                    
+                    // For no expiry, show permanent QR code
+                    $expiryInfo.text('Permanent QR Code - Never Expires');
+                    $expiryInfo.css('color', '#28a745').show();
+                    $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
+                    clearInterval(qrExpiryTimer);
+                } else {
+                    console.log('Using TIMED OPTION logic for:', expiryOption);
+                    // For timed options, generate dynamic token
+                    $expiryInfo.text('Generating secure QR...').show().css('color', '#6c757d');
+                    $('#qrModalImage').attr('src', '');
+                    clearInterval(qrExpiryTimer);
+                    
+                    fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId) + '&expiry_option=' + encodeURIComponent(expiryOption))
+                        .then(r => {
+                            console.log('API response status:', r.status);
+                            return r.json();
+                        })
+                        .then(data => {
+                            console.log('API response data:', data);
+                            if (data && data.success) {
+                                $('#qrModalImage').attr('src', data.data.qr_image_url);
+                                // Countdown
+                                const expiresAt = new Date(data.data.expires_at.replace(' ', 'T'));
+                                function tick() {
+                                    const now = new Date();
+                                    const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
+                                    if (diff <= 0) {
+                                        $expiryInfo.css('color', '#dc3545').text('QR expired');
+                                        return;
+                                    }
+                                    $expiryInfo.css('color', '#6c757d').text('Expires in ' + formatTime(diff));
+                                    window.qrCountdownTimer = requestAnimationFrame(tick);
+                                }
+                                tick();
+                            } else {
+                                console.error('API returned error:', data);
+                                $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
+                                $expiryInfo.text('API Error - Using static QR');
                             }
-                        } else {
-                            alert((data && data.message) ? data.message : 'Failed to generate QR');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('QR generation error', err);
-                        alert('Network error generating QR');
-                    });
+                        })
+                        .catch((error) => {
+                            console.error('Fetch error:', error);
+                            $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
+                            $expiryInfo.text('Network Error - Using static QR');
+                        });
+                }
                 
                 // Show modal
                 $('#globalQrModal').show();
             });
-        
-
             
             // Close modal handlers
             $('#closeQrModal, #closeQrButton').on('click', function() {
@@ -1834,9 +1913,9 @@ foreach ($result as $row) {
                 if (updateCourseSelect.val() === 'custom') {
                     // If custom option selected, validate and set the course_section value
                     const customValue = updateCustomCourseInput.val().trim();
-                    if (!customValue) {
+                    if (!customValue || customValue.length < 3) {
                         e.preventDefault();
-                        alert('Please enter a valid custom course & section');
+                        alert('Please enter a valid custom course & section (minimum 3 characters)');
                         updateCustomCourseInput.focus();
                         return false;
                     }
@@ -1927,8 +2006,6 @@ foreach ($result as $row) {
                     `;
                     tbody.appendChild(row);
                 });
-                
-                console.log('Added', filteredStudents.length, 'filtered rows with QR buttons');
 
                 // Hide pagination if searching/filtering
                 paginationContainer.style.display = (searchTerm || filterValue) ? 'none' : 'block';
@@ -1944,9 +2021,83 @@ foreach ($result as $row) {
                 window.location.reload();
             }
 
-            // Apply filters when button is clicked
+                        // Apply filters when button is clicked
             applyButton.addEventListener('click', applyFiltersAndSort);
+            
+            // Reattach QR button event listeners after table updates
+            function reattachQRListeners() {
+                console.log('Reattaching QR listeners to', $('.qr-button').length, 'buttons');
+                $('.qr-button').off('click').on('click', function() {
+                    const studentName = $(this).data('name');
+                    const qrCode = $(this).data('qr');
+                    const studentId = $(this).data('id');
+                    const expiryOption = $('#qrExpirySelect').val() || '1m';
+                    
+                    console.log('QR button clicked (reattached):', { studentName, qrCode });
+                        
+                    $('#qrModalTitle').text(studentName + "'s QR Code");
+                    const $expiryInfo = $('#qrExpiryInfo');
+                    
+                    if (expiryOption === 'no_expiry') {
+                        console.log('Reattached - Using NO EXPIRY logic');
+                        // Reset modal state and clear any cached data
+                        resetModalState();
+                        
+                        // For no expiry, show permanent QR code
+                        $expiryInfo.text('Permanent QR Code - Never Expires');
+                        $expiryInfo.css('color', '#28a745').show();
+                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
+                        clearInterval(qrExpiryTimer);
+                    } else {
+                        console.log('Reattached - Using TIMED OPTION logic for:', expiryOption);
+                        // For timed options, generate dynamic token
+                        $expiryInfo.text('Generating secure QR...').show().css('color', '#6c757d');
+                        $('#qrModalImage').attr('src', '');
+                        clearInterval(qrExpiryTimer);
+                        
+                        fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId) + '&expiry_option=' + encodeURIComponent(expiryOption))
+                            .then(r => {
+                                console.log('API response status:', r.status);
+                                return r.json();
+                            })
+                            .then(data => {
+                                console.log('API response data:', data);
+                                if (data && data.success) {
+                                    $('#qrModalImage').attr('src', data.data.qr_image_url);
+                                    const expiresAt = new Date(data.data.expires_at.replace(' ', 'T'));
+                                    function tick() {
+                                        const now = new Date();
+                                        const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
+                                        if (diff <= 0) { 
+                                            $expiryInfo.css('color', '#dc3545').text('QR expired'); 
+                                            return; 
+                                        }
+                                        $expiryInfo.css('color', '#6c757d').text('Expires in ' + formatTime(diff));
+                                        window.qrCountdownTimer = requestAnimationFrame(tick);
+                                    }
+                                    tick();
+                                } else {
+                                    console.error('API returned error:', data);
+                                    $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
+                                    $expiryInfo.text('API Error - Using static QR');
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Fetch error:', error);
+                                $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
+                                $expiryInfo.text('Network Error - Using static QR');
+                            });
+                    }
+                    $('#globalQrModal').show();
+                });
+            }
 
+            // Call reattachQRListeners after table updates
+            const observer = new MutationObserver(reattachQRListeners);
+            if (tbody) {
+                observer.observe(tbody, { childList: true });
+            }
+            
             // Reset filters when reset button is clicked
             resetButton.addEventListener('click', resetAllFilters);
 
@@ -1959,6 +2110,7 @@ foreach ($result as $row) {
 
             // Reattach QR button event listeners after table updates
             function reattachQRListeners() {
+<<<<<<< Updated upstream
                 console.log('Reattaching QR listeners to', $('.qr-button').length, 'buttons');
                 $('.qr-button').off('click').on('click', function() {
                     const studentId = $(this).data('id');
@@ -1991,6 +2143,17 @@ foreach ($result as $row) {
                         });
 
                     $('#globalQrModal').show();
+=======
+                document.querySelectorAll('.qr-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const studentName = this.dataset.name;
+                        const qrCode = this.dataset.qr;
+                        
+                        $('#qrModalTitle').text(studentName + "'s QR Code");
+                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
+                        $('#globalQrModal').show();
+                    });
+>>>>>>> Stashed changes
                 });
             }
 
