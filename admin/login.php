@@ -730,11 +730,14 @@ $schools = getSchools($conn);
     
     display: flex;
     align-items: center;
-    justify-content: start;
+                justify-content: flex-start;
     gap: 18px;
     z-index: 1000;
     box-shadow: 0 -4px 18px rgba(0,0,0,0.25);
   }
+
+            .footer .flex-spacer { flex: 1 1 auto; }
+            .footer .app-version { font-size: 12px; opacity: 0.85; margin-right: 14px; white-space: nowrap; }
 
   /* Each policy item must be position:relative for absolute child */
   .policy-item {
@@ -758,35 +761,64 @@ $schools = getSchools($conn);
     outline: none;
   }
 
-  /* Small hover modal (tooltip-like) */
-  ..hover-modal {
-  display: none;
-  position: fixed; /* covers full screen */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 420px;
-  max-width: 90%;
-  background: linear-gradient(145deg, #ffffff, #f9fafc);
-  color: #333;
-  padding: 28px 24px;
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  z-index: 1000;
-  text-align: left;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
-  letter-spacing: 0.3px;
-  animation: fadeIn 0.25s ease-in-out;
-}
+                /* Small hover modal (tooltip-like) - dark glass theme (readability enhanced) */
+                .hover-modal {
+            position: fixed; /* centered overlay panel */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(.97);
+            width: 520px;
+            max-width: min(90%, 640px);
+                background:
+                    linear-gradient(160deg, rgba(22,78,55,.90), rgba(14,55,38,.93)) padding-box;
+                color: #f2fff9;
+            padding: 28px 32px 30px;
+            border-radius: 18px;
+                border: 1px solid rgba(255,255,255,0.18);
+                box-shadow: 0 4px 12px -2px rgba(0,0,0,0.45), 0 20px 44px -10px rgba(0,0,0,0.55);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            z-index: 1000;
+            text-align: left;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.55;
+            letter-spacing: .25px;
+            opacity: 0;               /* hidden by default */
+            visibility: hidden;
+            pointer-events: none;      /* don't intercept clicks when hidden */
+            transition: opacity .14s ease, transform .22s cubic-bezier(.16,.84,.44,1);
+        }
+
+                .hover-modal:before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    border-radius: inherit;
+                    background:
+                        radial-gradient(circle at 18% 22%, rgba(120,255,200,0.15), rgba(120,255,200,0) 62%),
+                        radial-gradient(circle at 82% 78%, rgba(9,135,68,0.22), rgba(9,135,68,0) 70%);
+                    pointer-events: none;
+                    mix-blend-mode: screen;
+                }
+
+                .hover-modal .left strong,
+                .hover-modal .right strong { color:#8dfed4; font-weight:700; letter-spacing:.45px; text-shadow:0 0 6px rgba(141,254,212,0.4); }
+                .hover-modal p { margin:0 0 14px; font-size:15px; line-height:1.55; color:#e6f9f1; }
+                .hover-modal .separator { background: linear-gradient(to bottom, rgba(141,254,212,0.65), rgba(141,254,212,0.08)); }
+                .hover-modal a { color:#9bffe0; text-decoration:underline; }
+                .hover-modal a:hover { text-decoration:none; color:#cffff0; }
+                .hover-modal small, .hover-modal li { color:#d9f5eb; }
   
 
   /* show hover modal when the policy-item or the modal itself is hovered or focused */
-  .policy-item:hover .hover-modal,
-  .policy-item:focus-within .hover-modal,
-  .hover-modal:hover {
-    display: block;
-  }
+    .policy-item:hover .hover-modal,
+    .policy-item:focus-within .hover-modal,
+    .hover-modal:hover {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translate(-50%, -50%) scale(1);
+    }
   
   
   /* Overlay modal (large full content on click) */
@@ -845,27 +877,12 @@ $schools = getSchools($conn);
       text-align: center;
       z-index: 1000;
     }
-    .hover-modal {
-      display: none;
-      position: fixed; /* covers full screen */
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-       width: 450px;
-      max-width: 90%;
-      background-color:lightgreen;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-      z-index: 1000;
-      text-align: left;
-    }
+    /* Removed duplicate .hover-modal rule (was overriding earlier definition with display:none) */
+    /* Override old paragraph styling inside hover modal (kept for legacy) */
     .hover-modal p{
-        font-size:20px;
-        color:black;
-        
-        
-        line-spacing:1px;
+        font-size:15px !important;
+        color:#e6f9f1 !important;
+        line-height:1.55 !important;
     }
 
     .modal-overlay {
@@ -887,16 +904,17 @@ $schools = getSchools($conn);
     /* Left column */
 .hover-modal .left {
     text-align:center;
-  flex: 1;
-  font-size: 22px;
-  line-height: 1.6;
-  color:Black;
+    flex: 1;
+    font-size: 22px;
+    line-height: 1.5;
+    color:#e6f9f1; /* light text for dark glass */
 }
 .hover-modal .left strong {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: black;
+    display:block;
+    font-weight:700;
+    margin-bottom:8px;
+    color:#8dfed4; /* accent heading */
+    letter-spacing:.4px;
 }
 
 /* Separator */
@@ -908,17 +926,16 @@ $schools = getSchools($conn);
 
 /* Right column */
 .hover-modal .right {
-    
     margin-top:10px;
-    
-  font-size: 18px;
-  color: #475569;
-  text-align: center;
+    font-size:18px;
+    color:#d9f5eb;
+    text-align:center;
 }
 .hover-modal .right strong {
-  display:inline;
-  color: #0f172a;
-  margin-bottom: 4px;
+    display:inline;
+    color:#8dfed4;
+    margin-bottom:4px;
+    font-weight:600;
 }
     
   /* Responsive */
@@ -1666,18 +1683,31 @@ $schools = getSchools($conn);
         <a href="#" class="footer-link" data-key="community">About Us</a>
         <div class="hover-modal" role="tooltip">
             <div class="left">
-            <strong>CAPSTONE DEVELOPED BY:</strong>
-            San Pedro Polytechnic School <br>
-            BSIT-402 | GROUP 1
-            </div>
+            <strong>A Capstone Project Developed By:</strong>
+            San Pedro City Polytechnic College <br>
+            BSIT - 402 | GROUP 1<br>
+           <br>
+            <ul>
+                Barcelona, Christian Danry<br>
+                Bayot, David Joshua<br>
+                Bismar, John Carl<br>
+                Escallente, Alexander Joerenz<br>
+                Lucenecio, Ma. Melissa<br>
+                Pinedes, Redgine<br>
+            </ul>
+            </div> <br>
             <div class="separator"></div>
             <div class="right">
-            Copyright © 2025  
+           Qnnect © 2025
             | To God be the Glory <br>
-            Current version: 1.3.3
             </div>
         </div>
     </span>
+
+    
+
+    <span class="flex-spacer" aria-hidden="true"></span>
+    <span class="app-version" title="Application Version">Current Version: 1.3.4</span>
 
   </footer>
 
