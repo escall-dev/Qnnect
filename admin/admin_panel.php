@@ -410,10 +410,81 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
         .settings-content { padding: 20px; background: #fff; }
         .settings-title { display:flex; align-items:center; gap:12px; padding: 18px 20px; border-bottom: 1px solid #e9ecef; background: #fff; }
         .settings-title h2 { font-size: 22px; margin: 0; font-weight: 800; color: #1f2937; }
-        .settings-nav { display:flex; gap: 12px; flex-wrap: wrap; padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e9ecef; }
+        .settings-nav { display:flex; gap: 12px; flex-wrap: wrap; padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e9ecef; align-items: center; }
         .settings-nav a { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius: 10px; color:#1f2937; text-decoration:none; background:#fff; border:1px solid #e5e7eb; transition: all .2s ease; font-weight:600; }
         .settings-nav a:hover { background: #f1f5f9; }
         .settings-nav a.active { background: var(--primary-color); color:#fff; border-color: var(--primary-color); }
+        
+        /* Danger Zone Dropdown Styles */
+        .settings-nav .dropdown { 
+            position: relative; 
+            display: inline-flex; 
+            align-items: center;
+        }
+        .settings-nav .dropdown-toggle { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 10px 14px; 
+            border-radius: 10px; 
+            color: #dc3545 !important; 
+            text-decoration: none; 
+            background: #fff; 
+            border: 1px solid #dc3545; 
+            transition: all .2s ease; 
+            font-weight: 600; 
+            cursor: pointer;
+        }
+        .settings-nav .dropdown-toggle:hover { 
+            background: #f8d7da; 
+            text-decoration: none;
+        }
+        .settings-nav .dropdown-toggle.active {
+            background: #dc3545;
+            color: #fff !important;
+            border-color: #dc3545;
+        }
+        .settings-nav .dropdown-menu-danger {
+            background: #fff;
+            border: 1px solid #dc3545;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+            padding: 8px 0;
+            margin-top: 4px;
+            min-width: 200px;
+        }
+        .settings-nav .dropdown-menu-danger .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: #dc3545;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .settings-nav .dropdown-menu-danger .dropdown-item:hover {
+            background: #f8d7da;
+            color: #dc3545;
+            text-decoration: none;
+        }
+        .settings-nav .dropdown-menu-danger .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+        .settings-nav .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+        }
+        .settings-nav .dropdown-menu.show {
+            display: block;
+        }
+        
         .content-section { display:none; }
         .content-section.active { display:block; }
     .card { background:#fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #0ca557; margin-bottom: 20px; }
@@ -449,7 +520,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
 <body>
     <div class="header">
         <div style="display:flex; align-items:center; gap:10px;">
-            <h1 style="margin:0;">Admin Panel</h1>
+            <h1 style="margin:0;">Super Admin Panel</h1>
         </div>
         <div class="user-info">
             <div class="user-avatar"><i class="fas fa-user"></i></div>
@@ -548,8 +619,20 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 <a href="#attendance" data-section="attendance"><i class="fas fa-check-square"></i> Attendance</a>
                 <a href="#schedules" data-section="schedules"><i class="fas fa-calendar"></i> Schedules</a>
                 <a href="#courses" data-section="courses"><i class="fas fa-book"></i> Courses & Sections</a>
-                <a href="#backup-restore" data-section="backup-restore" class="text-danger"><i class="fas fa-database"></i> Backup & Restore</a>
-                <a href="#delete-data" data-section="delete-data" class="text-danger"><i class="fas fa-trash-alt"></i> Delete Data</a>
+                <!-- Danger Zone Dropdown - positioned right after Courses & Sections on same line -->
+                <div class="dropdown">
+                    <a href="#" class="dropdown-toggle text-danger" id="dangerZoneDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-danger" aria-labelledby="dangerZoneDropdown">
+                        <a class="dropdown-item" href="#backup-restore" data-section="backup-restore">
+                            <i class="fas fa-database"></i> Backup & Restore
+                        </a>
+                        <a class="dropdown-item" href="#delete-data" data-section="delete-data">
+                            <i class="fas fa-trash-alt"></i> Delete Data
+                        </a>
+                    </div>
+                </div>
                 <?php endif; ?>
             </div>
             <div class="settings-content">
@@ -1098,6 +1181,11 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 <h5><i class="fas fa-database"></i> Backup & Restore</h5>
             </div>
             <div class="card-body">
+                <!-- Important Note -->
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>NOTE:</strong> The backup process is only available on the 15th and 30th of each month (Kinsenas at Katapusan). No inputs should be made during the backup process.
+                </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card">
@@ -1547,27 +1635,69 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             const sec = document.getElementById(sectionId);
             if (sec) sec.classList.add('active');
-            document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
-            if (el) el.classList.add('active');
+            
+            // Remove active class from all navigation items
+            document.querySelectorAll('.settings-nav a:not(.dropdown-toggle), .settings-nav .dropdown-item').forEach(a => a.classList.remove('active'));
+            
+            // Add active class to the clicked element
+            if (el) {
+                el.classList.add('active');
+                
+                // If it's a dropdown item, also highlight the dropdown toggle
+                if (el.classList.contains('dropdown-item')) {
+                    const dropdown = el.closest('.dropdown');
+                    if (dropdown) {
+                        const toggle = dropdown.querySelector('.dropdown-toggle');
+                        if (toggle) {
+                            toggle.classList.add('active');
+                        }
+                    }
+                }
+            }
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
             try { location.hash = '#' + sectionId; } catch (_) {}
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Wire tab clicks
-            document.querySelectorAll('.settings-nav a').forEach(a => {
+            // Wire tab clicks for regular navigation links
+            document.querySelectorAll('.settings-nav a:not(.dropdown-toggle):not(.dropdown-item)').forEach(a => {
                 a.addEventListener('click', (e) => {
                     e.preventDefault();
                     const id = a.getAttribute('data-section');
                     showSection(id, a);
                 });
             });
+            
+            // Wire dropdown item clicks
+            document.querySelectorAll('.settings-nav .dropdown-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = item.getAttribute('data-section');
+                    if (id) {
+                        showSection(id, item);
+                        // Close the dropdown after selection using Bootstrap 5 API
+                        const dropdown = item.closest('.dropdown');
+                        if (dropdown) {
+                            const toggle = dropdown.querySelector('.dropdown-toggle');
+                            if (toggle) {
+                                const bsDropdown = bootstrap.Dropdown.getInstance(toggle);
+                                if (bsDropdown) {
+                                    bsDropdown.hide();
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Bootstrap 5 handles dropdown toggle automatically
             // Initial activation: ?tab= or hash
             const params = new URLSearchParams(location.search);
             const fromTab = params.get('tab');
             const hash = (location.hash || '').replace('#','');
             const target = fromTab || hash || 'dashboard';
-            const link = document.querySelector(`.settings-nav a[data-section="${target}"]`) || document.querySelector('.settings-nav a');
+            const link = document.querySelector(`.settings-nav a[data-section="${target}"], .settings-nav .dropdown-item[data-section="${target}"]`) || document.querySelector('.settings-nav a:not(.dropdown-toggle)');
             if (link) {
                 showSection(link.getAttribute('data-section'), link);
             }
