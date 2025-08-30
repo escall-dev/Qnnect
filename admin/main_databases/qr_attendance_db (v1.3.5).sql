@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 23, 2025 at 07:01 PM
+-- Generation Time: Aug 30, 2025 at 03:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -198,7 +198,12 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `action_type`, `action_description
 (99, 24, '', 'Deleted attendance record #48', 'tbl_attendance', 48, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-06 22:22:58', NULL, 1),
 (100, 24, '', 'Deleted attendance record #46', 'tbl_attendance', 46, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-06 22:23:01', '{\"tbl_attendance_id\":46,\"tbl_student_id\":7,\"time_in\":\"2025-08-01 14:09:34\",\"status\":\"Late\",\"mode\":\"general\",\"time_out\":null,\"instructor_id\":6,\"subject_id\":null,\"school_id\":2,\"user_id\":24}', 1),
 (101, 24, '', 'Deleted attendance record #153', 'tbl_attendance', 153, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-06 22:23:04', '{\"tbl_attendance_id\":153,\"tbl_student_id\":27,\"time_in\":\"2025-08-06 21:59:02\",\"status\":\"Late\",\"mode\":\"general\",\"time_out\":null,\"instructor_id\":1,\"subject_id\":1,\"school_id\":2,\"user_id\":24}', 1),
-(102, 24, '', 'Deleted attendance record #153', 'tbl_attendance', 153, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-06 22:23:07', NULL, 1);
+(102, 24, '', 'Deleted attendance record #153', 'tbl_attendance', 153, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-06 22:23:07', NULL, 1),
+(103, 30, 'settings_change', 'Updated school information', 'school_info', 15, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 18:00:40', NULL, 1),
+(104, 30, 'settings_change', 'Updated school information', 'school_info', 15, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 18:00:45', '{\"school_name\":{\"old\":\"San Pedro City Polytechnic College\",\"new\":\"San Pedro City Polytechnic Colleges\"}}', 1),
+(105, 30, 'settings_change', 'Updated school information', 'school_info', 15, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 18:00:49', '{\"school_name\":{\"old\":\"San Pedro City Polytechnic Colleges\",\"new\":\"San Pedro City Polytechnic College\"}}', 1),
+(106, 28, 'settings_change', 'Updated school information', 'school_info', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 20:58:51', '{\"school_logo_path\":{\"old\":\"uploads\\/school_logos\\/school_logo_2_1756500343.png\",\"new\":\"admin\\/image\\/school-logo-2.png\"}}', 1),
+(107, 28, 'settings_change', 'Updated school information', 'school_info', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 21:01:17', '{\"school_logo_path\":{\"old\":\"admin\\/image\\/school-logo-2.png\",\"new\":\"admin\\/image\\/school-logo-2.png\"}}', 1);
 
 -- --------------------------------------------------------
 
@@ -279,7 +284,8 @@ CREATE TABLE `class_time_settings` (
 --
 
 INSERT INTO `class_time_settings` (`id`, `instructor_name`, `course_section`, `subject`, `start_time`, `status`, `end_time`, `days_of_week`, `school_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(35, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 15, 1, '2025-08-23 14:21:53', '2025-08-23 14:38:00');
+(35, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 15, 1, '2025-08-23 14:21:53', '2025-08-30 12:23:02'),
+(38, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 2, 1, '2025-08-24 04:46:28', '2025-08-30 13:02:25');
 
 -- --------------------------------------------------------
 
@@ -346,7 +352,43 @@ CREATE TABLE `school_info` (
 
 INSERT INTO `school_info` (`id`, `school_name`, `school_address`, `school_contact`, `school_email`, `school_website`, `school_logo_path`, `school_motto`, `school_vision`, `school_mission`, `created_at`, `updated_at`, `school_id`) VALUES
 (1, 'San Pedro City Polytechnic College', '', '', '', '', 'admin/image/school-logo.png', '', '', '', '2025-07-17 13:01:15', '2025-07-17 16:15:36', 1),
-(2, 'Computer Site Inc.', '', '', '', '', 'admin/image/school-logo-2.png', '', '', '', '2025-07-17 16:14:38', '2025-07-17 16:24:37', 2);
+(2, 'Computer Site Inc.', '', '', '', '', 'admin/image/school-logo-2.png', '', '', '', '2025-07-17 16:14:38', '2025-08-30 21:01:17', 2);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_qr_tokens`
+--
+
+CREATE TABLE `student_qr_tokens` (
+  `id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `token` varchar(191) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `user_id` int(11) NOT NULL,
+  `school_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student_qr_tokens`
+--
+
+INSERT INTO `student_qr_tokens` (`id`, `student_id`, `token`, `expires_at`, `used_at`, `revoked_at`, `created_at`, `user_id`, `school_id`) VALUES
+(32, 7, 'yWEgdSqoH4bpP_ak4i5cqA-aLICSw', '2025-08-30 03:41:59', NULL, '2025-08-30 03:41:21', '2025-08-30 03:40:59', 28, 2),
+(33, 4, 'aUaUukCWqRS8z88o9L8BBg-aLICVA', '2025-08-30 03:42:08', NULL, NULL, '2025-08-30 03:41:08', 28, 2),
+(34, 7, 'TOEdKZIVY-zP7k5ODyLFaw-aLICYQ', '2025-08-30 03:46:21', NULL, NULL, '2025-08-30 03:41:21', 28, 2),
+(35, 3, 'EyiTSCN3KSxndVw_plW_mw-aLICbw', '2025-08-30 03:56:35', NULL, '2025-08-30 03:48:29', '2025-08-30 03:41:35', 28, 2),
+(36, 3, '_uWQc4pdSE9RXSwXFxd6nQ-aLICeg', '2025-08-31 03:41:46', NULL, '2025-08-30 03:48:29', '2025-08-30 03:41:46', 28, 2),
+(37, 10, 'VM7-flbyZtuq3c8rHn0Mnw-aLIDnQ', '2025-08-30 03:47:37', '2025-08-30 03:46:52', NULL, '2025-08-30 03:46:37', 28, 2),
+(38, 3, 'Gt9VijVD8Qk4l1N0BNptYw-aLIEDQ', '2025-08-30 03:49:29', NULL, NULL, '2025-08-30 03:48:29', 28, 2),
+(39, 7, '_ZxVATX8a9f0O8tFKNXx3A-aLIENg', '2025-08-30 03:54:10', '2025-08-30 03:49:35', NULL, '2025-08-30 03:49:10', 28, 2),
+(40, 7, '7RXXKVmHpDVQFOsWR_nAOQ-aLIEiw', '2025-08-30 03:55:35', '2025-08-30 03:50:49', NULL, '2025-08-30 03:50:35', 28, 2),
+(41, 10, 'PyAXA8jppjtvDXe5fO5fYQ-aLIGRQ', '2025-08-30 04:12:57', NULL, NULL, '2025-08-30 03:57:57', 28, 2),
+(42, 11, 'XLIoKd6Xax7r3pZUZmldDw-aLLs5Q', '2025-08-30 20:22:57', NULL, '2025-08-30 20:22:14', '2025-08-30 20:21:57', 28, 2),
+(43, 11, 'n7LvYOJoSLRdhvKy1QSfjA-aLLs9g', '2025-08-31 20:22:14', NULL, NULL, '2025-08-30 20:22:14', 28, 2);
 
 -- --------------------------------------------------------
 
@@ -370,6 +412,19 @@ CREATE TABLE `tbl_attendance` (
   `instructor_id_nz` int(11) GENERATED ALWAYS AS (ifnull(`instructor_id`,0)) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+--
+-- Dumping data for table `tbl_attendance`
+--
+
+INSERT INTO `tbl_attendance` (`tbl_attendance_id`, `tbl_student_id`, `time_in`, `status`, `mode`, `time_out`, `instructor_id`, `subject_id`, `school_id`, `user_id`) VALUES
+(7, 3, '2025-08-24 04:46:38', 'On Time', 'general', NULL, 25, 0, 2, 28),
+(8, 4, '2025-08-24 04:56:58', 'Late', 'general', NULL, 25, 0, 2, 28),
+(9, 2, '2025-08-24 05:01:37', 'On Time', 'general', NULL, 27, 0, 15, 30),
+(10, 1, '2025-08-24 05:02:08', 'Late', 'general', NULL, 27, 6, 15, 30),
+(13, 7, '2025-08-29 19:49:35', 'On Time', 'general', NULL, 25, 8, 2, 28),
+(14, 7, '2025-08-29 19:50:49', 'On Time', 'general', NULL, 25, 9, 2, 28),
+(15, 3, '2025-08-30 12:40:00', 'On Time', 'general', NULL, NULL, NULL, 2, 26);
+
 -- --------------------------------------------------------
 
 --
@@ -389,7 +444,12 @@ CREATE TABLE `tbl_courses` (
 --
 
 INSERT INTO `tbl_courses` (`course_id`, `course_name`, `user_id`, `school_id`, `created_at`) VALUES
-(37, 'BSIS', 30, 15, '2025-08-23 14:20:39');
+(37, 'BSIS', 30, 15, '2025-08-23 14:20:39'),
+(38, 'HUMMS', 28, 2, '2025-08-24 04:39:38'),
+(44, 'BSIT', 30, 15, '2025-08-24 13:03:21'),
+(45, 'HUMMS', 30, 15, '2025-08-24 13:03:47'),
+(48, 'STEM', 28, 2, '2025-08-29 19:43:52'),
+(49, 'ICT', 28, 2, '2025-08-30 02:50:41');
 
 -- --------------------------------------------------------
 
@@ -424,6 +484,20 @@ CREATE TABLE `tbl_face_verification_logs` (
   `school_id` int(11) DEFAULT 1,
   `user_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tbl_face_verification_logs`
+--
+
+INSERT INTO `tbl_face_verification_logs` (`log_id`, `student_id`, `student_name`, `status`, `verification_time`, `ip_address`, `user_agent`, `notes`, `school_id`, `user_id`) VALUES
+(80, 3, 'Comsite', 'Success', '2025-08-24 12:39:33', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 28),
+(81, 4, 'CSI', 'Success', '2025-08-24 12:47:12', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 28),
+(82, 5, 'javascript', 'Success', '2025-08-24 13:47:06', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 28),
+(83, 6, 'Plankton', 'Success', '2025-08-24 20:33:06', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 28),
+(84, 7, 'Plankton', 'Success', '2025-08-24 20:36:12', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 28),
+(85, 8, 'vue', 'Success', '2025-08-24 21:03:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 15, 30),
+(86, 9, 'js', 'Success', '2025-08-24 21:03:44', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 15, 30),
+(87, 10, 'krabby', 'Success', '2025-08-30 03:43:46', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 2, 28);
 
 -- --------------------------------------------------------
 
@@ -463,6 +537,15 @@ CREATE TABLE `tbl_instructor_subjects` (
   `school_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `tbl_instructor_subjects`
+--
+
+INSERT INTO `tbl_instructor_subjects` (`id`, `instructor_id`, `subject_id`, `created_at`, `school_id`) VALUES
+(6, 0, 7, '2025-08-24 05:02:18', 1),
+(7, 25, 8, '2025-08-29 19:46:15', 1),
+(8, 0, 8, '2025-08-29 19:47:29', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -483,7 +566,22 @@ CREATE TABLE `tbl_sections` (
 --
 
 INSERT INTO `tbl_sections` (`section_id`, `section_name`, `user_id`, `school_id`, `created_at`, `course_id`) VALUES
-(204, '302', 30, 15, '2025-08-23 14:20:39', 37);
+(204, '302', 30, 15, '2025-08-23 14:20:39', 37),
+(205, '12 HUMANIDADES', 28, 2, '2025-08-24 04:39:38', 38),
+(206, '11 AGHIMUAN', 28, 2, '2025-08-24 04:47:18', 49),
+(207, '11  VERSI', 28, 2, '2025-08-24 12:33:09', 49),
+(208, '11  VERSI', 1, 1, '2025-08-24 12:33:34', NULL),
+(209, 'ICT SHELBY', 28, 2, '2025-08-24 12:36:17', 41),
+(210, 'ICT SHELBY', 1, 1, '2025-08-24 12:36:43', NULL),
+(211, 'ICT SHELBYie', 1, 1, '2025-08-24 12:38:12', NULL),
+(212, '11 AGHIMUAN', 1, 1, '2025-08-24 12:55:23', NULL),
+(213, '302', 1, 1, '2025-08-24 13:00:38', NULL),
+(214, '402', 30, 15, '2025-08-24 13:03:21', 44),
+(215, '12 EVOLVE', 30, 15, '2025-08-24 13:03:47', 45),
+(216, '12 EVOLVE', 1, 1, '2025-08-24 13:04:58', NULL),
+(217, '402', 1, 1, '2025-08-24 13:11:14', NULL),
+(218, '403', 1, 1, '2025-08-24 13:16:40', NULL),
+(219, '12 TEKNO', 28, 2, '2025-08-29 19:43:52', 48);
 
 -- --------------------------------------------------------
 
@@ -508,7 +606,13 @@ CREATE TABLE `tbl_student` (
 
 INSERT INTO `tbl_student` (`tbl_student_id`, `student_name`, `course_section`, `generated_code`, `face_image`, `face_image_path`, `school_id`, `user_id`) VALUES
 (1, 'SPCPC', 'BSIS - 302', 'STU-30-15-c1fb424c-c9b4f61d9256a239', NULL, 'face_1755958839_68a9ce37f3f4a.jpg', 15, 30),
-(2, 'angular', 'BSIS - 302', 'STU-30-15-f41e2082-4e3b81967acf7b46', NULL, 'face_1755959033_68a9cef97258d.jpg', 15, 30);
+(2, 'angular', 'BSIS - 302', 'STU-30-15-f41e2082-4e3b81967acf7b46', NULL, 'face_1755959033_68a9cef97258d.jpg', 15, 30),
+(3, 'Comsite', 'HUMMS - 12 HUMANIDADES', 'STU-28-2-01b59ddc-b2bfb513115cc649', NULL, 'face_1756010378_68aa978a3d4c0.jpg', 2, 28),
+(4, 'CSI', 'ICT - 11 AGHIMUAN', 'STU-28-2-88bca758-f114ee6d4279002b', NULL, 'face_1756010838_68aa995621460.jpg', 2, 28),
+(7, 'Plankton', '11 - ICT SHELBY', 'STU-28-2-447222be-1b42b0e46bee51cc', NULL, 'face_1756038977_68ab074137e45.jpg', 2, 28),
+(8, 'vue js', 'BSIT - 401', 'STU-30-15-24a561ab-bab013a4c926dca6', NULL, 'face_1756040601_68ab0d998ae71.jpg', 15, 30),
+(10, 'krabbypatty', 'STEM - 12 TEKNO', 'STU-28-2-076b1db0-0bcec879b39b3375', NULL, 'face_1756496632_68b202f878f55.jpg', 2, 28),
+(11, 'monarba', 'STEM - 12 SIGBIN', '', NULL, NULL, 2, 28);
 
 -- --------------------------------------------------------
 
@@ -529,7 +633,10 @@ CREATE TABLE `tbl_subjects` (
 --
 
 INSERT INTO `tbl_subjects` (`subject_id`, `subject_name`, `created_at`, `school_id`, `user_id`) VALUES
-(6, 'Networking', '2025-08-23 12:54:12', 15, 30);
+(6, 'Networking', '2025-08-23 12:54:12', 15, 30),
+(7, '-- Select Subject --', '2025-08-24 05:02:18', 15, 30),
+(8, 'FILIPINO', '2025-08-29 19:46:15', 2, 28),
+(9, 'TEKNOLOHIYA', '2025-08-29 19:50:16', 2, 28);
 
 -- --------------------------------------------------------
 
@@ -593,7 +700,9 @@ CREATE TABLE `teacher_schedules` (
 --
 
 INSERT INTO `teacher_schedules` (`id`, `teacher_username`, `subject`, `section`, `day_of_week`, `start_time`, `end_time`, `room`, `school_id`, `user_id`, `created_at`, `updated_at`, `status`) VALUES
-(34, 'SPCPC', 'Networking', 'BSIS - 302', 'Monday', '09:00:00', '23:00:00', 'Computer Laboratory', 15, 30, '2025-08-23 14:21:34', '2025-08-23 14:21:34', 'active');
+(34, 'SPCPC', 'Networkings', 'BSIS - 302', 'Monday', '09:00:00', '23:00:00', 'Computer Laboratory', 15, 30, '2025-08-23 14:21:34', '2025-08-25 09:56:10', 'active'),
+(35, 'COMSITE', 'FILIPINO', 'STEM - 12 TEKNO', 'Monday', '12:00:00', '13:00:00', '204', 2, 28, '2025-08-29 19:45:31', '2025-08-29 19:45:31', 'active'),
+(36, 'COMSITE', 'TEKNOLOHIYA', 'STEM - 12 TEKNO', 'Saturday', '13:00:00', '14:00:00', '200', 2, 28, '2025-08-29 19:45:57', '2025-08-29 19:45:57', 'active');
 
 --
 -- Triggers `teacher_schedules`
@@ -790,7 +899,17 @@ INSERT INTO `teacher_schedule_logs` (`id`, `schedule_id`, `action`, `old_values`
 (0, 26, 'DELETE', '{\"teacher_username\": \"alex\", \"subject\": \"Web Dev\", \"section\": \"BSIT-302\", \"day_of_week\": \"Monday\", \"start_time\": \"07:00:00\", \"end_time\": \"22:00:00\", \"room\": \"Dress Room\", \"school_id\": 2}', NULL, 'root@localhost', '2025-08-23 13:53:27'),
 (0, 32, 'DELETE', '{\"teacher_username\": \"alex\", \"subject\": \"Capstone 2\", \"section\": \"BSIT-302\", \"day_of_week\": \"Tuesday\", \"start_time\": \"08:00:00\", \"end_time\": \"12:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 2}', NULL, 'root@localhost', '2025-08-23 13:53:27'),
 (0, 33, 'DELETE', '{\"teacher_username\": \"escall\", \"subject\": \"Networking\", \"section\": \"BSIT-301\", \"day_of_week\": \"Friday\", \"start_time\": \"08:00:00\", \"end_time\": \"09:00:00\", \"room\": \"\", \"school_id\": 1}', NULL, 'root@localhost', '2025-08-23 13:53:27'),
-(0, 34, 'INSERT', NULL, '{\"teacher_username\": \"SPCPC\", \"subject\": \"Networking\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"23:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 15}', 'root@localhost', '2025-08-23 14:21:34');
+(0, 34, 'INSERT', NULL, '{\"teacher_username\": \"SPCPC\", \"subject\": \"Networking\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"23:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 15}', 'root@localhost', '2025-08-23 14:21:34'),
+(0, 34, 'UPDATE', '{\"teacher_username\": \"SPCPC\", \"subject\": \"Networking\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"23:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 15}', '{\"teacher_username\": \"SPCPC\", \"subject\": \"Networkings\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"23:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 15}', 'root@localhost', '2025-08-25 09:56:10'),
+(0, 35, 'INSERT', NULL, '{\"teacher_username\": \"COMSITE\", \"subject\": \"FILIPINO\", \"section\": \"STEM - 12 TEKNO\", \"day_of_week\": \"Monday\", \"start_time\": \"12:00:00\", \"end_time\": \"13:00:00\", \"room\": \"204\", \"school_id\": 2}', 'root@localhost', '2025-08-29 19:45:31'),
+(0, 36, 'INSERT', NULL, '{\"teacher_username\": \"COMSITE\", \"subject\": \"TEKNOLOHIYA\", \"section\": \"STEM - 12 TEKNO\", \"day_of_week\": \"Saturday\", \"start_time\": \"13:00:00\", \"end_time\": \"14:00:00\", \"room\": \"200\", \"school_id\": 2}', 'root@localhost', '2025-08-29 19:45:57'),
+(0, 37, 'INSERT', NULL, '{\"teacher_username\": \"aranaydo\", \"subject\": \"abc\", \"section\": \"MLBB - 12 DAWN\", \"day_of_week\": \"Wednesday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"1\", \"school_id\": 2}', 'root@localhost', '2025-08-29 20:53:15'),
+(0, 37, 'UPDATE', '{\"teacher_username\": \"aranaydo\", \"subject\": \"abc\", \"section\": \"MLBB - 12 DAWN\", \"day_of_week\": \"Wednesday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"1\", \"school_id\": 2}', '{\"teacher_username\": \"COMSITE\", \"subject\": \"abc\", \"section\": \"MLBB - 12 DAWN\", \"day_of_week\": \"Wednesday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"1\", \"school_id\": 2}', 'root@localhost', '2025-08-29 20:53:58'),
+(0, 37, 'UPDATE', '{\"teacher_username\": \"COMSITE\", \"subject\": \"abc\", \"section\": \"MLBB - 12 DAWN\", \"day_of_week\": \"Wednesday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"1\", \"school_id\": 2}', '{\"teacher_username\": \"COMSITE\", \"subject\": \"abc\", \"section\": \"MLBB - 12 DAWN\", \"day_of_week\": \"Wednesday\", \"start_time\": \"09:00:00\", \"end_time\": \"11:00:00\", \"room\": \"12\", \"school_id\": 2}', 'root@localhost', '2025-08-29 20:59:33'),
+(0, 37, 'UPDATE', '{\"teacher_username\": \"COMSITE\", \"subject\": \"abc\", \"section\": \"MLBB - 12 DAWN\", \"day_of_week\": \"Wednesday\", \"start_time\": \"09:00:00\", \"end_time\": \"11:00:00\", \"room\": \"12\", \"school_id\": 2}', '{\"teacher_username\": \"COMSITE\", \"subject\": \"abcde\", \"section\": \"MLBB - 12 DAWNe\", \"day_of_week\": \"Tuesday\", \"start_time\": \"08:00:00\", \"end_time\": \"10:00:00\", \"room\": \"123\", \"school_id\": 2}', 'root@localhost', '2025-08-29 21:03:50'),
+(0, 38, 'INSERT', NULL, '{\"teacher_username\": \"COMSITE\", \"subject\": \"aa\", \"section\": \"STEM -11 SIGBIN\", \"day_of_week\": \"Thursday\", \"start_time\": \"06:07:00\", \"end_time\": \"07:00:00\", \"room\": \"1\", \"school_id\": 2}', 'root@localhost', '2025-08-30 02:34:32'),
+(0, 38, 'DELETE', '{\"teacher_username\": \"COMSITE\", \"subject\": \"aa\", \"section\": \"STEM -11 SIGBIN\", \"day_of_week\": \"Thursday\", \"start_time\": \"06:07:00\", \"end_time\": \"07:00:00\", \"room\": \"1\", \"school_id\": 2}', NULL, 'root@localhost', '2025-08-30 02:34:55'),
+(0, 37, 'DELETE', '{\"teacher_username\": \"COMSITE\", \"subject\": \"abcde\", \"section\": \"MLBB - 12 DAWNe\", \"day_of_week\": \"Tuesday\", \"start_time\": \"08:00:00\", \"end_time\": \"10:00:00\", \"room\": \"123\", \"school_id\": 2}', NULL, 'root@localhost', '2025-08-30 11:57:57');
 
 -- --------------------------------------------------------
 
@@ -814,7 +933,7 @@ CREATE TABLE `user_settings` (
 --
 
 INSERT INTO `user_settings` (`id`, `email`, `school_year`, `semester`, `created_at`, `updated_at`, `school_id`, `user_id`) VALUES
-(1, 'escall.byte@gmail.com', '2024-2025', '2nd Semester', '2025-04-05 14:54:58', '2025-04-09 21:20:55', 1, 1),
+(1, 'escall.byte@gmail.com', '2024-2025', '1st Semester', '2025-04-05 14:54:58', '2025-08-24 13:03:56', 1, 1),
 (6, 'joerenz.dev@gmail.com', '2025-2026', '1st Semester', '2025-07-17 14:01:24', '2025-07-17 14:01:40', 1, 1),
 (7, 'joerenzescallente027@gmail.com', '2025-2026', '2nd Semester', '2025-07-27 15:21:59', '2025-07-27 15:21:59', 1, 1);
 
@@ -901,6 +1020,22 @@ ALTER TABLE `schedules`
   ADD KEY `idx_room_day_time` (`school_id`,`room`,`day_of_week`,`start_time`,`end_time`);
 
 --
+-- Indexes for table `school_info`
+--
+ALTER TABLE `school_info`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `student_qr_tokens`
+--
+ALTER TABLE `student_qr_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `token` (`token`),
+  ADD KEY `idx_student_current` (`student_id`,`used_at`,`expires_at`),
+  ADD KEY `idx_expires` (`expires_at`),
+  ADD KEY `idx_user_school` (`user_id`,`school_id`);
+
+--
 -- Indexes for table `tbl_attendance`
 --
 ALTER TABLE `tbl_attendance`
@@ -912,6 +1047,12 @@ ALTER TABLE `tbl_attendance`
 --
 ALTER TABLE `tbl_courses`
   ADD PRIMARY KEY (`course_id`);
+
+--
+-- Indexes for table `tbl_face_recognition_logs`
+--
+ALTER TABLE `tbl_face_recognition_logs`
+  ADD PRIMARY KEY (`log_id`);
 
 --
 -- Indexes for table `tbl_face_verification_logs`
@@ -970,6 +1111,12 @@ ALTER TABLE `user_settings`
 --
 
 --
+-- AUTO_INCREMENT for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
+
+--
 -- AUTO_INCREMENT for table `attendance_logs`
 --
 ALTER TABLE `attendance_logs`
@@ -979,7 +1126,7 @@ ALTER TABLE `attendance_logs`
 -- AUTO_INCREMENT for table `class_time_settings`
 --
 ALTER TABLE `class_time_settings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -994,58 +1141,70 @@ ALTER TABLE `schedules`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `school_info`
+--
+ALTER TABLE `school_info`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `student_qr_tokens`
+--
+ALTER TABLE `student_qr_tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+
+--
 -- AUTO_INCREMENT for table `tbl_attendance`
 --
 ALTER TABLE `tbl_attendance`
-  MODIFY `tbl_attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `tbl_attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `tbl_courses`
 --
 ALTER TABLE `tbl_courses`
-  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `tbl_face_verification_logs`
 --
 ALTER TABLE `tbl_face_verification_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
 
 --
 -- AUTO_INCREMENT for table `tbl_instructors`
 --
 ALTER TABLE `tbl_instructors`
-  MODIFY `instructor_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `instructor_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `tbl_instructor_subjects`
 --
 ALTER TABLE `tbl_instructor_subjects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `tbl_sections`
 --
 ALTER TABLE `tbl_sections`
-  MODIFY `section_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
+  MODIFY `section_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
 
 --
 -- AUTO_INCREMENT for table `tbl_student`
 --
 ALTER TABLE `tbl_student`
-  MODIFY `tbl_student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `tbl_student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `tbl_subjects`
 --
 ALTER TABLE `tbl_subjects`
-  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `teacher_schedules`
 --
 ALTER TABLE `teacher_schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `user_settings`

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 23, 2025 at 07:05 PM
+-- Generation Time: Aug 30, 2025 at 03:03 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -45,9 +45,9 @@ INSERT INTO `recent_logins` (`id`, `username`, `profile_image`, `last_login`, `c
 (13, 'ara', 'uploads/profile_images/profile_1752744870_40011e02deb1edad.jpg', '2025-08-22 17:17:41', '2025-07-13 16:53:40', NULL),
 (114, 'alex', 'uploads/profile_images/profile_1755870815.png', '2025-08-22 14:05:02', '2025-07-16 19:34:13', 2),
 (771, 'JOERENZ', 'uploads/profile_images/profile_1755870815.png', '2025-08-22 14:01:52', '2025-08-22 14:01:52', 2),
-(773, 'COMSITE', 'uploads/profile_images/profile_1755871431.png', '2025-08-23 14:12:41', '2025-08-22 14:03:31', 2),
-(788, 'ADMIN - Bagwis', 'uploads/profile_images/profile_1755870815.png', '2025-08-23 13:32:17', '2025-08-22 15:52:24', NULL),
-(805, 'SPCPC', 'uploads/profile_images/profile_1755948720.png', '2025-08-23 14:37:59', '2025-08-23 11:31:43', 15);
+(773, 'COMSITE', 'uploads/profile_images/profile_1756558903.png', '2025-08-30 13:02:25', '2025-08-22 14:03:31', 2),
+(788, 'ADMIN - Bagwis', 'uploads/profile_images/profile_1755871431.png', '2025-08-24 08:48:56', '2025-08-22 15:52:24', NULL),
+(805, 'SPCPC', 'uploads/profile_images/profile_1756500463.png', '2025-08-30 12:23:02', '2025-08-23 11:31:43', 15);
 
 -- --------------------------------------------------------
 
@@ -97,7 +97,7 @@ CREATE TABLE `schools` (
 
 INSERT INTO `schools` (`id`, `name`, `code`, `theme_color`, `created_at`, `updated_at`, `status`) VALUES
 (2, 'Computer Site Inc.', 'CSI', '#4CAF00', '2025-07-16 16:51:47', '2025-08-13 07:37:31', 'active'),
-(15, 'San Pedro City Polytechnic College', 'SPCPC', '#098744', '2025-08-23 11:29:23', '2025-08-23 14:17:05', 'active');
+(15, 'San Pedro City Polytechnic College', 'SPCPC', '#098744', '2025-08-23 11:29:23', '2025-08-29 20:22:54', 'active');
 
 -- --------------------------------------------------------
 
@@ -632,7 +632,150 @@ INSERT INTO `system_logs` (`id`, `user_id`, `school_id`, `action`, `details`, `i
 (508, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-24 16:16:59', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-23 14:16:59'),
 (509, 26, NULL, 'THEME_PASSKEY_USED', 'Passkey ID: 16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-23 14:17:05'),
 (510, 26, NULL, 'THEME_UPDATED', 'School ID: 15, Color: #098744', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-23 14:17:05'),
-(511, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-23 14:20:12');
+(511, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-23 14:20:12'),
+(512, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 04:34:46'),
+(513, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 05:01:14'),
+(514, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 05:02:52'),
+(515, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 05:07:45'),
+(516, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 05:49:31'),
+(517, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 06:43:25'),
+(518, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:31:09'),
+(519, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:47:11');
+INSERT INTO `system_logs` (`id`, `user_id`, `school_id`, `action`, `details`, `ip_address`, `user_agent`, `created_at`) VALUES
+(520, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:47:23'),
+(521, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:47:31'),
+(522, 26, NULL, 'USER_UPDATED', 'User ID: 28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:48:08'),
+(523, 26, NULL, 'USER_UPDATED', 'User ID: 28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:48:49'),
+(524, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:49:12'),
+(525, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:49:24'),
+(526, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 2, Expires: 2025-08-25 10:50:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:50:16'),
+(527, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-25 10:50:31', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:50:31'),
+(528, 26, NULL, 'THEME_PASSKEY_USED', 'Passkey ID: 18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:50:43'),
+(529, 26, NULL, 'THEME_UPDATED', 'School ID: 15, Color: #389f68', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:50:43'),
+(530, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-25 10:51:04', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:51:04'),
+(531, 26, NULL, 'THEME_PASSKEY_USED', 'Passkey ID: 19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:51:11'),
+(532, 26, NULL, 'THEME_UPDATED', 'School ID: 15, Color: #098744', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:51:11'),
+(533, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:52:04'),
+(534, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:52:56'),
+(535, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:53:05'),
+(536, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 08:56:25'),
+(537, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 09:16:59'),
+(538, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 09:27:17'),
+(539, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 2, Expires: 2025-08-25 11:29:36', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 09:29:36'),
+(540, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 10:41:43'),
+(541, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 11:33:15'),
+(542, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 11:43:48'),
+(543, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 12:15:55'),
+(544, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 12:16:39'),
+(545, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 12:21:06'),
+(546, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 12:22:14'),
+(547, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 12:22:30'),
+(548, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 12:32:11'),
+(549, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 13:00:31'),
+(550, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-24 13:18:23'),
+(551, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 07:10:19'),
+(552, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 07:49:49'),
+(553, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 07:50:50'),
+(554, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 07:52:17'),
+(555, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 07:54:20'),
+(556, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 07:58:11'),
+(557, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 08:07:42'),
+(558, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 09:22:58'),
+(559, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 09:23:17'),
+(560, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 09:28:03'),
+(561, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 09:31:02'),
+(562, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 09:50:00'),
+(563, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:14:41'),
+(564, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:24:03'),
+(565, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:24:15'),
+(566, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:28:56'),
+(567, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:33:08'),
+(568, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:33:18'),
+(569, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:33:34'),
+(570, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:40:16'),
+(571, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:40:26'),
+(572, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 10:55:52'),
+(573, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:05:36'),
+(574, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:05:52'),
+(575, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:07:34'),
+(576, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:11:01'),
+(577, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:11:43'),
+(578, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:12:55'),
+(579, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 11:14:13'),
+(580, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-26 16:42:17'),
+(581, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-26 16:54:35'),
+(582, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-26 16:54:41'),
+(583, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 14:52:35'),
+(584, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:38:47'),
+(585, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:43:48'),
+(586, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:45:54'),
+(587, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:46:13'),
+(588, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:46:21'),
+(589, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:53:58'),
+(590, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:54:22'),
+(591, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:54:31'),
+(592, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:54:55'),
+(593, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 17:55:14'),
+(594, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 18:34:46'),
+(595, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 19:39:09'),
+(596, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:12:25'),
+(597, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:17:08'),
+(598, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-30 22:17:27', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:17:27'),
+(599, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-29 23:17:52', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:17:52'),
+(600, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-30 22:20:24', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:20:24'),
+(601, 26, NULL, 'THEME_PASSKEY_USED', 'Passkey ID: 23', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:20:34'),
+(602, 26, NULL, 'THEME_UPDATED', 'School ID: 15, Color: #098744', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:20:34'),
+(603, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-30 22:22:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:22:16'),
+(604, 26, NULL, 'THEME_PASSKEY_USED', 'Passkey ID: 24', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:22:27'),
+(605, 26, NULL, 'THEME_UPDATED', 'School ID: 15, Color: #5fbf8c', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:22:27'),
+(606, 26, NULL, 'THEME_PASSKEY_GENERATED', 'School ID: 15, Expires: 2025-08-30 22:22:45', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:22:45'),
+(607, 26, NULL, 'THEME_PASSKEY_USED', 'Passkey ID: 25', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:22:54'),
+(608, 26, NULL, 'THEME_UPDATED', 'School ID: 15, Color: #098744', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:22:54'),
+(609, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:34:18'),
+(610, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:34:58'),
+(611, 26, NULL, 'SCHOOL_LOGO_UPDATED', 'School ID: 15, Logo: uploads/school_logos/school_logo_15_1756499698.jpeg', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:34:58'),
+(612, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:38:06'),
+(613, 26, NULL, 'SCHOOL_LOGO_UPDATED', 'School ID: 15, Logo: uploads/school_logos/school_logo_15_1756499886.png', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:38:06'),
+(614, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:38:15'),
+(615, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:41:53'),
+(616, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:44:25'),
+(617, 26, NULL, 'SCHOOL_LOGO_UPDATED', 'School ID: 15, Logo: uploads/school_logos/school_logo_15_1756500265.jpeg', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:44:25'),
+(618, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:44:57'),
+(619, 26, NULL, 'SCHOOL_LOGO_UPDATED', 'School ID: 15, Logo: uploads/school_logos/school_logo_15_1756500297.jpg', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:44:57'),
+(620, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:45:35'),
+(621, 26, NULL, 'SCHOOL_LOGO_UPDATED', 'School ID: 15, Logo: uploads/school_logos/school_logo_15_1756500335.png', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:45:36'),
+(622, 26, NULL, 'SCHOOL_UPDATED', 'School ID: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:45:43'),
+(623, 26, NULL, 'SCHOOL_LOGO_UPDATED', 'School ID: 2, Logo: uploads/school_logos/school_logo_2_1756500343.png', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:45:43'),
+(624, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:47:30'),
+(625, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:47:51'),
+(626, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:48:11'),
+(627, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:48:53'),
+(628, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:52:42'),
+(629, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 20:59:59'),
+(630, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:00:12'),
+(631, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:03:17'),
+(632, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:08:44'),
+(633, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:09:13'),
+(634, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:09:24'),
+(635, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:09:54'),
+(636, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-29 21:15:27'),
+(637, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 02:25:33'),
+(638, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 02:25:55'),
+(639, 26, NULL, 'USER_UPDATED', 'User ID: 28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 02:29:56'),
+(640, 26, NULL, 'USER_UPDATED', 'User ID: 28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 02:30:15'),
+(641, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 02:46:53'),
+(642, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 02:49:56'),
+(643, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 03:04:33'),
+(644, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 11:21:41'),
+(645, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 11:28:37'),
+(646, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 11:31:24'),
+(647, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 11:32:07'),
+(648, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 11:42:46'),
+(649, 30, 15, 'USER_LOGIN', 'School: 15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 12:22:55'),
+(650, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 12:25:33'),
+(651, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 12:34:32'),
+(652, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 12:42:09'),
+(653, 28, 2, 'USER_LOGIN', 'School: 2', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-30 12:58:32');
 
 -- --------------------------------------------------------
 
@@ -745,30 +888,136 @@ INSERT INTO `tbl_user_logs` (`log_id`, `username`, `user_type`, `log_in_time`, `
 (669, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 01:48:07', NULL, '::1', 26, 0),
 (670, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 12:37:23', NULL, '::1', 26, 0),
 (671, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 19:06:07', NULL, '::1', 26, 0),
-(672, 'SPCPC', 'admin', '2025-08-23 19:31:43', NULL, '::1', 30, 15),
+(672, 'SPCPC', 'admin', '2025-08-23 19:31:43', '2025-08-24 16:53:18', '::1', 30, 15),
 (673, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 19:42:56', NULL, '::1', 26, 0),
 (674, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 19:43:08', NULL, '::1', 26, 0),
-(675, 'SPCPC', 'admin', '2025-08-23 20:52:11', NULL, '::1', 30, 15),
+(675, 'SPCPC', 'admin', '2025-08-23 20:52:11', '2025-08-24 16:53:18', '::1', 30, 15),
 (676, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:20:34', NULL, '::1', 26, 0),
-(677, 'SPCPC', 'admin', '2025-08-23 21:21:22', NULL, '::1', 30, 15),
+(677, 'SPCPC', 'admin', '2025-08-23 21:21:22', '2025-08-24 16:53:18', '::1', 30, 15),
 (678, 'COMSITE', 'admin', '2025-08-23 21:21:29', '2025-08-23 21:58:37', '::1', 28, 2),
 (679, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:21:55', NULL, '::1', 26, 0),
 (680, 'COMSITE', 'admin', '2025-08-23 21:22:04', '2025-08-23 21:58:37', '::1', 28, 2),
 (681, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:28:17', NULL, '::1', 26, 0),
 (682, 'COMSITE', 'admin', '2025-08-23 21:28:29', '2025-08-23 21:58:37', '::1', 28, 2),
 (683, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:28:48', NULL, '::1', 26, 0),
-(684, 'SPCPC', 'admin', '2025-08-23 21:29:02', NULL, '::1', 30, 15),
+(684, 'SPCPC', 'admin', '2025-08-23 21:29:02', '2025-08-24 16:53:18', '::1', 30, 15),
 (685, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:31:40', NULL, '::1', 26, 0),
 (686, 'COMSITE', 'admin', '2025-08-23 21:31:51', '2025-08-23 21:58:37', '::1', 28, 2),
 (687, 'COMSITE', 'admin', '2025-08-23 21:31:58', '2025-08-23 21:58:37', '::1', 28, 2),
 (688, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:32:11', NULL, '::1', 26, 0),
 (689, 'COMSITE', 'admin', '2025-08-23 21:32:37', '2025-08-23 21:58:37', '::1', 28, 2),
 (690, 'COMSITE', 'admin', '2025-08-23 21:47:58', '2025-08-23 21:58:37', '::1', 28, 2),
-(691, 'SPCPC', 'admin', '2025-08-23 21:49:13', NULL, '::1', 30, 15),
+(691, 'SPCPC', 'admin', '2025-08-23 21:49:13', '2025-08-24 16:53:18', '::1', 30, 15),
 (692, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:51:28', NULL, '::1', 26, 0),
 (693, 'ADMIN - Bagwis', 'Super Admin', '2025-08-23 21:51:57', NULL, '::1', 26, 0),
-(694, 'COMSITE', 'admin', '2025-08-23 21:53:41', NULL, '::1', 28, 2),
-(695, 'SPCPC', 'admin', '2025-08-23 22:20:12', NULL, '::1', 30, 15);
+(694, 'COMSITE', 'admin', '2025-08-23 21:53:41', '2025-08-24 20:21:38', '::1', 28, 2),
+(695, 'SPCPC', 'admin', '2025-08-23 22:20:12', '2025-08-24 16:53:18', '::1', 30, 15),
+(696, 'COMSITE', 'admin', '2025-08-24 12:34:46', '2025-08-24 20:21:38', '::1', 28, 2),
+(697, 'SPCPC', 'admin', '2025-08-24 13:01:14', '2025-08-24 16:53:18', '::1', 30, 15),
+(698, 'COMSITE', 'admin', '2025-08-24 13:02:52', '2025-08-24 20:21:38', '::1', 28, 2),
+(699, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 13:07:45', NULL, '::1', 26, 0),
+(700, 'SPCPC', 'admin', '2025-08-24 13:49:31', '2025-08-24 16:53:18', '::1', 30, 15),
+(701, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 14:43:25', NULL, '::1', 26, 0),
+(702, 'COMSITE', 'admin', '2025-08-24 16:31:09', '2025-08-24 20:21:38', '::1', 28, 2),
+(703, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 16:47:11', NULL, '::1', 26, 0),
+(704, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 16:47:23', NULL, '::1', 26, 0),
+(705, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 16:47:31', NULL, '::1', 26, 0),
+(706, 'COMSITE', 'admin', '2025-08-24 16:49:12', '2025-08-24 20:21:38', '::1', 28, 2),
+(707, 'COMSITE', 'admin', '2025-08-24 16:49:24', '2025-08-24 20:21:38', '::1', 28, 2),
+(708, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 16:52:04', NULL, '::1', 26, 0),
+(709, 'COMSITE', 'admin', '2025-08-24 16:52:56', '2025-08-24 20:21:38', '::1', 28, 2),
+(710, 'SPCPC', 'admin', '2025-08-24 16:53:05', '2025-08-25 17:56:20', '::1', 30, 15),
+(711, 'COMSITE', 'admin', '2025-08-24 16:56:25', '2025-08-24 20:21:38', '::1', 28, 2),
+(712, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 17:16:59', NULL, '::1', 26, 0),
+(713, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 17:27:17', NULL, '::1', 26, 0),
+(714, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 18:41:43', NULL, '::1', 26, 0),
+(715, 'COMSITE', 'admin', '2025-08-24 19:33:15', '2025-08-24 20:21:38', '::1', 28, 2),
+(716, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 19:43:48', NULL, '::1', 26, 0),
+(717, 'SPCPC', 'admin', '2025-08-24 20:15:55', '2025-08-25 17:56:20', '::1', 30, 15),
+(718, 'COMSITE', 'admin', '2025-08-24 20:16:39', '2025-08-24 20:21:38', '::1', 28, 2),
+(719, 'COMSITE', 'admin', '2025-08-24 20:21:06', '2025-08-27 00:42:28', '::1', 28, 2),
+(720, 'SPCPC', 'admin', '2025-08-24 20:22:14', '2025-08-25 17:56:20', '::1', 30, 15),
+(721, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 20:22:30', NULL, '::1', 26, 0),
+(722, 'COMSITE', 'admin', '2025-08-24 20:32:11', '2025-08-27 00:42:28', '::1', 28, 2),
+(723, 'SPCPC', 'admin', '2025-08-24 21:00:31', '2025-08-25 17:56:20', '::1', 30, 15),
+(724, 'ADMIN - Bagwis', 'Super Admin', '2025-08-24 21:18:23', NULL, '::1', 26, 0),
+(725, 'COMSITE', 'admin', '2025-08-25 15:10:19', '2025-08-27 00:42:28', '::1', 28, 2),
+(726, 'SPCPC', 'admin', '2025-08-25 15:49:49', '2025-08-25 17:56:20', '::1', 30, 15),
+(727, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 15:50:50', NULL, '::1', 26, 0),
+(728, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 15:52:17', NULL, '::1', 26, 0),
+(729, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 15:54:20', NULL, '::1', 26, 0),
+(730, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 15:58:11', NULL, '::1', 26, 0),
+(731, 'COMSITE', 'admin', '2025-08-25 16:07:42', '2025-08-27 00:42:28', '::1', 28, 2),
+(732, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 17:22:58', NULL, '::1', 26, 0),
+(733, 'COMSITE', 'admin', '2025-08-25 17:23:17', '2025-08-27 00:42:28', '::1', 28, 2),
+(734, 'COMSITE', 'admin', '2025-08-25 17:28:03', '2025-08-27 00:42:28', '::1', 28, 2),
+(735, 'COMSITE', 'admin', '2025-08-25 17:31:02', '2025-08-27 00:42:28', '::1', 28, 2),
+(736, 'SPCPC', 'admin', '2025-08-25 17:50:00', NULL, '::1', 30, 15),
+(737, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:14:41', NULL, '::1', 26, 0),
+(738, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:24:03', NULL, '::1', 26, 0),
+(739, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:24:15', NULL, '::1', 26, 0),
+(740, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:28:56', NULL, '::1', 26, 0),
+(741, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:33:08', NULL, '::1', 26, 0),
+(742, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:33:18', NULL, '::1', 26, 0),
+(743, 'COMSITE', 'admin', '2025-08-25 18:33:34', '2025-08-27 00:42:28', '::1', 28, 2),
+(744, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:40:16', NULL, '::1', 26, 0),
+(745, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:40:26', NULL, '::1', 26, 0),
+(746, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 18:55:52', NULL, '::1', 26, 0),
+(747, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:05:36', NULL, '::1', 26, 0),
+(748, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:05:52', NULL, '::1', 26, 0),
+(749, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:07:34', NULL, '::1', 26, 0),
+(750, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:11:01', NULL, '::1', 26, 0),
+(751, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:11:43', NULL, '::1', 26, 0),
+(752, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:12:55', NULL, '::1', 26, 0),
+(753, 'ADMIN - Bagwis', 'Super Admin', '2025-08-25 19:14:13', NULL, '::1', 26, 0),
+(754, 'COMSITE', 'admin', '2025-08-27 00:42:17', '2025-08-30 10:55:37', '::1', 28, 2),
+(755, 'ADMIN - Bagwis', 'Super Admin', '2025-08-27 00:54:35', NULL, '::1', 26, 0),
+(756, 'ADMIN - Bagwis', 'Super Admin', '2025-08-27 00:54:41', NULL, '::1', 26, 0),
+(757, 'ADMIN - Bagwis', 'Super Admin', '2025-08-29 22:52:35', NULL, '::1', 26, 0),
+(758, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:38:47', NULL, '::1', 26, 0),
+(759, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:43:48', NULL, '::1', 26, 0),
+(760, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:45:54', NULL, '::1', 26, 0),
+(761, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:46:13', NULL, '::1', 26, 0),
+(762, 'COMSITE', 'admin', '2025-08-30 01:46:21', '2025-08-30 10:55:37', '::1', 28, 2),
+(763, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:53:58', NULL, '::1', 26, 0),
+(764, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:54:22', NULL, '::1', 26, 0),
+(765, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:54:31', NULL, '::1', 26, 0),
+(766, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:54:55', NULL, '::1', 26, 0),
+(767, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 01:55:14', NULL, '::1', 26, 0),
+(768, 'COMSITE', 'admin', '2025-08-30 02:34:46', '2025-08-30 10:55:37', '::1', 28, 2),
+(769, 'COMSITE', 'admin', '2025-08-30 03:39:09', '2025-08-30 10:55:37', '::1', 28, 2),
+(770, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 04:12:24', NULL, '::1', 26, 0),
+(771, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 04:34:18', NULL, '::1', 26, 0),
+(772, 'SPCPC', 'admin', '2025-08-30 04:38:15', NULL, '::1', 30, 15),
+(773, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 04:41:53', NULL, '::1', 26, 0),
+(774, 'SPCPC', 'admin', '2025-08-30 04:47:30', NULL, '::1', 30, 15),
+(775, 'COMSITE', 'admin', '2025-08-30 04:47:51', '2025-08-30 10:55:37', '::1', 28, 2),
+(776, 'COMSITE', 'admin', '2025-08-30 04:48:11', '2025-08-30 10:55:37', '::1', 28, 2),
+(777, 'COMSITE', 'admin', '2025-08-30 04:48:53', '2025-08-30 10:55:37', '::1', 28, 2),
+(778, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 04:52:42', NULL, '::1', 26, 0),
+(779, 'SPCPC', 'admin', '2025-08-30 04:59:59', NULL, '::1', 30, 15),
+(780, 'COMSITE', 'admin', '2025-08-30 05:00:12', '2025-08-30 10:55:37', '::1', 28, 2),
+(781, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 05:03:17', NULL, '::1', 26, 0),
+(782, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 05:08:44', NULL, '::1', 26, 0),
+(783, 'SPCPC', 'admin', '2025-08-30 05:09:13', NULL, '::1', 30, 15),
+(784, 'COMSITE', 'admin', '2025-08-30 05:09:24', '2025-08-30 10:55:37', '::1', 28, 2),
+(785, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 05:09:54', NULL, '::1', 26, 0),
+(786, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 05:15:27', NULL, '::1', 26, 0),
+(787, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 10:25:33', NULL, '::1', 26, 0),
+(788, 'COMSITE', 'admin', '2025-08-30 10:25:55', '2025-08-30 10:55:37', '::1', 28, 2),
+(789, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 10:46:53', NULL, '::1', 26, 0),
+(790, 'COMSITE', 'admin', '2025-08-30 10:49:56', NULL, '::1', 28, 2),
+(791, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 11:04:33', NULL, '::1', 26, 0),
+(792, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 19:21:41', NULL, '::1', 26, 0),
+(793, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 19:28:37', NULL, '::1', 26, 0),
+(794, 'COMSITE', 'admin', '2025-08-30 19:31:24', NULL, '::1', 28, 2),
+(795, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 19:32:07', NULL, '::1', 26, 0),
+(796, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 19:42:46', NULL, '::1', 26, 0),
+(797, 'SPCPC', 'admin', '2025-08-30 20:22:55', NULL, '::1', 30, 15),
+(798, 'COMSITE', 'admin', '2025-08-30 20:25:33', NULL, '::1', 28, 2),
+(799, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 20:34:32', NULL, '::1', 26, 0),
+(800, 'ADMIN - Bagwis', 'Super Admin', '2025-08-30 20:42:09', NULL, '::1', 26, 0),
+(801, 'COMSITE', 'admin', '2025-08-30 20:58:32', NULL, '::1', 28, 2);
 
 -- --------------------------------------------------------
 
@@ -808,7 +1057,16 @@ INSERT INTO `theme_passkeys` (`id`, `key_hash`, `created_by`, `school_id`, `used
 (13, '$2y$10$xFMQIkqlic/NkGRuOj6cAemqx1IC4C/waCkOkJvv6V4yBgmq.arqy', 26, 2, 0, NULL, NULL, '2025-08-24 16:15:50', '2025-08-23 14:15:50'),
 (14, '$2y$10$fXBfD1aBq/q9eFyIlNJVy.mTtwefbIwCzDlrw3ElQMVBCdziJ.yxu', 26, 15, 1, '2025-08-23 22:16:23', 26, '2025-08-24 16:16:15', '2025-08-23 14:16:15'),
 (15, '$2y$10$fAohkIcwY6JFSLonWQyKH.YXkShBPIg0UywMIY0ePGF7AS9vbxZfS', 26, 0, 0, NULL, NULL, '2025-08-24 16:16:45', '2025-08-23 14:16:45'),
-(16, '$2y$10$D6yk8wNdxGHaQiPi21me4OtPJ5GN3BxGyBRU5y34phI.ix6DprU9e', 26, 15, 1, '2025-08-23 22:17:05', 26, '2025-08-24 16:16:59', '2025-08-23 14:16:59');
+(16, '$2y$10$D6yk8wNdxGHaQiPi21me4OtPJ5GN3BxGyBRU5y34phI.ix6DprU9e', 26, 15, 1, '2025-08-23 22:17:05', 26, '2025-08-24 16:16:59', '2025-08-23 14:16:59'),
+(17, '$2y$10$V3XlZ5QlbRTVzDVh.X7LQuU3ym/BVVkU8hQ7C6XbbAbY/271KFDrG', 26, 2, 0, NULL, NULL, '2025-08-25 10:50:16', '2025-08-24 08:50:16'),
+(18, '$2y$10$OMl.Pc8y1.LKKmtXAG30aedwk.Xcu4kxgAM7OJNKzf.fp21.DPEzO', 26, 15, 1, '2025-08-24 16:50:43', 26, '2025-08-25 10:50:31', '2025-08-24 08:50:31'),
+(19, '$2y$10$l86QIlhO8MOX3JREsFczFeyBcYX.Hh4.sCn1foCfLYBbF2OBI1p1K', 26, 15, 1, '2025-08-24 16:51:11', 26, '2025-08-25 10:51:04', '2025-08-24 08:51:04'),
+(20, '$2y$10$yh2TGtGX2HzgTFrKnLTeX.H8LSq7R3cNR5LwYuf6CKhDeGhlGzOhi', 26, 2, 0, NULL, NULL, '2025-08-25 11:29:36', '2025-08-24 09:29:36'),
+(21, '$2y$10$cSnZFIxiBYT8HJ2ocvFXq.X9ggtNZAM1XdVQVd0uj.EsTJamR/7.K', 26, 15, 0, NULL, NULL, '2025-08-30 22:17:27', '2025-08-29 20:17:27'),
+(22, '$2y$10$CdeSFIfXe2B.A0bA28RX4u9QLsSgap9ZsV4v4QgtsuJLabA2PgBc6', 26, 15, 0, NULL, NULL, '2025-08-29 23:17:52', '2025-08-29 20:17:52'),
+(23, '$2y$10$jrECcumxAK6SLSeikFYxL.QnCXSCzYmcTmgXHAgZJmv.oXx/r1TLu', 26, 15, 1, '2025-08-30 04:20:34', 26, '2025-08-30 22:20:24', '2025-08-29 20:20:24'),
+(24, '$2y$10$2jjYQYpTIyH227gre3AS/.ku/334eEwxpFDZUcGG88EWYhZrmhhgC', 26, 15, 1, '2025-08-30 04:22:27', 26, '2025-08-30 22:22:16', '2025-08-29 20:22:16'),
+(25, '$2y$10$7qr7wGFjYCbJGYIpjHU0neuzX0kvH3MHmnmWG.FVN8VhWeExUKfCG', 26, 15, 1, '2025-08-30 04:22:54', 26, '2025-08-30 22:22:45', '2025-08-29 20:22:45');
 
 -- --------------------------------------------------------
 
@@ -836,8 +1094,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `full_name`, `email`, `username`, `password`, `profile_image`, `reset_token_hash`, `reset_token_hash_expires_at`, `user_type`, `role`, `school_id`) VALUES
 (26, 'Alexander Joerenz Escallente', 'joerenzescallente027@gmail.com', 'ADMIN - Bagwis', '$2y$10$hs4DHo.1FASEj/B.4Vcyhu/QsYZV8KwlUz0n8LOqBlhCADunDMiEW', 'uploads/profile_images/profile_1755870815.png', NULL, NULL, 'User', 'super_admin', NULL),
-(28, '', 'escall.byte@gmail.com', 'COMSITE', '$2y$10$boPdke5kjBjAAAKCHQJGEeeY7JbmNDgZqmj5Eds2l9LJY4h/a84Qi', 'uploads/profile_images/profile_1755871431.png', NULL, NULL, 'User', 'admin', 2),
-(30, '', 'spcpc2017ph@gmail.com', 'SPCPC', '$2y$10$Lwtk7g05AdFv8XL9yv05veIWSXDFExUIMX32OnVG56Xs/6xZznE2C', 'uploads/profile_images/profile_1755948720.png', NULL, NULL, 'User', 'admin', 15);
+(28, '', 'escall.byte@gmail.com', 'COMSITE', '$2y$10$.pTdjTgWQE.AzPRiPlQeqe75/Dd/JQ60WujMNWqcRUqeefW8To3Wm', 'uploads/profile_images/profile_1756558903.png', '0fd6ad7c1f4981301c8af1cfdd101d5d4291c56fa5c9aedb06b5ada40819ab86', '2025-08-30 04:37:13', 'User', 'admin', 2),
+(30, '', 'spcpc2017ph@gmail.com', 'SPCPC', '$2y$10$Lwtk7g05AdFv8XL9yv05veIWSXDFExUIMX32OnVG56Xs/6xZznE2C', 'uploads/profile_images/profile_1756500463.png', NULL, NULL, 'User', 'admin', 15);
 
 --
 -- Indexes for dumped tables
@@ -915,7 +1173,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `recent_logins`
 --
 ALTER TABLE `recent_logins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=831;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=914;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -933,7 +1191,7 @@ ALTER TABLE `schools`
 -- AUTO_INCREMENT for table `system_logs`
 --
 ALTER TABLE `system_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=512;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=654;
 
 --
 -- AUTO_INCREMENT for table `system_settings`
@@ -945,13 +1203,13 @@ ALTER TABLE `system_settings`
 -- AUTO_INCREMENT for table `tbl_user_logs`
 --
 ALTER TABLE `tbl_user_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=696;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=802;
 
 --
 -- AUTO_INCREMENT for table `theme_passkeys`
 --
 ALTER TABLE `theme_passkeys`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `users`
