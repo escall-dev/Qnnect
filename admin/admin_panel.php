@@ -487,33 +487,58 @@ $all_schools = $is_super_admin ? getAllSchools($conn) : [];
 $effective_scope_id = getEffectiveScopeSchoolId();
 $users = getFilteredUsers($conn, $effective_scope_id);
 
-// Get system logs respecting scope
+// Get system logs respecting scope with pagination
+$logs_page = isset($_GET['logs_page']) ? max(1, intval($_GET['logs_page'])) : 1;
+$logs_per_page = 10;
+$logs_offset = ($logs_page - 1) * $logs_per_page;
+
+// Get total count first
 if ($is_super_admin) {
     if ($effective_scope_id) {
+        $count_sql = "SELECT COUNT(*) as total FROM system_logs sl WHERE sl.school_id = ?";
+        $stmt_count = mysqli_prepare($conn, $count_sql);
+        mysqli_stmt_bind_param($stmt_count, "i", $effective_scope_id);
+        mysqli_stmt_execute($stmt_count);
+        $count_result = mysqli_stmt_get_result($stmt_count);
+        $total_logs = mysqli_fetch_assoc($count_result)['total'];
+        mysqli_stmt_close($stmt_count);
+        
         $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
        LEFT JOIN users u ON sl.user_id = u.id 
        LEFT JOIN schools s ON sl.school_id = s.id 
        WHERE sl.school_id = ? 
-       ORDER BY sl.created_at DESC LIMIT 50";
+       ORDER BY sl.created_at DESC LIMIT ? OFFSET ?";
         $stmt = mysqli_prepare($conn, $logs_sql);
-        mysqli_stmt_bind_param($stmt, "i", $effective_scope_id);
+        mysqli_stmt_bind_param($stmt, "iii", $effective_scope_id, $logs_per_page, $logs_offset);
         mysqli_stmt_execute($stmt);
         $logs_result = mysqli_stmt_get_result($stmt);
     } else {
+        $count_sql = "SELECT COUNT(*) as total FROM system_logs sl";
+        $count_result = mysqli_query($conn, $count_sql);
+        $total_logs = mysqli_fetch_assoc($count_result)['total'];
+        
         $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
        LEFT JOIN users u ON sl.user_id = u.id 
        LEFT JOIN schools s ON sl.school_id = s.id 
-       ORDER BY sl.created_at DESC LIMIT 50";
-    $logs_result = mysqli_query($conn, $logs_sql);
+       ORDER BY sl.created_at DESC LIMIT $logs_per_page OFFSET $logs_offset";
+        $logs_result = mysqli_query($conn, $logs_sql);
     }
 } else {
+    $count_sql = "SELECT COUNT(*) as total FROM system_logs sl WHERE sl.school_id = ?";
+    $stmt_count = mysqli_prepare($conn, $count_sql);
+    mysqli_stmt_bind_param($stmt_count, "i", $user_school_id);
+    mysqli_stmt_execute($stmt_count);
+    $count_result = mysqli_stmt_get_result($stmt_count);
+    $total_logs = mysqli_fetch_assoc($count_result)['total'];
+    mysqli_stmt_close($stmt_count);
+    
     $logs_sql = "SELECT sl.*, u.username, s.name as school_name FROM system_logs sl 
        LEFT JOIN users u ON sl.user_id = u.id 
        LEFT JOIN schools s ON sl.school_id = s.id 
        WHERE sl.school_id = ? 
-       ORDER BY sl.created_at DESC LIMIT 50";
+       ORDER BY sl.created_at DESC LIMIT ? OFFSET ?";
     $stmt = mysqli_prepare($conn, $logs_sql);
-    mysqli_stmt_bind_param($stmt, "i", $user_school_id);
+    mysqli_stmt_bind_param($stmt, "iii", $user_school_id, $logs_per_page, $logs_offset);
     mysqli_stmt_execute($stmt);
     $logs_result = mysqli_stmt_get_result($stmt);
 }
@@ -522,6 +547,9 @@ $logs = [];
 while ($row = mysqli_fetch_assoc($logs_result)) {
     $logs[] = $row;
 }
+
+// Calculate pagination info
+$total_pages = ceil($total_logs / $logs_per_page);
 ?>
 
 <!DOCTYPE html>
@@ -752,7 +780,7 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 <a href="#students" data-section="students"><i class="fas fa-user-graduate"></i> Students</a>
                 <a href="#attendance" data-section="attendance"><i class="fas fa-check-square"></i> Attendance</a>
                 <a href="#schedules" data-section="schedules"><i class="fas fa-calendar"></i> Schedules</a>
-                <a href="#courses" data-section="courses"><i class="fas fa-book"></i> Courses & Sections</a>
+               
                 <!-- Danger Zone Dropdown - positioned right after Courses & Sections on same line -->
                 <div class="dropdown">
                     <a href="#" class="dropdown-toggle text-danger" id="dangerZoneDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1146,38 +1174,120 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
     <!-- System Logs Section -->
     <div id="logs" class="content-section">
             <div class="card">
-                <div class="card-header">
-                    <h5>System Logs</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">System Logs</h5>
+                    <div class="logs-info text-muted">
+                        Showing <?php echo count($logs); ?> of <?php echo $total_logs; ?> records (Page <?php echo $logs_page; ?> of <?php echo max(1, $total_pages); ?>)
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>User</th>
-                                    <th>Action</th>
-                                    <th>Details</th>
-                                    <?php if ($is_super_admin): ?>
-                                    <th>School</th>
-                                    <?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($logs as $log): ?>
-                                <tr>
-                                    <td><?php echo date('M j, H:i', strtotime($log['created_at'])); ?></td>
-                                    <td><?php echo htmlspecialchars($log['username'] ?? 'System'); ?></td>
-                                    <td><?php echo htmlspecialchars($log['action']); ?></td>
-                                    <td><?php echo htmlspecialchars($log['details'] ?? ''); ?></td>
-                                    <?php if ($is_super_admin): ?>
-                                    <td><?php echo htmlspecialchars($log['school_name'] ?? 'N/A'); ?></td>
-                                    <?php endif; ?>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                    <!-- Export Buttons -->
+                    <div class="d-flex justify-content-start mb-3">
+                        <button class="btn btn-success me-2" onclick="exportSystemLogs('excel')">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                        <button class="btn btn-success me-2" onclick="exportSystemLogs('pdf')">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-success" onclick="exportSystemLogs('print')">
+                            <i class="fas fa-print"></i> Print
+                        </button>
                     </div>
+                    
+                    <?php if (empty($logs)): ?>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No system logs found.
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="system-logs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Details</th>
+                                        <?php if ($is_super_admin): ?>
+                                        <th>School</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($logs as $log): ?>
+                                    <tr>
+                                        <td><?php echo date('M j, Y H:i', strtotime($log['created_at'])); ?></td>
+                                        <td><?php echo htmlspecialchars($log['username'] ?? 'System'); ?></td>
+                                        <td>
+                                            <span class="badge bg-primary"><?php echo htmlspecialchars($log['action']); ?></span>
+                                        </td>
+                                        <td>
+                                            <div style="max-width: 300px; word-wrap: break-word;">
+                                                <?php echo htmlspecialchars($log['details'] ?? ''); ?>
+                                            </div>
+                                        </td>
+                                        <?php if ($is_super_admin): ?>
+                                        <td>
+                                            <span class="badge bg-info"><?php echo htmlspecialchars($log['school_name'] ?? 'N/A'); ?></span>
+                                        </td>
+                                        <?php endif; ?>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <?php if ($total_pages > 1): ?>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="pagination-info">
+                                Showing <?php echo (($logs_page - 1) * $logs_per_page) + 1; ?> to <?php echo min($logs_page * $logs_per_page, $total_logs); ?> of <?php echo $total_logs; ?> entries
+                            </div>
+                            <nav aria-label="System logs pagination">
+                                <ul class="pagination pagination-sm mb-0">
+                                    <?php if ($logs_page > 1): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?logs_page=<?php echo $logs_page - 1; ?>#logs" onclick="navigateToLogsPage(<?php echo $logs_page - 1; ?>)">Previous</a>
+                                    </li>
+                                    <?php endif; ?>
+                                    
+                                    <?php
+                                    $start_page = max(1, $logs_page - 2);
+                                    $end_page = min($total_pages, $logs_page + 2);
+                                    
+                                    if ($start_page > 1): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?logs_page=1#logs" onclick="navigateToLogsPage(1)">1</a>
+                                    </li>
+                                    <?php if ($start_page > 2): ?>
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <?php endif; ?>
+                                    <?php endif; ?>
+                                    
+                                    <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                    <li class="page-item <?php echo ($i == $logs_page) ? 'active' : ''; ?>">
+                                        <a class="page-link" href="?logs_page=<?php echo $i; ?>#logs" onclick="navigateToLogsPage(<?php echo $i; ?>)"><?php echo $i; ?></a>
+                                    </li>
+                                    <?php endfor; ?>
+                                    
+                                    <?php if ($end_page < $total_pages): ?>
+                                    <?php if ($end_page < $total_pages - 1): ?>
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <?php endif; ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?logs_page=<?php echo $total_pages; ?>#logs" onclick="navigateToLogsPage(<?php echo $total_pages; ?>)"><?php echo $total_pages; ?></a>
+                                    </li>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ($logs_page < $total_pages): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?logs_page=<?php echo $logs_page + 1; ?>#logs" onclick="navigateToLogsPage(<?php echo $logs_page + 1; ?>)">Next</a>
+                                    </li>
+                                    <?php endif; ?>
+                                </ul>
+                            </nav>
+                        </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
     </div>
@@ -2865,6 +2975,58 @@ while ($row = mysqli_fetch_assoc($logs_result)) {
                 await showError('Error deleting backup file: ' + error.message);
             }
         }
+        
+        // System Logs Export Functions
+        function exportSystemLogs(format) {
+            // Create a form to submit to the export endpoint
+            const form = document.createElement('form');
+            form.method = 'GET';
+            form.action = 'export_system_logs.php';
+            form.target = '_blank'; // Open in new tab/window
+            
+            const formatInput = document.createElement('input');
+            formatInput.type = 'hidden';
+            formatInput.name = 'format';
+            formatInput.value = format;
+            form.appendChild(formatInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+        
+        // System Logs Pagination Navigation
+        function navigateToLogsPage(page) {
+            // Update the URL and navigate
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('logs_page', page);
+            currentUrl.hash = 'logs';
+            
+            window.location.href = currentUrl.toString();
+        }
+        
+        // Auto-navigate to logs section if logs_page parameter is present
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('logs_page')) {
+                // Show the logs section
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById('logs').classList.add('active');
+                
+                // Update navigation
+                document.querySelectorAll('.settings-nav a').forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelector('.settings-nav a[data-section="logs"]').classList.add('active');
+                
+                // Scroll to logs section
+                setTimeout(() => {
+                    document.getElementById('logs').scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            }
+        });
     </script>
 </body>
 </html>

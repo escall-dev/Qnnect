@@ -49,10 +49,33 @@ if ($op !== 'list') {
 			echo json_encode(array('success'=>$ok)); exit();
 		}
 		if ($op === 'update') {
-			$id = (int)($_POST['course_id'] ?? 0); $name = trim($_POST['course_name'] ?? '');
+			$id = (int)($_POST['course_id'] ?? 0); 
+			$name = trim($_POST['course_name'] ?? '');
+			$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : null;
+			
 			if ($id<=0 || $name==='') { echo json_encode(array('success'=>false,'message'=>'Invalid')); exit(); }
-			$stmt = mysqli_prepare($conn_qr, 'UPDATE tbl_courses SET course_name=? WHERE course_id=?');
-			mysqli_stmt_bind_param($stmt, 'si', $name, $id);
+			
+			// Get the school's admin user_id for updates
+			$user_id = null;
+			if ($conn_login && $school_id) {
+				$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+				mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+				mysqli_stmt_execute($stmt_user);
+				$res_user = mysqli_stmt_get_result($stmt_user);
+				if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+					$user_id = (int)$user_data['id'];
+				}
+				mysqli_stmt_close($stmt_user);
+			}
+			
+			// Update query - include school_id and user_id if provided
+			if ($school_id && $user_id) {
+				$stmt = mysqli_prepare($conn_qr, 'UPDATE tbl_courses SET course_name=?, school_id=?, user_id=? WHERE course_id=?');
+				mysqli_stmt_bind_param($stmt, 'siii', $name, $school_id, $user_id, $id);
+			} else {
+				$stmt = mysqli_prepare($conn_qr, 'UPDATE tbl_courses SET course_name=? WHERE course_id=?');
+				mysqli_stmt_bind_param($stmt, 'si', $name, $id);
+			}
 			$ok = mysqli_stmt_execute($stmt);
 			mysqli_stmt_close($stmt);
 			echo json_encode(array('success'=>$ok)); exit();
@@ -93,10 +116,32 @@ if ($op !== 'list') {
 			echo json_encode(array('success'=>$ok)); exit();
 		}
 		if ($op === 'update') {
-			$id = (int)($_POST['section_id'] ?? 0); $name = trim($_POST['section_name'] ?? ''); $course_id = (int)($_POST['course_id'] ?? 0);
+			$id = (int)($_POST['section_id'] ?? 0); 
+			$name = trim($_POST['section_name'] ?? ''); 
+			$course_id = (int)($_POST['course_id'] ?? 0);
+			$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : null;
+			
 			if ($id<=0 || $name==='') { echo json_encode(array('success'=>false,'message'=>'Invalid')); exit(); }
+			
+			// Get the school's admin user_id for updates
+			$user_id = null;
+			if ($conn_login && $school_id) {
+				$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+				mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+				mysqli_stmt_execute($stmt_user);
+				$res_user = mysqli_stmt_get_result($stmt_user);
+				if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+					$user_id = (int)$user_data['id'];
+				}
+				mysqli_stmt_close($stmt_user);
+			}
+			
 			$fields=array('section_name=?'); $types='s'; $params=array($name);
 			if ($course_id>0) { $fields[]='course_id=?'; $types.='i'; $params[]=$course_id; }
+			if ($school_id && $user_id) { 
+				$fields[]='school_id=?'; $types.='i'; $params[]=$school_id; 
+				$fields[]='user_id=?'; $types.='i'; $params[]=$user_id; 
+			}
 			$stmt = mysqli_prepare($conn_qr, 'UPDATE tbl_sections SET '.implode(',', $fields).' WHERE section_id=?');
 			$types.='i'; $params[]=$id;
 			mysqli_stmt_bind_param($stmt, $types, ...$params);
