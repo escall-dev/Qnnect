@@ -765,9 +765,10 @@ foreach ($teacher_schedules as $schedule) {
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Course & Section</label>
-                                    <input type="text" class="form-control" name="course_section" id="modal_course_section" 
-                                           placeholder="Enter Course-Section (e.g. BSCS-101, BSIT-2A)" required>
-                                    <small class="form-text text-muted">Format: Course-Section (e.g. BSCS-101, BSIT-2A)</small>
+                                    <select class="form-control" name="course_section" id="modal_course_section" required>
+                                        <option value="">Select Course & Section</option>
+                                    </select>
+                                    <small class="form-text text-muted">Select from available courses and sections</small>
                                 </div>
                             </div>
                         </div>
@@ -948,6 +949,9 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     console.log('Document ready!');
     
+    // Populate course & section dropdown on page load
+    populateCourseSectionDropdown();
+    
     // Ensure modal is properly initialized
     $('#scheduleModal').on('shown.bs.modal', function () {
         console.log('Modal shown');
@@ -1101,16 +1105,18 @@ $(document).ready(function() {
 });
 
 function openScheduleModal(data) {
+    // Populate course & section dropdown first
+    populateCourseSectionDropdown();
+    
     if (data.id) {
         // Edit mode - fetch schedule data
         $.get('api/get-teacher-schedule.php?id=' + data.id)
             .done(function(response) {
                 try {
-                    var schedule = JSON.parse(response).schedule;
+                    var schedule = JSON.parse(response).data;
                     $('#modal_schedule_id').val(schedule.id);
                     $('#modal_subject').val(schedule.subject);
                     $('#modal_course_section').val(schedule.section);
-                    $('#modal_week_number').val(1);
                     $('#modal_day_of_week').val(schedule.day_of_week);
                     $('#modal_start_time').val(convertTo24Hour(schedule.start_time));
                     $('#modal_end_time').val(convertTo24Hour(schedule.end_time));
@@ -1124,7 +1130,6 @@ function openScheduleModal(data) {
         // Add mode - clear form
         $('#scheduleForm')[0].reset();
         $('#modal_schedule_id').val('');
-        $('#modal_week_number').val(1);
         if (data.day) {
             $('#modal_day_of_week').val(data.day);
         }
@@ -1196,6 +1201,40 @@ function showHolidayDetails(date) {
         error: function(xhr, status, error) {
             console.error('AJAX error:', status, error);
             alert('Error loading holiday details');
+        }
+    });
+}
+
+// Function to populate course & section dropdown from masterlist
+function populateCourseSectionDropdown() {
+    console.log('populateCourseSectionDropdown called');
+    $.ajax({
+        url: 'api/get-teacher-course-sections.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            console.log('API Response:', response);
+            if (response.success && response.course_sections) {
+                var dropdown = $('#modal_course_section');
+                // Clear existing options except the first one
+                dropdown.find('option:not(:first)').remove();
+                
+                // Add new options from the API response
+                response.course_sections.forEach(function(courseSection) {
+                    var option = $('<option></option>')
+                        .val(courseSection)
+                        .text(courseSection);
+                    dropdown.append(option);
+                });
+                
+                console.log('Course & section dropdown populated with', response.course_sections.length, 'items');
+            } else {
+                console.error('Failed to populate dropdown:', response.error || 'Unknown error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching course sections:', error);
+            console.error('Response:', xhr.responseText);
         }
     });
 }
@@ -1391,45 +1430,7 @@ function showHolidayDetails(date, holidayName, isNational) {
     $('#eventDetailsModal').modal('show');
 }
 
-// Function to open schedule modal
-function openScheduleModal(data) {
-    $('#modal_schedule_id').val('');
-    $('#scheduleForm')[0].reset();
-    
-    if (data.id) {
-        // Edit mode - fetch schedule data
-        $.ajax({
-            url: 'api/get-teacher-schedule.php',
-            type: 'GET',
-            data: { id: data.id },
-            success: function(response) {
-                try {
-                    var schedule = JSON.parse(response);
-                    if (schedule.success) {
-                        $('#modal_schedule_id').val(schedule.data.id);
-                        $('#modal_subject').val(schedule.data.subject);
-                        $('#modal_course_section').val(schedule.data.section);
-                        $('#modal_day_of_week').val(schedule.data.day_of_week);
-                        $('#modal_start_time').val(convertTo24Hour(schedule.data.start_time));
-                        $('#modal_end_time').val(convertTo24Hour(schedule.data.end_time));
-                        $('#modal_room').val(schedule.data.room);
-                        $('#modalTitle').text('Edit Schedule');
-                    }
-                } catch (e) {
-                    console.error('Error parsing schedule data:', e);
-                }
-            }
-        });
-    } else if (data.day) {
-        // Add mode with pre-filled day
-        $('#modal_day_of_week').val(data.day);
-        $('#modalTitle').text('Add New Schedule');
-    } else {
-        $('#modalTitle').text('Add New Schedule');
-    }
-    
-    $('#scheduleModal').modal('show');
-}
+
 
 // Function to delete schedule
 function deleteSchedule(scheduleId) {
