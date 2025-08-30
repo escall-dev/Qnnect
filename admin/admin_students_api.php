@@ -35,6 +35,59 @@ if (!$conn_qr) {
 
 $op = $_POST['op'] ?? 'list';
 
+if ($op === 'create_or_find') {
+	$name = trim($_POST['student_name'] ?? '');
+	$course_section = trim($_POST['course_section'] ?? '');
+	$school_id = isset($_POST['school_id']) && $_POST['school_id'] !== '' ? (int)$_POST['school_id'] : ($scopeSchoolId ?? null);
+	
+	if ($name === '' || $course_section === '' || !$school_id) { 
+		echo json_encode(['success'=>false,'message'=>'Missing required fields']); 
+		exit(); 
+	}
+	
+	// First, try to find existing student
+	$stmt_find = mysqli_prepare($conn_qr, 'SELECT tbl_student_id FROM tbl_student WHERE student_name = ? AND course_section = ? AND school_id = ? LIMIT 1');
+	mysqli_stmt_bind_param($stmt_find, 'ssi', $name, $course_section, $school_id);
+	mysqli_stmt_execute($stmt_find);
+	$result = mysqli_stmt_get_result($stmt_find);
+	
+	if ($result && $existing = mysqli_fetch_assoc($result)) {
+		// Student already exists, return existing ID
+		mysqli_stmt_close($stmt_find);
+		echo json_encode(['success' => true, 'student_id' => (int)$existing['tbl_student_id'], 'created' => false]);
+		exit();
+	}
+	mysqli_stmt_close($stmt_find);
+	
+	// Student doesn't exist, create new one
+	// Get a teacher/admin user_id for this school instead of using super admin's user_id
+	$user_id = 1; // Default fallback
+	if ($conn_login && $school_id) {
+		$stmt_user = mysqli_prepare($conn_login, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
+		mysqli_stmt_bind_param($stmt_user, 'i', $school_id);
+		mysqli_stmt_execute($stmt_user);
+		$res_user = mysqli_stmt_get_result($stmt_user);
+		if ($res_user && $user_data = mysqli_fetch_assoc($res_user)) {
+			$user_id = (int)$user_data['id'];
+		}
+		mysqli_stmt_close($stmt_user);
+	}
+	
+	$sql = "INSERT INTO tbl_student (student_name, course_section, user_id, school_id) VALUES (?,?,?,?)";
+	$stmt = mysqli_prepare($conn_qr, $sql);
+	mysqli_stmt_bind_param($stmt, 'ssii', $name, $course_section, $user_id, $school_id);
+	$ok = mysqli_stmt_execute($stmt);
+	$new_student_id = mysqli_insert_id($conn_qr);
+	mysqli_stmt_close($stmt);
+	
+	if ($ok) {
+		echo json_encode(['success' => true, 'student_id' => $new_student_id, 'created' => true]);
+	} else {
+		echo json_encode(['success' => false, 'message' => 'Failed to create student']);
+	}
+	exit();
+}
+
 if ($op === 'create') {
 	$name = trim($_POST['student_name'] ?? '');
 	$course_section = trim($_POST['course_section'] ?? '');

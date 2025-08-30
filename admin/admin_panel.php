@@ -1666,8 +1666,27 @@ $total_pages = ceil($total_logs / $logs_per_page);
                     <form id="attendanceForm">
                         <input type="hidden" id="attendance_id">
                         <div class="mb-3">
-                            <label class="form-label">Student ID</label>
-                            <input type="number" class="form-control" id="attendance_student_id" required>
+                            <label class="form-label">School</label>
+                            <select class="form-select" id="attendance_school_id" required>
+                                <option value="">Select School</option>
+                                <?php foreach ($all_schools as $school): ?>
+                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Student Name</label>
+                            <input type="text" class="form-control" id="attendance_student_name" required 
+                                   placeholder="Enter student name (will create new if doesn't exist)"
+                                   autocomplete="off">
+                            <div id="student_suggestions" class="dropdown-menu" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+                            <small class="form-text text-muted">Type student name - suggestions will appear for existing students</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Course/Section</label>
+                            <input type="text" class="form-control" id="attendance_course_section" required 
+                                   placeholder="e.g., BSIS - 302">
+                            <small class="form-text text-muted">Required for new students</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Time In</label>
@@ -1679,15 +1698,6 @@ $total_pages = ceil($total_logs / $logs_per_page);
                                 <option value="On Time">On Time</option>
                                 <option value="Late">Late</option>
                                 <option value="Absent">Absent</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">School</label>
-                            <select class="form-select" id="attendance_school_id" required>
-                                <option value="">Select School</option>
-                                <?php foreach ($all_schools as $school): ?>
-                                <option value="<?php echo (int)$school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
-                                <?php endforeach; ?>
                             </select>
                         </div>
                     </form>
@@ -1745,7 +1755,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
                         <div class="mb-3"><label class="form-label">Day of Week</label>
                             <select class="form-select" id="schedule_day">
                                 <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
-                                <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+                                <option>Thursday</option><option>Friday</option><option>Saturday</option>
                             </select>
                         </div>
                         <div class="row g-2">
@@ -2502,40 +2512,219 @@ $total_pages = ceil($total_logs / $logs_per_page);
 
         document.getElementById('student_add_btn')?.addEventListener('click', openStudentCreate);
 
+        // Student name autocomplete functionality
+        let studentSuggestions = [];
+        let selectedStudentData = null;
+
+        async function loadStudentSuggestions(schoolId) {
+            if (!schoolId) return;
+            
+            try {
+                const params = new URLSearchParams();
+                params.append('action', 'get_students');
+                params.append('school_id', schoolId);
+                
+                const res = await fetch('admin_students_api.php', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
+                    body: params.toString() 
+                });
+                const data = await res.json();
+                
+                if (data.success && data.students) {
+                    studentSuggestions = data.students;
+                } else {
+                    studentSuggestions = [];
+                }
+            } catch (error) {
+                console.error('Error loading student suggestions:', error);
+                studentSuggestions = [];
+            }
+        }
+
+        function showStudentSuggestions(input, query) {
+            const suggestionsDiv = document.getElementById('student_suggestions');
+            if (!query || query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            const filteredStudents = studentSuggestions.filter(student => 
+                student.student_name.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filteredStudents.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            suggestionsDiv.innerHTML = '';
+            filteredStudents.forEach(student => {
+                const item = document.createElement('a');
+                item.className = 'dropdown-item';
+                item.href = '#';
+                item.innerHTML = `<strong>${student.student_name}</strong><br><small>${student.course_section || 'No Section'}</small>`;
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectedStudentData = student;
+                    input.value = student.student_name;
+                    document.getElementById('attendance_course_section').value = student.course_section || '';
+                    suggestionsDiv.style.display = 'none';
+                });
+                suggestionsDiv.appendChild(item);
+            });
+
+            suggestionsDiv.style.display = 'block';
+        }
+
+        // Set up autocomplete for student name input
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInput = document.getElementById('attendance_student_name');
+            const suggestionsDiv = document.getElementById('student_suggestions');
+            
+            if (studentInput) {
+                studentInput.addEventListener('input', function() {
+                    selectedStudentData = null; // Reset selection when typing
+                    showStudentSuggestions(this, this.value);
+                });
+
+                studentInput.addEventListener('blur', function() {
+                    // Hide suggestions after a delay to allow clicking
+                    setTimeout(() => {
+                        suggestionsDiv.style.display = 'none';
+                    }, 200);
+                });
+            }
+        });
+
+        // Load student suggestions when school changes
+        document.getElementById('attendance_school_id')?.addEventListener('change', function() {
+            const schoolId = this.value;
+            selectedStudentData = null;
+            if (schoolId) {
+                loadStudentSuggestions(schoolId);
+            } else {
+                studentSuggestions = [];
+            }
+        });
+
         // ---- Attendance CRUD ----
         function openAttendanceCreate() {
             document.getElementById('attendanceModalTitle').textContent = 'Add Attendance';
             document.getElementById('attendance_id').value = '';
-            document.getElementById('attendance_student_id').value = '';
+            document.getElementById('attendance_student_name').value = '';
+            document.getElementById('attendance_course_section').value = '';
             document.getElementById('attendance_time_in').value = '';
             document.getElementById('attendance_status').value = 'On Time';
             document.getElementById('attendance_school_id').value = '';
+            selectedStudentData = null;
+            document.getElementById('student_suggestions').style.display = 'none';
             _attendanceModal?.show();
             document.getElementById('attendanceModalSave').onclick = saveAttendance;
         }
-        function openAttendanceEdit(id, studentId, timeIn, status, schoolId) {
+        async function openAttendanceEdit(id, studentId, studentName, courseSection, timeIn, status, schoolId) {
             document.getElementById('attendanceModalTitle').textContent = 'Edit Attendance';
             document.getElementById('attendance_id').value = id;
-            document.getElementById('attendance_student_id').value = studentId || '';
+            document.getElementById('attendance_student_name').value = studentName || '';
+            document.getElementById('attendance_course_section').value = courseSection || '';
             document.getElementById('attendance_time_in').value = timeIn ? timeIn.replace(' ', 'T') : '';
             document.getElementById('attendance_status').value = status || 'On Time';
             document.getElementById('attendance_school_id').value = schoolId || '';
+            
+            // Set selected student data for editing
+            if (studentId && studentName) {
+                selectedStudentData = {
+                    tbl_student_id: studentId,
+                    student_name: studentName,
+                    course_section: courseSection
+                };
+            } else {
+                selectedStudentData = null;
+            }
+            
+            // Load suggestions for the selected school
+            if (schoolId) {
+                await loadStudentSuggestions(schoolId);
+            }
+            
+            document.getElementById('student_suggestions').style.display = 'none';
             _attendanceModal?.show();
             document.getElementById('attendanceModalSave').onclick = saveAttendance;
         }
         async function saveAttendance() {
             const id = document.getElementById('attendance_id').value;
-            const studentId = document.getElementById('attendance_student_id').value;
+            const studentName = document.getElementById('attendance_student_name').value.trim();
+            const courseSection = document.getElementById('attendance_course_section').value.trim();
             const timeIn = document.getElementById('attendance_time_in').value;
             const status = document.getElementById('attendance_status').value;
             const schoolId = document.getElementById('attendance_school_id').value;
-            if (!studentId || !timeIn || !schoolId) { await showError('Please fill all fields'); return; }
-            const params = new URLSearchParams(); params.append('op', id ? 'update' : 'create');
-            if (id) params.append('id', id);
-            params.append('tbl_student_id', studentId); params.append('time_in', timeIn.replace('T',' ')); params.append('status', status); params.append('school_id', schoolId);
-            const res = await fetch('admin_attendance_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
-            const data = await res.json(); if (!data.success) { await showError(data.message || 'Save failed'); return; }
-            _attendanceModal?.hide(); await showSuccess('Attendance saved.'); loadAttendance();
+            
+            if (!studentName || !courseSection || !timeIn || !schoolId) { 
+                await showError('Please fill all fields'); 
+                return; 
+            }
+
+            let studentId;
+            
+            // Check if we have an existing student selected
+            if (selectedStudentData && selectedStudentData.student_name === studentName) {
+                studentId = selectedStudentData.tbl_student_id;
+            } else {
+                // Need to create new student or find existing one
+                try {
+                    const studentParams = new URLSearchParams();
+                    studentParams.append('op', 'create_or_find');
+                    studentParams.append('student_name', studentName);
+                    studentParams.append('course_section', courseSection);
+                    studentParams.append('school_id', schoolId);
+                    
+                    const studentRes = await fetch('admin_students_api.php', { 
+                        method: 'POST', 
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'}, 
+                        body: studentParams.toString() 
+                    });
+                    const studentData = await studentRes.json();
+                    
+                    if (!studentData.success) { 
+                        await showError(studentData.message || 'Failed to create/find student'); 
+                        return; 
+                    }
+                    
+                    studentId = studentData.student_id;
+                } catch (error) {
+                    await showError('Error creating/finding student');
+                    return;
+                }
+            }
+
+            // Now create/update attendance record
+            try {
+                const params = new URLSearchParams();
+                params.append('op', id ? 'update' : 'create');
+                if (id) params.append('id', id);
+                params.append('tbl_student_id', studentId);
+                params.append('time_in', timeIn.replace('T', ' '));
+                params.append('status', status);
+                params.append('school_id', schoolId);
+                
+                const res = await fetch('admin_attendance_api.php', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}, 
+                    body: params.toString() 
+                });
+                const data = await res.json();
+                
+                if (!data.success) { 
+                    await showError(data.message || 'Save failed'); 
+                    return; 
+                }
+                
+                _attendanceModal?.hide();
+                await showSuccess('Attendance saved.');
+                loadAttendance();
+            } catch (error) {
+                await showError('Error saving attendance');
+            }
         }
         async function deleteAttendance(id) {
             const ok = await showConfirm({ title:'Delete Attendance', message:'Are you sure you want to delete this entry?' }); if (!ok) return;
@@ -2608,7 +2797,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 const c6 = document.createElement('td');
                 const grp = document.createElement('div'); grp.className = 'btn-group btn-group-sm';
                 const eBtn = document.createElement('button'); eBtn.className = 'btn btn-outline-primary'; eBtn.innerHTML = '<i class="fas fa-pen"></i>';
-                eBtn.addEventListener('click', () => openAttendanceEdit(a.id, a.student_id || 0, a.time_in || '', a.status || '', a.school_id || 0));
+                eBtn.addEventListener('click', () => openAttendanceEdit(a.id, a.student_id || 0, a.student_name || '', a.course_section || '', a.time_in || '', a.status || '', a.school_id || 0));
                 const dBtn = document.createElement('button'); dBtn.className = 'btn btn-outline-danger'; dBtn.innerHTML = '<i class="fas fa-trash"></i>';
                 dBtn.addEventListener('click', () => deleteAttendance(a.id));
                 grp.appendChild(eBtn); grp.appendChild(dBtn); c6.appendChild(grp);

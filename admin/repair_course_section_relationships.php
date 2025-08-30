@@ -222,3 +222,4 @@ echo "<p><a href='admin_panel.php' style='background:#098744;color:white;padding
 echo "<a href='diagnose_course_section_data.php' style='background:#2196f3;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>Run Diagnostics Again</a></p>";
 echo "</body></html>";
 ?>
+

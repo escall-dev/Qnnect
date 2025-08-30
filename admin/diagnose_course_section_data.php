@@ -166,3 +166,4 @@ if ($orphaned_sections > 0) {
 echo "<p><a href='admin_panel.php' style='background:#098744;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>← Back to Admin Panel</a></p>";
 echo "</body></html>";
 ?>
+

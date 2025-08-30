@@ -2168,22 +2168,21 @@ $filteredSchedules = getFilteredSchedules(
                                         SELECT a.*, s.student_name, s.course_section 
                                         FROM tbl_attendance a
                                         LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id 
-                                            AND s.school_id = a.school_id 
-                                            AND s.user_id = a.user_id
-                                        WHERE a.time_in IS NOT NULL AND a.user_id = ? AND a.school_id = ?
+                                            AND s.school_id = a.school_id
+                                        WHERE a.time_in IS NOT NULL AND a.school_id = ?
                                         ORDER BY a.time_in DESC 
                                         LIMIT ?, ?
                                     ";
                                     
                                     $stmt = $conn_qr->prepare($query);
-                                    $stmt->bind_param("iiii", $user_id, $school_id, $offset, $limit);
+                                    $stmt->bind_param("iii", $school_id, $offset, $limit);
                                     $stmt->execute();
                                     $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
                                     // Get total records for pagination
-                                    $totalQuery = "SELECT COUNT(*) as total FROM tbl_attendance WHERE user_id = ? AND school_id = ?";
+                                    $totalQuery = "SELECT COUNT(*) as total FROM tbl_attendance WHERE school_id = ?";
                                     $totalStmt = $conn_qr->prepare($totalQuery);
-                                    $totalStmt->bind_param("ii", $user_id, $school_id);
+                                    $totalStmt->bind_param("i", $school_id);
                                     $totalStmt->execute();
                                     $totalResult = $totalStmt->get_result();
                                     $totalRow = $totalResult->fetch_assoc();
