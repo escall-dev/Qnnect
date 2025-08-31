@@ -548,24 +548,21 @@ if ($column_result->num_rows == 0) {
                             <select class="form-control mx-2" id="filterBy" style="width: 150px;">
                                 <option value="">All Courses</option>
                                 <?php
-                                // Build account-specific course-section options.
-                                // Use the existing mysqli connection ($conn_qr) which is available earlier in the file.
+                                // Build course-section options from actual student data only
                                 if (isset($user_id) && isset($school_id) && isset($conn_qr)) {
                                     $combo_seen = array();
-                                    // Include records that belong to the current user/school or global entries (user_id = 1)
-                                    $fs_query = "SELECT DISTINCT c.course_name, s.section_name
-                                                 FROM tbl_sections s
-                                                 JOIN tbl_courses c ON s.course_id = c.course_id
-                                                 WHERE ((s.user_id = ? AND s.school_id = ?) OR s.user_id = 1)
-                                                 AND ((c.user_id = ? AND c.school_id = ?) OR c.user_id = 1)
-                                                 ORDER BY c.course_name, s.section_name";
+                                    // Get distinct course_section values from actual student data
+                                    $fs_query = "SELECT DISTINCT course_section 
+                                                 FROM tbl_student 
+                                                 WHERE school_id = ? AND user_id = ?
+                                                 ORDER BY course_section";
                                     if ($stmt_fs = $conn_qr->prepare($fs_query)) {
-                                        $stmt_fs->bind_param('iiii', $user_id, $school_id, $user_id, $school_id);
+                                        $stmt_fs->bind_param('ii', $school_id, $user_id);
                                         $stmt_fs->execute();
                                         $res_fs = $stmt_fs->get_result();
                                         while ($r = $res_fs->fetch_assoc()) {
-                                            $combo = trim($r['course_name']) . '-' . trim($r['section_name']);
-                                            if (!in_array($combo, $combo_seen)) {
+                                            $combo = trim($r['course_section']);
+                                            if (!empty($combo) && !in_array($combo, $combo_seen)) {
                                                 $combo_seen[] = $combo;
                                                 $safe = htmlspecialchars($combo, ENT_QUOTES);
                                                 echo "<option value=\"{$safe}\">{$safe}</option>";
@@ -1973,16 +1970,21 @@ foreach ($result as $row) {
                 // Sort filtered results
                 if (sortValue) {
                     filteredStudents.sort((a, b) => {
-                        const aValue = sortValue.includes('name') 
-                            ? a.student_name
-                            : a.course_section;
-                        const bValue = sortValue.includes('name')
-                            ? b.student_name
-                            : b.course_section;
+                        let aValue, bValue;
                         
-                        return sortValue.includes('desc') 
-                            ? bValue.localeCompare(aValue)
-                            : aValue.localeCompare(bValue);
+                        if (sortValue.startsWith('name_')) {
+                            aValue = a.student_name.toLowerCase();
+                            bValue = b.student_name.toLowerCase();
+                        } else if (sortValue.startsWith('course_')) {
+                            aValue = a.course_section.toLowerCase();
+                            bValue = b.course_section.toLowerCase();
+                        }
+                        
+                        if (sortValue.endsWith('_desc')) {
+                            return bValue.localeCompare(aValue);
+                        } else {
+                            return aValue.localeCompare(bValue);
+                        }
                     });
                 }
 
@@ -2009,6 +2011,9 @@ foreach ($result as $row) {
 
                 // Hide pagination if searching/filtering
                 paginationContainer.style.display = (searchTerm || filterValue) ? 'none' : 'block';
+                
+                // Reattach QR listeners after table update
+                reattachQRListeners();
             }
 
             function resetAllFilters() {
@@ -2017,86 +2022,118 @@ foreach ($result as $row) {
                 filterSelect.value = '';
                 sortSelect.value = '';
 
-                // Reload the page to restore original pagination
-                window.location.reload();
+                // Clear current table content and reload original data
+                tbody.innerHTML = '';
+                
+                // Display all students without any filters
+                allStudentsData.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.className = 'student-row';
+                    row.innerHTML = `
+                        <td id="studentName-${student.tbl_student_id}">${student.student_name}</td>
+                        <td id="studentCourse-${student.tbl_student_id}">${student.course_section}</td>
+                        <td>
+                            <div class="action-button">
+                                <button class="btn btn-success btn-sm qr-button" data-id="${student.tbl_student_id}" data-name="${student.student_name}" data-qr="${student.generated_code}">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteStudent(${student.tbl_student_id})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Show pagination again
+                paginationContainer.style.display = 'block';
+                
+                // Reattach QR listeners after table update
+                reattachQRListeners();
+            }
+
+            // Reattach QR button event listeners after table updates
+            function reattachQRListeners() {
+                console.log('Reattaching QR listeners to', document.querySelectorAll('.qr-button').length, 'buttons');
+                document.querySelectorAll('.qr-button').forEach(button => {
+                    // Remove existing listeners to prevent duplicates
+                    button.removeEventListener('click', button.qrClickHandler);
+                    
+                    // Create new click handler
+                    button.qrClickHandler = function() {
+                        const studentName = this.dataset.name;
+                        const qrCode = this.dataset.qr;
+                        const studentId = this.dataset.id;
+                        const expiryOption = document.getElementById('qrExpirySelect').value || '1m';
+                        
+                        console.log('QR button clicked:', { studentName, qrCode });
+                            
+                        document.getElementById('qrModalTitle').textContent = studentName + "'s QR Code";
+                        const expiryInfo = document.getElementById('qrExpiryInfo');
+                        
+                        if (expiryOption === 'no_expiry') {
+                            console.log('Using NO EXPIRY logic');
+                            // For no expiry, show permanent QR code
+                            expiryInfo.textContent = 'Permanent QR Code - Never Expires';
+                            expiryInfo.style.color = '#28a745';
+                            expiryInfo.style.display = 'block';
+                            document.getElementById('qrModalImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode);
+                            if (window.qrExpiryTimer) clearInterval(window.qrExpiryTimer);
+                        } else {
+                            console.log('Using TIMED OPTION logic for:', expiryOption);
+                            // For timed options, generate dynamic token
+                            expiryInfo.textContent = 'Generating secure QR...';
+                            expiryInfo.style.display = 'block';
+                            expiryInfo.style.color = '#6c757d';
+                            document.getElementById('qrModalImage').src = '';
+                            if (window.qrExpiryTimer) clearInterval(window.qrExpiryTimer);
+                            
+                            fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId) + '&expiry_option=' + encodeURIComponent(expiryOption))
+                                .then(r => {
+                                    console.log('API response status:', r.status);
+                                    return r.json();
+                                })
+                                .then(data => {
+                                    console.log('API response data:', data);
+                                    if (data && data.success) {
+                                        document.getElementById('qrModalImage').src = data.data.qr_image_url;
+                                        const expiresAt = new Date(data.data.expires_at.replace(' ', 'T'));
+                                        function tick() {
+                                            const now = new Date();
+                                            const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
+                                            if (diff <= 0) { 
+                                                expiryInfo.style.color = '#dc3545';
+                                                expiryInfo.textContent = 'QR expired'; 
+                                                return; 
+                                            }
+                                            expiryInfo.style.color = '#6c757d';
+                                            expiryInfo.textContent = 'Expires in ' + formatTime(diff);
+                                            window.qrCountdownTimer = requestAnimationFrame(tick);
+                                        }
+                                        tick();
+                                    } else {
+                                        console.error('API returned error:', data);
+                                        document.getElementById('qrModalImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode);
+                                        expiryInfo.textContent = 'API Error - Using static QR';
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Fetch error:', error);
+                                    document.getElementById('qrModalImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode);
+                                    expiryInfo.textContent = 'Network Error - Using static QR';
+                                });
+                        }
+                        document.getElementById('globalQrModal').style.display = 'block';
+                    };
+                    
+                    // Attach the new listener
+                    button.addEventListener('click', button.qrClickHandler);
+                });
             }
 
                         // Apply filters when button is clicked
             applyButton.addEventListener('click', applyFiltersAndSort);
-            
-            // Reattach QR button event listeners after table updates
-            function reattachQRListeners() {
-                console.log('Reattaching QR listeners to', $('.qr-button').length, 'buttons');
-                $('.qr-button').off('click').on('click', function() {
-                    const studentName = $(this).data('name');
-                    const qrCode = $(this).data('qr');
-                    const studentId = $(this).data('id');
-                    const expiryOption = $('#qrExpirySelect').val() || '1m';
-                    
-                    console.log('QR button clicked (reattached):', { studentName, qrCode });
-                        
-                    $('#qrModalTitle').text(studentName + "'s QR Code");
-                    const $expiryInfo = $('#qrExpiryInfo');
-                    
-                    if (expiryOption === 'no_expiry') {
-                        console.log('Reattached - Using NO EXPIRY logic');
-                        // Reset modal state and clear any cached data
-                        resetModalState();
-                        
-                        // For no expiry, show permanent QR code
-                        $expiryInfo.text('Permanent QR Code - Never Expires');
-                        $expiryInfo.css('color', '#28a745').show();
-                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
-                        clearInterval(qrExpiryTimer);
-                    } else {
-                        console.log('Reattached - Using TIMED OPTION logic for:', expiryOption);
-                        // For timed options, generate dynamic token
-                        $expiryInfo.text('Generating secure QR...').show().css('color', '#6c757d');
-                        $('#qrModalImage').attr('src', '');
-                        clearInterval(qrExpiryTimer);
-                        
-                        fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId) + '&expiry_option=' + encodeURIComponent(expiryOption))
-                            .then(r => {
-                                console.log('API response status:', r.status);
-                                return r.json();
-                            })
-                            .then(data => {
-                                console.log('API response data:', data);
-                                if (data && data.success) {
-                                    $('#qrModalImage').attr('src', data.data.qr_image_url);
-                                    const expiresAt = new Date(data.data.expires_at.replace(' ', 'T'));
-                                    function tick() {
-                                        const now = new Date();
-                                        const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
-                                        if (diff <= 0) { 
-                                            $expiryInfo.css('color', '#dc3545').text('QR expired'); 
-                                            return; 
-                                        }
-                                        $expiryInfo.css('color', '#6c757d').text('Expires in ' + formatTime(diff));
-                                        window.qrCountdownTimer = requestAnimationFrame(tick);
-                                    }
-                                    tick();
-                                } else {
-                                    console.error('API returned error:', data);
-                                    $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
-                                    $expiryInfo.text('API Error - Using static QR');
-                                }
-                            })
-                            .catch((error) => {
-                                console.error('Fetch error:', error);
-                                $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
-                                $expiryInfo.text('Network Error - Using static QR');
-                            });
-                    }
-                    $('#globalQrModal').show();
-                });
-            }
-
-            // Call reattachQRListeners after table updates
-            const observer = new MutationObserver(reattachQRListeners);
-            if (tbody) {
-                observer.observe(tbody, { childList: true });
-            }
             
             // Reset filters when reset button is clicked
             resetButton.addEventListener('click', resetAllFilters);
@@ -2108,58 +2145,8 @@ foreach ($result as $row) {
                 }
             });
 
-            // Reattach QR button event listeners after table updates
-            function reattachQRListeners() {
-<<<<<<< Updated upstream
-                console.log('Reattaching QR listeners to', $('.qr-button').length, 'buttons');
-                $('.qr-button').off('click').on('click', function() {
-                    const studentId = $(this).data('id');
-                    const studentName = $(this).data('name');
-                    $('#qrModalTitle').text(studentName + "'s QR Code");
-                    $('#qrModalImage').attr('src', '');
-                    $('#qrExpiryInfo').hide().css('color', '#098744');
-                    clearInterval(qrExpiryTimer);
-
-                    fetch('api/generate-student-qr.php?student_id=' + encodeURIComponent(studentId), { cache: 'no-store' })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data && data.success) {
-                                $('#qrModalImage').attr('src', data.data.qr_image_url);
-                                try {
-                                    const expiresAt = new Date(data.data.expires_at.replace(' ', 'T') + '+08:00');
-                                    const now = new Date();
-                                    const diff = Math.max(0, Math.round((expiresAt.getTime() - now.getTime()) / 1000));
-                                    startQrCountdown(diff || 60);
-                                } catch (e) {
-                                    startQrCountdown(60);
-                                }
-                            } else {
-                                alert((data && data.message) ? data.message : 'Failed to generate QR');
-                            }
-                        })
-                        .catch(err => {
-                            console.error('QR generation error', err);
-                            alert('Network error generating QR');
-                        });
-
-                    $('#globalQrModal').show();
-=======
-                document.querySelectorAll('.qr-button').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const studentName = this.dataset.name;
-                        const qrCode = this.dataset.qr;
-                        
-                        $('#qrModalTitle').text(studentName + "'s QR Code");
-                        $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + qrCode);
-                        $('#globalQrModal').show();
-                    });
->>>>>>> Stashed changes
-                });
-            }
-
-            // Call reattachQRListeners after table updates
-            const observer = new MutationObserver(reattachQRListeners);
-            observer.observe(tbody, { childList: true });
+            // Initial QR listeners attachment
+            reattachQRListeners();
         });
     </script>
 

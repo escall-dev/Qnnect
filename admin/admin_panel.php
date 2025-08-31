@@ -2805,6 +2805,32 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 tbody.appendChild(tr);
             });
         }
+        
+        // Function to format time from 24-hour to 12-hour format
+        function formatTimeTo12Hour(timeString) {
+            if (!timeString) return '';
+            
+            // Check if already in 12-hour format
+            if (timeString.includes('AM') || timeString.includes('PM')) {
+                return timeString;
+            }
+            
+            // Convert 24-hour to 12-hour format
+            try {
+                const date = new Date('1970-01-01T' + timeString);
+                if (isNaN(date.getTime())) return timeString; // Return original if invalid
+                
+                const options = { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                };
+                return date.toLocaleTimeString('en-US', options);
+            } catch (e) {
+                return timeString; // Return original if conversion fails
+            }
+        }
+        
         async function loadSchedules() {
             const r = await fetch('admin_schedules_api.php', { method:'POST' });
             const data = await r.json();
@@ -2814,7 +2840,10 @@ $total_pages = ceil($total_logs / $logs_per_page);
             if (!data.success) { tbody.innerHTML = '<tr><td colspan="8">Failed to load</td></tr>'; return; }
             data.schedules.forEach(s => {
                 const tr = document.createElement('tr');
-                const tds = [s.subject||'', s.teacher_username||'', s.section||'', s.day_of_week||'', s.start_time||'', s.end_time||'', s.room||''];
+                // Format start and end times to 12-hour format
+                const startTimeFormatted = formatTimeTo12Hour(s.start_time);
+                const endTimeFormatted = formatTimeTo12Hour(s.end_time);
+                const tds = [s.subject||'', s.teacher_username||'', s.section||'', s.day_of_week||'', startTimeFormatted, endTimeFormatted, s.room||''];
                 tds.forEach(v => { const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
                 const act = document.createElement('td'); const grp=document.createElement('div'); grp.className='btn-group btn-group-sm';
                 const e=document.createElement('button'); e.className='btn btn-outline-primary'; e.innerHTML='<i class="fas fa-pen"></i>'; e.addEventListener('click',()=>openScheduleEdit(s.id));

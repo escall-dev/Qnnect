@@ -1110,22 +1110,56 @@ function openScheduleModal(data) {
     
     if (data.id) {
         // Edit mode - fetch schedule data
-        $.get('api/get-teacher-schedule.php?id=' + data.id)
-            .done(function(response) {
+        console.log('Fetching schedule data for ID:', data.id);
+        
+        $.ajax({
+            url: 'api/get-teacher-schedule.php?id=' + data.id,
+            method: 'GET',
+            dataType: 'json',
+            timeout: 10000, // 10 second timeout
+            success: function(responseData) {
+                console.log('API response received:', responseData);
                 try {
-                    var schedule = JSON.parse(response).data;
-                    $('#modal_schedule_id').val(schedule.id);
-                    $('#modal_subject').val(schedule.subject);
-                    $('#modal_course_section').val(schedule.section);
-                    $('#modal_day_of_week').val(schedule.day_of_week);
-                    $('#modal_start_time').val(convertTo24Hour(schedule.start_time));
-                    $('#modal_end_time').val(convertTo24Hour(schedule.end_time));
-                    $('#modal_room').val(schedule.room || '');
-                    $('#modalTitle').text('Edit Schedule');
+                    if (responseData.success && responseData.data) {
+                        var schedule = responseData.data;
+                        console.log('Schedule data:', schedule);
+                        $('#modal_schedule_id').val(schedule.id);
+                        $('#modal_subject').val(schedule.subject);
+                        $('#modal_course_section').val(schedule.section);
+                        $('#modal_day_of_week').val(schedule.day_of_week);
+                        $('#modal_start_time').val(convertTo24Hour(schedule.start_time));
+                        $('#modal_end_time').val(convertTo24Hour(schedule.end_time));
+                        $('#modal_room').val(schedule.room || '');
+                        $('#modalTitle').text('Edit Schedule');
+                        console.log('Form populated successfully');
+                    } else {
+                        console.error('API Error:', responseData.message || 'Unknown error');
+                        // Don't show alert, just log the error and continue
+                        console.log('Failed to load schedule data, using empty form');
+                        $('#scheduleForm')[0].reset();
+                        $('#modal_schedule_id').val('');
+                        $('#modalTitle').text('Edit Schedule');
+                    }
                 } catch (e) {
-                    alert('Error loading schedule data');
+                    console.error('Error processing schedule data:', e);
+                    // Don't show alert, just log the error and continue
+                    console.log('Failed to process schedule data, using empty form');
+                    $('#scheduleForm')[0].reset();
+                    $('#modal_schedule_id').val('');
+                    $('#modalTitle').text('Edit Schedule');
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                console.error('Response text:', xhr.responseText);
+                console.error('Status code:', xhr.status);
+                // Don't show alert, just log the error and continue
+                console.log('AJAX request failed, using empty form');
+                $('#scheduleForm')[0].reset();
+                $('#modal_schedule_id').val('');
+                $('#modalTitle').text('Edit Schedule');
+            }
+        });
     } else {
         // Add mode - clear form
         $('#scheduleForm')[0].reset();
