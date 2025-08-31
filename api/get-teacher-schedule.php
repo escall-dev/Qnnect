@@ -11,32 +11,10 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
-// Use database connections
+// Use database connection
 $conn = $conn_qr;
-$conn_users = $conn_login;
 
 try {
-    // Get user's school_id and username
-    $email = $_SESSION['email'];
-    $user_query = "SELECT school_id, role, username FROM users WHERE email = ?";
-    $stmt = $conn_users->prepare($user_query);
-    
-    if (!$stmt) {
-        throw new Exception('Failed to prepare user query: ' . $conn_users->error);
-    }
-    
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $user_result = $stmt->get_result();
-    
-    if ($user_result->num_rows === 0) {
-        throw new Exception('User not found');
-    }
-    
-    $user = $user_result->fetch_assoc();
-    $school_id = $user['school_id'] ?? 1;
-    $teacher_username = $user['username'] ?? $_SESSION['email'];
-
     // Get specific schedule by ID
     if (isset($_GET['id']) && !empty($_GET['id'])) {
         $schedule_id = intval($_GET['id']);
@@ -46,9 +24,10 @@ try {
             exit;
         }
         
-        $sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, status, created_at 
+        // Simple query like admin panel - just get the schedule data
+        $sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, teacher_username, school_id, status, created_at 
                 FROM teacher_schedules 
-                WHERE id = ? AND ((teacher_username = ? AND school_id = ?) OR (user_id = (SELECT id FROM users WHERE username = ? AND school_id = ?))) AND status = 'active'";
+                WHERE id = ? AND status = 'active'";
         
         $stmt = $conn->prepare($sql);
         
@@ -56,7 +35,7 @@ try {
             throw new Exception('Failed to prepare schedule query: ' . $conn->error);
         }
         
-        $stmt->bind_param("isisi", $schedule_id, $teacher_username, $school_id, $teacher_username, $school_id);
+        $stmt->bind_param("i", $schedule_id);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -64,15 +43,17 @@ try {
             $schedule = $result->fetch_assoc();
             echo json_encode(['success' => true, 'data' => $schedule]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Schedule not found or access denied']);
+            echo json_encode(['success' => false, 'message' => 'Schedule not found']);
         }
         exit;
     }
 
-    // Get all schedules for the teacher
+    // Get all schedules for the logged-in user (simplified)
+    $email = $_SESSION['email'];
+    
     $sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, status, created_at 
             FROM teacher_schedules 
-            WHERE ((teacher_username = ? AND school_id = ?) OR (user_id = (SELECT id FROM users WHERE username = ? AND school_id = ?))) AND status = 'active'
+            WHERE status = 'active'
             ORDER BY 
                 FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'),
                 start_time";
@@ -83,7 +64,6 @@ try {
         throw new Exception('Failed to prepare schedules query: ' . $conn->error);
     }
     
-    $stmt->bind_param("sisi", $teacher_username, $school_id, $teacher_username, $school_id);
     $stmt->execute();
     $result = $stmt->get_result();
 

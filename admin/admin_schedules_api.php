@@ -80,6 +80,20 @@ if ($op === 'delete') {
 	exit();
 }
 
+if ($op === 'get') {
+	$id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+	if ($id <= 0) { echo json_encode(['success'=>false,'message'=>'Invalid id']); exit(); }
+	$stmt = mysqli_prepare($conn_qr, 'SELECT id, subject, section, day_of_week, start_time, end_time, room, teacher_username, school_id FROM teacher_schedules WHERE id = ? AND status = "active"');
+	mysqli_stmt_bind_param($stmt, 'i', $id);
+	mysqli_stmt_execute($stmt);
+	$res = mysqli_stmt_get_result($stmt);
+	$schedule = $res ? mysqli_fetch_assoc($res) : null;
+	mysqli_stmt_close($stmt);
+	if (!$schedule) { echo json_encode(['success'=>false,'message'=>'Schedule not found']); exit(); }
+	echo json_encode(['success'=>true,'schedule'=>$schedule]);
+	exit();
+}
+
 $rows = [];
 if ($scopeSchoolId) {
 	$sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, teacher_username, school_id

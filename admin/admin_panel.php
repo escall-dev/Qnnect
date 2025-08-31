@@ -2750,8 +2750,60 @@ $total_pages = ceil($total_logs / $logs_per_page);
             _scheduleModal?.show(); document.getElementById('scheduleModalSave').onclick = saveSchedule;
         }
         function openScheduleEdit(id) {
-            // Minimal editor: ask user to retype fields for now (enhance later by fetching one row if needed)
-            document.getElementById('schedule_id').value=id; _scheduleModal?.show(); document.getElementById('scheduleModalSave').onclick = saveSchedule; document.getElementById('scheduleModalTitle').textContent = 'Edit Schedule';
+            // Fetch schedule data and populate the form
+            document.getElementById('schedule_id').value = id;
+            document.getElementById('scheduleModalTitle').textContent = 'Edit Schedule';
+            
+            // Fetch the schedule data
+            const params = new URLSearchParams();
+            params.append('op', 'get');
+            params.append('id', id);
+            
+            fetch('admin_schedules_api.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: params.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.schedule) {
+                    const schedule = data.schedule;
+                    document.getElementById('schedule_subject').value = schedule.subject || '';
+                    document.getElementById('schedule_teacher').value = schedule.teacher_username || '';
+                    document.getElementById('schedule_section').value = schedule.section || '';
+                    document.getElementById('schedule_day').value = schedule.day_of_week || 'Monday';
+                    document.getElementById('schedule_start').value = schedule.start_time || '';
+                    document.getElementById('schedule_end').value = schedule.end_time || '';
+                    document.getElementById('schedule_room').value = schedule.room || '';
+                    document.getElementById('schedule_school_id').value = schedule.school_id || '';
+                } else {
+                    console.error('Failed to load schedule data:', data.message);
+                    // Still show the modal but with empty fields
+                    document.getElementById('schedule_subject').value = '';
+                    document.getElementById('schedule_teacher').value = '';
+                    document.getElementById('schedule_section').value = '';
+                    document.getElementById('schedule_day').value = 'Monday';
+                    document.getElementById('schedule_start').value = '';
+                    document.getElementById('schedule_end').value = '';
+                    document.getElementById('schedule_room').value = '';
+                    document.getElementById('schedule_school_id').value = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching schedule data:', error);
+                // Still show the modal but with empty fields
+                document.getElementById('schedule_subject').value = '';
+                document.getElementById('schedule_teacher').value = '';
+                document.getElementById('schedule_section').value = '';
+                document.getElementById('schedule_day').value = 'Monday';
+                document.getElementById('schedule_start').value = '';
+                document.getElementById('schedule_end').value = '';
+                document.getElementById('schedule_room').value = '';
+                document.getElementById('schedule_school_id').value = '';
+            });
+            
+            _scheduleModal?.show();
+            document.getElementById('scheduleModalSave').onclick = saveSchedule;
         }
         async function saveSchedule() {
             const id=document.getElementById('schedule_id').value; const subject=document.getElementById('schedule_subject').value.trim(); const teacher=document.getElementById('schedule_teacher').value.trim(); const section=document.getElementById('schedule_section').value.trim(); const day=document.getElementById('schedule_day').value; const start=document.getElementById('schedule_start').value; const end=document.getElementById('schedule_end').value; const room=document.getElementById('schedule_room').value.trim(); const schoolId=document.getElementById('schedule_school_id').value;

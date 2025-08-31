@@ -1105,75 +1105,111 @@ $(document).ready(function() {
 });
 
 function openScheduleModal(data) {
-    // Populate course & section dropdown first
-    populateCourseSectionDropdown();
+    console.log('openScheduleModal called with data:', data);
     
     if (data.id) {
         // Edit mode - fetch schedule data
         console.log('Fetching schedule data for ID:', data.id);
         
-        $.ajax({
-            url: 'api/get-teacher-schedule.php?id=' + data.id,
-            method: 'GET',
-            dataType: 'json',
-            timeout: 10000, // 10 second timeout
-            success: function(responseData) {
-                console.log('API response received:', responseData);
-                try {
-                    if (responseData.success && responseData.data) {
-                        var schedule = responseData.data;
-                        console.log('Schedule data:', schedule);
-                        $('#modal_schedule_id').val(schedule.id);
-                        $('#modal_subject').val(schedule.subject);
-                        $('#modal_course_section').val(schedule.section);
-                        $('#modal_day_of_week').val(schedule.day_of_week);
-                        $('#modal_start_time').val(convertTo24Hour(schedule.start_time));
-                        $('#modal_end_time').val(convertTo24Hour(schedule.end_time));
-                        $('#modal_room').val(schedule.room || '');
-                        $('#modalTitle').text('Edit Schedule');
-                        console.log('Form populated successfully');
-                    } else {
-                        console.error('API Error:', responseData.message || 'Unknown error');
-                        // Don't show alert, just log the error and continue
-                        console.log('Failed to load schedule data, using empty form');
-                        $('#scheduleForm')[0].reset();
-                        $('#modal_schedule_id').val('');
-                        $('#modalTitle').text('Edit Schedule');
+        // Clear form first but don't show modal yet
+        $('#scheduleForm')[0].reset();
+        $('#modal_schedule_id').val(data.id);
+        $('#modalTitle').text('Edit Schedule');
+        
+        // First populate the dropdown, then fetch schedule data
+        populateCourseSectionDropdown().then(function() {
+            console.log('Dropdown populated, now fetching schedule data...');
+            
+            // After dropdown is populated, fetch the schedule data
+            $.ajax({
+                url: 'api/get-teacher-schedule.php?id=' + data.id,
+                method: 'GET',
+                dataType: 'json',
+                timeout: 10000, // 10 second timeout
+                success: function(responseData) {
+                    console.log('API response received:', responseData);
+                    try {
+                        if (responseData.success && responseData.data) {
+                            var schedule = responseData.data;
+                            console.log('Schedule data:', schedule);
+                            
+                            // Populate form fields with fetched data
+                            $('#modal_schedule_id').val(schedule.id);
+                            $('#modal_subject').val(schedule.subject || '');
+                            $('#modal_course_section').val(schedule.section || '');
+                            $('#modal_day_of_week').val(schedule.day_of_week || 'Monday');
+                            $('#modal_start_time').val(convertTo24Hour(schedule.start_time || ''));
+                            $('#modal_end_time').val(convertTo24Hour(schedule.end_time || ''));
+                            $('#modal_room').val(schedule.room || '');
+                            
+                            console.log('Form populated successfully');
+                            console.log('Set course section to:', schedule.section);
+                            
+                            // Trigger change events to update any dependent dropdowns
+                            $('#modal_course_section').trigger('change');
+                            
+                            // Now show the modal with populated data
+                            $('#scheduleModal').modal('show');
+                        } else {
+                            console.error('API Error:', responseData.message || 'Unknown error');
+                            // Show modal anyway for manual editing, but log the error
+                            console.log('Failed to load schedule data, showing modal for manual edit');
+                            $('#scheduleModal').modal('show');
+                        }
+                    } catch (e) {
+                        console.error('Error processing schedule data:', e);
+                        // Show modal anyway for manual editing
+                        console.log('Failed to process schedule data, showing modal for manual edit');
+                        $('#scheduleModal').modal('show');
                     }
-                } catch (e) {
-                    console.error('Error processing schedule data:', e);
-                    // Don't show alert, just log the error and continue
-                    console.log('Failed to process schedule data, using empty form');
-                    $('#scheduleForm')[0].reset();
-                    $('#modal_schedule_id').val('');
-                    $('#modalTitle').text('Edit Schedule');
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                    console.error('Response text:', xhr.responseText);
+                    console.error('Status code:', xhr.status);
+                    // Show modal anyway for manual editing
+                    console.log('AJAX request failed, showing modal for manual edit');
+                    $('#scheduleModal').modal('show');
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-                console.error('Response text:', xhr.responseText);
-                console.error('Status code:', xhr.status);
-                // Don't show alert, just log the error and continue
-                console.log('AJAX request failed, using empty form');
-                $('#scheduleForm')[0].reset();
-                $('#modal_schedule_id').val('');
-                $('#modalTitle').text('Edit Schedule');
-            }
+            });
+        }).catch(function(error) {
+            console.error('Error populating dropdown:', error);
+            // Still try to show the modal
+            $('#scheduleModal').modal('show');
         });
     } else {
-        // Add mode - clear form
-        $('#scheduleForm')[0].reset();
-        $('#modal_schedule_id').val('');
-        if (data.day) {
-            $('#modal_day_of_week').val(data.day);
-        }
-        $('#modalTitle').text('Add New Schedule');
+        // Add mode - populate dropdown then clear form and show modal
+        populateCourseSectionDropdown().then(function() {
+            $('#scheduleForm')[0].reset();
+            $('#modal_schedule_id').val('');
+            if (data.day) {
+                $('#modal_day_of_week').val(data.day);
+            }
+            $('#modalTitle').text('Add New Schedule');
+            $('#scheduleModal').modal('show');
+        }).catch(function(error) {
+            console.error('Error populating dropdown for add mode:', error);
+            // Still show the modal
+            $('#scheduleForm')[0].reset();
+            $('#modal_schedule_id').val('');
+            if (data.day) {
+                $('#modal_day_of_week').val(data.day);
+            }
+            $('#modalTitle').text('Add New Schedule');
+            $('#scheduleModal').modal('show');
+        });
     }
-    $('#scheduleModal').modal('show');
 }
 
 function convertTo24Hour(time12h) {
-    if (time12h.includes('PM') || time12h.includes('AM')) {
+    if (!time12h) return '';
+    
+    // If already in 24-hour format, return as is
+    if (!time12h.includes('PM') && !time12h.includes('AM')) {
+        return time12h;
+    }
+    
+    try {
         const [time, modifier] = time12h.split(' ');
         let [hours, minutes] = time.split(':');
         hours = parseInt(hours);
@@ -1185,8 +1221,10 @@ function convertTo24Hour(time12h) {
         }
         
         return `${hours.toString().padStart(2, '0')}:${minutes}`;
+    } catch (e) {
+        console.error('Error converting time:', time12h, e);
+        return time12h; // Return original if conversion fails
     }
-    return time12h;
 }
 
 function getDayOfWeek(dateString) {
@@ -1242,34 +1280,39 @@ function showHolidayDetails(date) {
 // Function to populate course & section dropdown from masterlist
 function populateCourseSectionDropdown() {
     console.log('populateCourseSectionDropdown called');
-    $.ajax({
-        url: 'api/get-teacher-course-sections.php',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            console.log('API Response:', response);
-            if (response.success && response.course_sections) {
-                var dropdown = $('#modal_course_section');
-                // Clear existing options except the first one
-                dropdown.find('option:not(:first)').remove();
-                
-                // Add new options from the API response
-                response.course_sections.forEach(function(courseSection) {
-                    var option = $('<option></option>')
-                        .val(courseSection)
-                        .text(courseSection);
-                    dropdown.append(option);
-                });
-                
-                console.log('Course & section dropdown populated with', response.course_sections.length, 'items');
-            } else {
-                console.error('Failed to populate dropdown:', response.error || 'Unknown error');
+    return new Promise(function(resolve, reject) {
+        $.ajax({
+            url: 'api/get-teacher-course-sections.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                console.log('API Response:', response);
+                if (response.success && response.course_sections) {
+                    var dropdown = $('#modal_course_section');
+                    // Clear existing options except the first one
+                    dropdown.find('option:not(:first)').remove();
+                    
+                    // Add new options from the API response
+                    response.course_sections.forEach(function(courseSection) {
+                        var option = $('<option></option>')
+                            .val(courseSection)
+                            .text(courseSection);
+                        dropdown.append(option);
+                    });
+                    
+                    console.log('Course & section dropdown populated with', response.course_sections.length, 'items');
+                    resolve(response);
+                } else {
+                    console.error('Failed to populate dropdown:', response.error || 'Unknown error');
+                    reject(new Error(response.error || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching course sections:', error);
+                console.error('Response:', xhr.responseText);
+                reject(new Error(error));
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error fetching course sections:', error);
-            console.error('Response:', xhr.responseText);
-        }
+        });
     });
 }
 
