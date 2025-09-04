@@ -5474,6 +5474,10 @@ $filteredSchedules = getFilteredSchedules(
             }
             
         function checkForNewAttendance() {
+                // Prevent auto-prepend of page 1 rows while viewing other pages
+                if (window.currentAttendancePage && window.currentAttendancePage !== 1) {
+                    return;
+                }
                 $.ajax({
                     url: 'api/get-latest-attendance.php',
                     type: 'GET',
@@ -5561,11 +5565,14 @@ $filteredSchedules = getFilteredSchedules(
                 }, 5000);
             }
             
-            // Initialize real-time updates
-            initializeLastAttendanceId();
-            
-            // Check for new attendance every 5 seconds
-            setInterval(checkForNewAttendance, 5000);
+            // Initialize real-time updates only on page 1
+            window.currentAttendancePage = <?php echo (int)$page; ?>;
+            if (window.currentAttendancePage === 1) {
+                initializeLastAttendanceId();
+                window.attendancePoller = setInterval(checkForNewAttendance, 5000);
+            } else if (window.attendancePoller) {
+                clearInterval(window.attendancePoller);
+            }
             
             // Enhanced session validation for QR scanning
             function validateSession() {
