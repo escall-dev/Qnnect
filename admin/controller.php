@@ -71,12 +71,22 @@ function handleEdit() {
             }
         }
         
+        // Get current username before making any updates (for related table updates)
+        $current_user_query = "SELECT username FROM users WHERE email = ?";
+        $current_stmt = $conn->prepare($current_user_query);
+        $current_stmt->bind_param("s", $email);
+        $current_stmt->execute();
+        $current_result = $current_stmt->get_result();
+        $current_user = $current_result->fetch_assoc();
+        $old_username = $current_user['username'] ?? null;
+        $current_stmt->close();
+        
         if (empty($updates)) {
             $_SESSION['error'] = "No changes to update.";
             header("Location: users.php");
             exit;
         }
-        
+
         // Add email to parameters for WHERE clause
         $params[] = $email;
         
@@ -99,9 +109,29 @@ function handleEdit() {
             
             // Execute the statement
             if ($stmt->execute()) {
-                // Update session variables
+                // If username was updated, we need to update related tables
+                if (!empty($username) && $old_username && $old_username !== $username) {
+                    require_once '../conn/db_connect.php';
+                    
+                    // Update teacher_schedules table with new username
+                    $update_schedules_query = "UPDATE teacher_schedules SET teacher_username = ? WHERE teacher_username = ?";
+                    $schedule_stmt = $conn_qr->prepare($update_schedules_query);
+                    $schedule_stmt->bind_param("ss", $username, $old_username);
+                    
+                    if ($schedule_stmt->execute()) {
+                        $affected_rows = $schedule_stmt->affected_rows;
+                        error_log("Updated teacher_schedules: changed username from '$old_username' to '$username' ($affected_rows rows affected)");
+                    } else {
+                        error_log("Failed to update teacher_schedules: " . $schedule_stmt->error);
+                    }
+                    $schedule_stmt->close();
+                }                // Update session variables
                 if (!empty($username)) {
                     $_SESSION['username'] = $username;
+                    // Also update userData session if it exists
+                    if (isset($_SESSION['userData'])) {
+                        $_SESSION['userData']['username'] = $username;
+                    }
                 }
                 if (isset($profile_image)) {
                     $_SESSION['profile_image'] = $profile_image;

@@ -12,7 +12,9 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $school_id = $_SESSION['school_id'];
-$instructor_name = $_SESSION['current_instructor_name'] ?? '';
+
+// Get the actual teacher username from the login system (this doesn't change when instructor display name is edited)
+$teacher_username = $_SESSION['userData']['username'] ?? $_SESSION['email'] ?? '';
 
 // Get POST data
 $input = json_decode(file_get_contents('php://input'), true);
@@ -25,25 +27,26 @@ if (empty($subject) || empty($section)) {
 }
 
 try {
-    // Get specific schedule details
+    // Get specific schedule details from teacher_schedules table
     $query = "SELECT 
                 subject, 
-                course_section as section,
+                section as section,
                 start_time,
                 end_time,
-                day,
+                day_of_week as day,
                 room,
-                instructor_name
+                teacher_username as instructor_name
               FROM teacher_schedules 
-              WHERE instructor_name = ? 
+              WHERE teacher_username = ? 
               AND subject = ?
-              AND course_section = ?
+              AND section = ?
               AND user_id = ? 
               AND school_id = ?
+              AND status = 'active'
               LIMIT 1";
               
     $stmt = $conn_qr->prepare($query);
-    $stmt->bind_param("sssii", $instructor_name, $subject, $section, $user_id, $school_id);
+    $stmt->bind_param("sssii", $teacher_username, $subject, $section, $user_id, $school_id);
     $stmt->execute();
     $result = $stmt->get_result();
     

@@ -155,8 +155,32 @@ if ($column_result->num_rows == 0) {
         .table-container {
             width: 100%;
             overflow-x: auto;
+            overflow-y: auto; /* Add vertical scrolling */
+            max-height: 400px; /* Limit height to ensure pagination is visible */
             transition: all 0.3s ease;
             margin: 15px 0; /* Add some vertical spacing */
+            border: 1px solid #dee2e6; /* Add border for visual clarity */
+            border-radius: 8px;
+        }
+
+        /* Custom scrollbar styling */
+        .table-container::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #098744;
+            border-radius: 5px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #076a34;
         }
 
         /* Table styles */
@@ -483,6 +507,13 @@ if ($column_result->num_rows == 0) {
             
             .table-container {
                 font-size: 14px;
+                max-height: 300px; /* Smaller height on mobile */
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-container {
+                max-height: 250px; /* Even smaller on very small screens */
             }
         }
 

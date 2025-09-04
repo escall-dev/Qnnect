@@ -12,25 +12,28 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['school_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $school_id = $_SESSION['school_id'];
-$instructor_name = $_SESSION['current_instructor_name'] ?? '';
+
+// Get the actual teacher username from the login system (this doesn't change when instructor display name is edited)
+$teacher_username = $_SESSION['userData']['username'] ?? $_SESSION['email'] ?? '';
 
 try {
-    // Get schedules for the current instructor
+    // Get schedules for the current instructor using teacher_username from teacher_schedules table
     $query = "SELECT DISTINCT 
                 subject, 
-                course_section as section,
+                section as section,
                 start_time,
                 end_time,
-                day,
+                day_of_week as day,
                 room
               FROM teacher_schedules 
-              WHERE instructor_name = ? 
+              WHERE teacher_username = ? 
               AND user_id = ? 
               AND school_id = ?
-              ORDER BY subject, course_section";
+              AND status = 'active'
+              ORDER BY subject, section";
               
     $stmt = $conn_qr->prepare($query);
-    $stmt->bind_param("sii", $instructor_name, $user_id, $school_id);
+    $stmt->bind_param("sii", $teacher_username, $user_id, $school_id);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -55,7 +58,7 @@ try {
         'schedules' => $schedules,
         'subjects' => $subjects,
         'sections' => $sections,
-        'instructor_name' => $instructor_name
+        'instructor_name' => $teacher_username
     ]);
     
 } catch (Exception $e) {

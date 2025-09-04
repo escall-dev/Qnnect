@@ -236,9 +236,40 @@ if (isset($_POST['action'])) {
             $types .= 'i';
             $params[] = $uid;
             $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?';
+            // Get the old username before making updates (for cascading updates)
+            $old_username = null;
+            if ($username !== null && $username !== '') {
+                $old_username_query = "SELECT username FROM users WHERE id = ?";
+                $old_stmt = mysqli_prepare($conn, $old_username_query);
+                mysqli_stmt_bind_param($old_stmt, 'i', $uid);
+                mysqli_stmt_execute($old_stmt);
+                $old_result = mysqli_stmt_get_result($old_stmt);
+                $old_user = $old_result ? mysqli_fetch_assoc($old_result) : null;
+                $old_username = $old_user ? $old_user['username'] : null;
+                mysqli_stmt_close($old_stmt);
+            }
+            
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, $types, ...$params);
             if (mysqli_stmt_execute($stmt)) {
+                // If username was updated, update related tables
+                if ($username !== null && $username !== '' && $old_username && $old_username !== $username) {
+                    // Update teacher_schedules table with new username
+                    require_once '../conn/db_connect.php';
+                    
+                    $update_schedules_query = "UPDATE teacher_schedules SET teacher_username = ? WHERE teacher_username = ?";
+                    $schedule_stmt = mysqli_prepare($conn_qr, $update_schedules_query);
+                    mysqli_stmt_bind_param($schedule_stmt, 'ss', $username, $old_username);
+                    
+                    if (mysqli_stmt_execute($schedule_stmt)) {
+                        $affected_rows = mysqli_affected_rows($conn_qr);
+                        error_log("Admin Panel: Updated teacher_schedules: changed username from '$old_username' to '$username' ($affected_rows rows affected)");
+                    } else {
+                        error_log("Admin Panel: Failed to update teacher_schedules: " . mysqli_error($conn_qr));
+                    }
+                    mysqli_stmt_close($schedule_stmt);
+                }
+                
                 logActivity($conn, 'USER_UPDATED', "User ID: {$uid}");
                 echo json_encode(['success' => true, 'message' => 'User updated successfully']);
             } else {
