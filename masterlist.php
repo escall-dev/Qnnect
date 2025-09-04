@@ -639,6 +639,7 @@ if ($column_result->num_rows == 0) {
                                     <i class="fas fa-clock"></i> QR Expiry Time
                                 </label>
                                 <select id="qrExpirySelect" class="form-select form-select-sm" style="min-width: 200px; border: 2px solid #098744; border-radius: 6px; background-color: white; color: #098744; font-weight: 500; box-shadow: 0 2px 4px rgba(9, 135, 68, 0.1);">
+                                    <option value="no_expiry">No Expiry (printable)</option>
                                     <option value="1m">1 min (high security)</option>
                                     <option value="5m">5 mins (balanced)</option>
                                     <option value="15m">15 mins (low security, faster flow)</option>
@@ -1685,7 +1686,8 @@ foreach ($result as $row) {
                             </div>
                             
                             <!-- Footer -->
-                            <div style="padding: 1rem; text-align: center; background-color: #f8f9fa;">
+                            <div style="padding: 1rem; text-align: center; background-color: #f8f9fa; display: flex; gap: 10px; justify-content: center;">
+                                <button id="printCr80Button" class="btn" style="background-color: #343a40; color: white; border: none; display: none;">Print CR80</button>
                                 <button id="closeQrButton" class="btn" style="background-color: #098744; color: white; border: none;">Close</button>
                             </div>
                         </div>
@@ -1736,6 +1738,8 @@ foreach ($result as $row) {
                     $expiryInfo.css('color', '#28a745').show();
                     $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
                     clearInterval(qrExpiryTimer);
+                    // Show the CR80 print button
+                    $('#printCr80Button').data('student', { id: studentId, name: studentName, code: qrCode }).show();
                 } else {
                     console.log('Using TIMED OPTION logic for:', expiryOption);
                     // For timed options, generate dynamic token
@@ -1776,6 +1780,8 @@ foreach ($result as $row) {
                             $('#qrModalImage').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode));
                             $expiryInfo.text('Network Error - Using static QR');
                         });
+                    // Hide CR80 button for timed codes
+                    $('#printCr80Button').hide();
                 }
                 
                 // Show modal
@@ -1786,6 +1792,7 @@ foreach ($result as $row) {
             $('#closeQrModal, #closeQrButton').on('click', function() {
                 $('#globalQrModal').hide();
                 clearInterval(qrExpiryTimer);
+                $('#printCr80Button').hide();
             });
             
             // Close when clicking outside
@@ -1793,6 +1800,40 @@ foreach ($result as $row) {
                 if (e.target === this) {
                     $(this).hide();
                 }
+            });
+
+            // Print CR80 handler
+            $('#printCr80Button').on('click', function() {
+                const data = $(this).data('student') || {};
+                if (!data.code) return;
+                // Create a printable window with CR80 dimensions
+                const w = window.open('', '', 'width=400,height=260');
+                const dpi = 96; // browser CSS pixel density assumption
+                // CR80: 85.6mm x 54mm -> in px at 96dpi: ~ 323.15 x 204.09
+                const cardWidthPx = Math.round((85.6 / 25.4) * dpi);
+                const cardHeightPx = Math.round((54 / 25.4) * dpi);
+                const qrSize = Math.min(cardHeightPx - 20, cardWidthPx - 20); // padding
+                const safeName = (data.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&data=' + encodeURIComponent(data.code);
+                var html = '';
+                html += '<!DOCTYPE html>';
+                html += '<html><head><meta charset="utf-8"><title>Print CR80</title>';
+                html += '<style>';
+                html += '@page { size: ' + cardWidthPx + 'px ' + cardHeightPx + 'px; margin: 0; }';
+                html += 'html, body { margin: 0; padding: 0; }';
+                html += '.card { width: ' + cardWidthPx + 'px; height: ' + cardHeightPx + 'px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #ccc; box-sizing: border-box; font-family: Arial, sans-serif; }';
+                html += '.name { font-size: 12px; margin-top: 4px; text-align: center; padding: 0 6px; }';
+                html += 'img { width: ' + qrSize + 'px; height: ' + qrSize + 'px; }';
+                html += '</style></head><body>';
+                html += '<div class="card">';
+                html += '<img src="' + qrUrl + '" alt="QR" />';
+                html += '<div class="name">' + safeName + '</div>';
+                html += '</div>';
+                html += '<script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>';
+                html += '</body></html>';
+                w.document.open();
+                w.document.write(html);
+                w.document.close();
             });
             
             // Handle custom course & section in add form
@@ -2111,6 +2152,9 @@ foreach ($result as $row) {
                             expiryInfo.style.display = 'block';
                             document.getElementById('qrModalImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode);
                             if (window.qrExpiryTimer) clearInterval(window.qrExpiryTimer);
+                            // Show CR80 print button
+                            const btn = document.getElementById('printCr80Button');
+                            if (btn) { btn.style.display = 'inline-block'; $(btn).data('student', { id: studentId, name: studentName, code: qrCode }); }
                         } else {
                             console.log('Using TIMED OPTION logic for:', expiryOption);
                             // For timed options, generate dynamic token
@@ -2154,6 +2198,9 @@ foreach ($result as $row) {
                                     document.getElementById('qrModalImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrCode);
                                     expiryInfo.textContent = 'Network Error - Using static QR';
                                 });
+                            // Hide CR80 print button for timed QR
+                            const btn = document.getElementById('printCr80Button');
+                            if (btn) { btn.style.display = 'none'; $(btn).removeData('student'); }
                         }
                         document.getElementById('globalQrModal').style.display = 'block';
                     };
