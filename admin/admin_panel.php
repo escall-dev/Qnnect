@@ -135,15 +135,52 @@ if (isset($_POST['action'])) {
             } else {
                 // Validate role value for SA
                 if (!in_array($role, ['admin','super_admin'], true)) $role = 'admin';
+                
+                // CRITICAL: Validate school exists if school_id is provided
+                if ($school_id) {
+                    $school_check = mysqli_prepare($conn, 'SELECT id, name FROM schools WHERE id = ? AND status = "active" LIMIT 1');
+                    mysqli_stmt_bind_param($school_check, 'i', $school_id);
+                    mysqli_stmt_execute($school_check);
+                    $school_result = mysqli_stmt_get_result($school_check);
+                    $school_data = mysqli_fetch_assoc($school_result);
+                    mysqli_stmt_close($school_check);
+                    
+                    if (!$school_data) {
+                        echo json_encode(['success' => false, 'message' => 'Selected school does not exist or is inactive']);
+                        exit();
+                    }
+                }
             }
+            
             // Unique email check
             $stmt = mysqli_prepare($conn, 'SELECT id FROM users WHERE email = ? LIMIT 1');
             mysqli_stmt_bind_param($stmt, 's', $email);
             mysqli_stmt_execute($stmt);
             $res = mysqli_stmt_get_result($stmt);
-            if ($res && mysqli_fetch_assoc($res)) { mysqli_stmt_close($stmt); echo json_encode(['success' => false, 'message' => 'Email already exists']); exit(); }
+            if ($res && mysqli_fetch_assoc($res)) { 
+                mysqli_stmt_close($stmt); 
+                echo json_encode(['success' => false, 'message' => 'Email already exists']); 
+                exit(); 
+            }
             mysqli_stmt_close($stmt);
+            
+            // Unique username check within school (if school is specified)
+            if ($school_id) {
+                $username_check = mysqli_prepare($conn, 'SELECT id FROM users WHERE username = ? AND school_id = ? LIMIT 1');
+                mysqli_stmt_bind_param($username_check, 'si', $username, $school_id);
+                mysqli_stmt_execute($username_check);
+                $username_result = mysqli_stmt_get_result($username_check);
+                if ($username_result && mysqli_fetch_assoc($username_result)) {
+                    mysqli_stmt_close($username_check);
+                    echo json_encode(['success' => false, 'message' => 'Username already exists in this school']);
+                    exit();
+                }
+                mysqli_stmt_close($username_check);
+            }
+            
             $hash = password_hash($password, PASSWORD_DEFAULT);
+            
+            // IMPORTANT: Only insert into users table, NEVER create new schools
             if ($school_id) {
                 $stmt = mysqli_prepare($conn, 'INSERT INTO users (username, email, password, role, school_id) VALUES (?,?,?,?,?)');
                 mysqli_stmt_bind_param($stmt, 'ssssi', $username, $email, $hash, $role, $school_id);
@@ -151,12 +188,14 @@ if (isset($_POST['action'])) {
                 $stmt = mysqli_prepare($conn, 'INSERT INTO users (username, email, password, role) VALUES (?,?,?,?)');
                 mysqli_stmt_bind_param($stmt, 'ssss', $username, $email, $hash, $role);
             }
+            
             if (mysqli_stmt_execute($stmt)) {
                 $new_id = mysqli_insert_id($conn);
-                logActivity($conn, 'USER_CREATED', "User ID: {$new_id}, Role: {$role}");
-                echo json_encode(['success' => true, 'message' => 'User created successfully']);
+                $school_name = $school_id ? ($school_data['name'] ?? 'Unknown School') : 'No School';
+                logActivity($conn, 'USER_CREATED', "User ID: {$new_id}, Role: {$role}, School: {$school_name}");
+                echo json_encode(['success' => true, 'message' => "User '{$username}' created successfully in {$school_name}"]);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Failed to create user']);
+                echo json_encode(['success' => false, 'message' => 'Failed to create user: ' . mysqli_error($conn)]);
             }
             mysqli_stmt_close($stmt);
             exit();
@@ -272,7 +311,9 @@ if (isset($_POST['action'])) {
             if (!$is_super_admin) { echo json_encode(['success' => false, 'message' => 'Access denied']); exit(); }
             $sid = isset($_POST['school_id']) ? (int)$_POST['school_id'] : 0;
             if ($sid <= 0) { echo json_encode(['success' => false, 'message' => 'Invalid school id']); exit(); }
-            $stmt = mysqli_prepare($conn, 'SELECT s.id, s.name, s.code, s.status, s.created_at, u.profile_image as logo_path FROM schools s LEFT JOIN users u ON s.id = u.school_id AND u.role = \'admin\' WHERE s.id = ? LIMIT 1');
+            $stmt = mysqli_prepare($conn, 'SELECT s.id, s.name, s.code, s.status, s.created_at, 
+                (SELECT u.profile_image FROM users u WHERE u.school_id = s.id AND u.role = "admin" AND u.profile_image IS NOT NULL ORDER BY u.id ASC LIMIT 1) as logo_path 
+                FROM schools s WHERE s.id = ? LIMIT 1');
             mysqli_stmt_bind_param($stmt, 'i', $sid);
             mysqli_stmt_execute($stmt);
             $res = mysqli_stmt_get_result($stmt);

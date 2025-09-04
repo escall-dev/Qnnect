@@ -103,7 +103,9 @@ function getUserSchool($conn) {
         return null;
     }
     
-    $sql = "SELECT s.*, u.profile_image as logo_path FROM schools s LEFT JOIN users u ON s.id = u.school_id AND u.role = 'admin' WHERE s.id = ? AND s.status = 'active'";
+    $sql = "SELECT s.*, 
+            (SELECT u.profile_image FROM users u WHERE u.school_id = s.id AND u.role = 'admin' AND u.profile_image IS NOT NULL ORDER BY u.id ASC LIMIT 1) as logo_path 
+            FROM schools s WHERE s.id = ? AND s.status = 'active' LIMIT 1";
     $stmt = mysqli_prepare($conn, $sql);
     
     if (!$stmt) {
@@ -130,7 +132,19 @@ function getAllSchools($conn) {
         return [];
     }
     
-    $sql = "SELECT s.*, u.profile_image as logo_path FROM schools s LEFT JOIN users u ON s.id = u.school_id AND u.role = 'admin' WHERE s.status = 'active' ORDER BY s.name";
+    // Fix: Use DISTINCT to prevent duplicate schools when multiple admins exist
+    // Get the first admin's profile image for each school as logo
+    $sql = "SELECT DISTINCT s.id, s.name, s.code, s.status, s.created_at, s.theme_color,
+            (SELECT u.profile_image 
+             FROM users u 
+             WHERE u.school_id = s.id 
+             AND u.role = 'admin' 
+             AND u.profile_image IS NOT NULL 
+             ORDER BY u.id ASC 
+             LIMIT 1) as logo_path
+            FROM schools s 
+            WHERE s.status = 'active' 
+            ORDER BY s.name";
     $result = mysqli_query($conn, $sql);
     
     if (!$result) {
