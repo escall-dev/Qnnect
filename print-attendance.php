@@ -149,7 +149,7 @@ try {
 // Debug - Log input parameters
 error_log("Date Range: $start_date to $end_date, Course: $selected_course_section, Day: $selected_day");
 
-// Prepare the SQL statement with filtering
+// Prepare the SQL statement with filtering (include school_id and user_id for data isolation)
 $sql = "
     SELECT *, 
     DATE_FORMAT(time_in, '%r') AS formatted_time_in,
@@ -157,7 +157,7 @@ $sql = "
     DATE_FORMAT(time_in, '%W') AS day_of_week
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id 
-    WHERE time_in IS NOT NULL
+    WHERE time_in IS NOT NULL AND tbl_attendance.school_id = :school_id AND tbl_attendance.user_id = :user_id
 ";
 
 // Add date range filter - Ensure dates are properly formatted and the condition is applied
@@ -183,7 +183,12 @@ error_log("SQL Query: $sql");
 
 $stmt = $conn->prepare($sql);
 
-// Bind parameters
+// Bind required parameters for data isolation
+$stmt->bindParam(':school_id', $school_id);
+$stmt->bindParam(':user_id', $user_id);
+error_log("Binding school_id: $school_id, user_id: $user_id");
+
+// Bind additional filter parameters
 if (!empty($start_date) && !empty($end_date)) {
     $stmt->bindParam(':start_date', $start_date);
     $stmt->bindParam(':end_date', $end_date);

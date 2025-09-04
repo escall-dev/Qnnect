@@ -20,26 +20,26 @@ $limit = 8; // Set to 8 records per page
 $offset = ($page - 1) * $limit;
 
 try {
-    // Get paginated attendance records
+    // Get paginated attendance records (filtered by both school_id and user_id for data isolation)
     $query = "
         SELECT a.*, s.student_name, s.course_section 
         FROM tbl_attendance a
         LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id 
             AND s.school_id = a.school_id
-        WHERE a.time_in IS NOT NULL AND a.school_id = ?
+        WHERE a.time_in IS NOT NULL AND a.school_id = ? AND a.user_id = ?
         ORDER BY a.time_in DESC 
         LIMIT ?, ?
     ";
     
     $stmt = $conn_qr->prepare($query);
-    $stmt->bind_param("iii", $school_id, $offset, $limit);
+    $stmt->bind_param("iiii", $school_id, $user_id, $offset, $limit);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    // Get total records for pagination
-    $totalQuery = "SELECT COUNT(*) as total FROM tbl_attendance WHERE school_id = ?";
+    // Get total records for pagination (filtered by both school_id and user_id)
+    $totalQuery = "SELECT COUNT(*) as total FROM tbl_attendance WHERE school_id = ? AND user_id = ?";
     $totalStmt = $conn_qr->prepare($totalQuery);
-    $totalStmt->bind_param("i", $school_id);
+    $totalStmt->bind_param("ii", $school_id, $user_id);
     $totalStmt->execute();
     $totalResult = $totalStmt->get_result();
     $totalRow = $totalResult->fetch_assoc();
