@@ -40,24 +40,94 @@ $subjectId = isset($_SESSION['current_subject_id']) ? (int)$_SESSION['current_su
 $subjectName = $_SESSION['current_subject_name'] ?? ($_SESSION['current_subject'] ?? '');
 
 try {
-    // Find student by generated_code scoped to user and school
-    $studentSel = $conn_qr->prepare("SELECT tbl_student_id, student_name, course_section FROM tbl_student WHERE generated_code = ? AND user_id = ? AND school_id = ? LIMIT 1");
-    $studentSel->bind_param('sii', $qr_code, $user_id, $school_id);
-    $studentSel->execute();
-    $student = $studentSel->get_result()->fetch_assoc();
+    // First try: dynamic token flow (student_qr_tokens)
+    $studentID = 0; $studentName = null; $courseSection = null; $usingDynamicToken = false;
 
-    if (!$student) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'invalid_qr',
-            'message' => 'QR code not found for this school/user'
-        ]);
-        exit;
+
+    // Heuristic: our token contains two base64url segments separated by '-'
+    // Updated to accept both timed tokens (6+ chars) and permanent tokens (-PERM)
+    // But exclude static codes that start with 'STU-'
+    if (preg_match('/^[A-Za-z0-9_-]{10,}\-[A-Za-z0-9_-]{4,}$/', $qr_code) && strpos($qr_code, 'STU-') !== 0) {
+        // Validate the token and mark it used atomically
+        // 1) Look up the token row, ensure not expired/used/revoked
+        $tokSel = $conn_qr->prepare("SELECT id, student_id FROM student_qr_tokens WHERE token = ? AND user_id = ? AND school_id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW() LIMIT 1");
+        if ($tokSel) {
+            $tokSel->bind_param('sii', $qr_code, $user_id, $school_id);
+            $tokSel->execute();
+            $tokRow = $tokSel->get_result()->fetch_assoc();
+            if ($tokRow) {
+                $tokenId = (int)$tokRow['id'];
+                $studentID = (int)$tokRow['student_id'];
+                // 2) Mark as used (guarding against race) - but not for permanent tokens
+                // Check if this is a permanent token (expires_at = '2099-12-31 23:59:59')
+                $isPermanent = false;
+                $checkPerm = $conn_qr->prepare("SELECT expires_at FROM student_qr_tokens WHERE id = ? AND expires_at = '2099-12-31 23:59:59' LIMIT 1");
+                if ($checkPerm) {
+                    $checkPerm->bind_param('i', $tokenId);
+                    $checkPerm->execute();
+                    $isPermanent = $checkPerm->get_result()->num_rows > 0;
+                }
+                
+                if ($isPermanent) {
+                    // For permanent tokens, don't mark as used - they can be reused
+                    $usingDynamicToken = true;
+                } else {
+                    // For timed tokens, mark as used
+                    $tokUpd = $conn_qr->prepare("UPDATE student_qr_tokens SET used_at = NOW() WHERE id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW()");
+                    if ($tokUpd) {
+                        $tokUpd->bind_param('i', $tokenId);
+                        $tokUpd->execute();
+                        if ($tokUpd->affected_rows === 1) {
+                            $usingDynamicToken = true;
+                        }
+                    }
+                }
+                
+                if ($usingDynamicToken) {
+                    // Resolve student name and course section
+                    $selStud = $conn_qr->prepare("SELECT student_name, course_section FROM tbl_student WHERE tbl_student_id = ? AND user_id = ? AND school_id = ? LIMIT 1");
+                    if ($selStud) {
+                        $selStud->bind_param('iii', $studentID, $user_id, $school_id);
+                        $selStud->execute();
+                        $rStud = $selStud->get_result()->fetch_assoc();
+                        $studentName = $rStud ? $rStud['student_name'] : 'Student';
+                        $courseSection = $rStud ? $rStud['course_section'] : '';
+                    }
+                }
+            }
+        }
+
+        if (!$usingDynamicToken) {
+            // Token invalid or already used/expired/revoked
+            echo json_encode([
+                'success' => false,
+                'error' => 'invalid_qr',
+                'message' => 'QR code expired or already used'
+            ]);
+            exit;
+        }
     }
 
-    $studentID = (int)$student['tbl_student_id'];
-    $studentName = $student['student_name'];
-    $courseSection = $student['course_section'];
+    // Fallback: legacy static generated_code path
+    if (!$usingDynamicToken) {
+        $studentSel = $conn_qr->prepare("SELECT tbl_student_id, student_name, course_section FROM tbl_student WHERE generated_code = ? AND user_id = ? AND school_id = ? LIMIT 1");
+        $studentSel->bind_param('sii', $qr_code, $user_id, $school_id);
+        $studentSel->execute();
+        $student = $studentSel->get_result()->fetch_assoc();
+
+        if (!$student) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'invalid_qr',
+                'message' => 'QR code not found for this school/user'
+            ]);
+            exit;
+        }
+
+        $studentID = (int)$student['tbl_student_id'];
+        $studentName = $student['student_name'];
+        $courseSection = $student['course_section'];
+    }
 
         // Duplicate check for same day within tenant and optional instructor/subject
         // Use IFNULL to normalize NULL to 0 for comparison (consistent with generated columns + unique index)

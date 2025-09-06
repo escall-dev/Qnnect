@@ -164,7 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $studentID = 0; $studentName = null; $usingDynamicToken = false;
 
             // Heuristic: our token contains two base64url segments separated by '-'
-            if (preg_match('/^[A-Za-z0-9_-]{10,}\-[A-Za-z0-9_-]{6,}$/', $qrCode)) {
+            // Updated to accept both timed tokens (6+ chars) and permanent tokens (-PERM)
+            // But exclude static codes that start with 'STU-'
+            if (preg_match('/^[A-Za-z0-9_-]{10,}\-[A-Za-z0-9_-]{4,}$/', $qrCode) && strpos($qrCode, 'STU-') !== 0) {
                 // Validate the token and mark it used atomically
                 // 1) Look up the token row, ensure not expired/used/revoked
                 $tokSel = $conn_qr->prepare("SELECT id, student_id FROM student_qr_tokens WHERE token = ? AND user_id = ? AND school_id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW() LIMIT 1");
@@ -175,21 +177,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($tokRow) {
                         $tokenId = (int)$tokRow['id'];
                         $studentID = (int)$tokRow['student_id'];
-                        // 2) Mark as used (guarding against race)
-                        $tokUpd = $conn_qr->prepare("UPDATE student_qr_tokens SET used_at = NOW() WHERE id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW()");
-                        if ($tokUpd) {
-                            $tokUpd->bind_param('i', $tokenId);
-                            $tokUpd->execute();
-                            if ($tokUpd->affected_rows === 1) {
-                                $usingDynamicToken = true;
-                                // Resolve student name
-                                $selStud = $conn_qr->prepare("SELECT student_name FROM tbl_student WHERE tbl_student_id = ? AND user_id = ? AND school_id = ? LIMIT 1");
-                                if ($selStud) {
-                                    $selStud->bind_param('iii', $studentID, $user_id, $school_id);
-                                    $selStud->execute();
-                                    $rStud = $selStud->get_result()->fetch_assoc();
-                                    $studentName = $rStud ? $rStud['student_name'] : 'Student';
+                        // 2) Mark as used (guarding against race) - but not for permanent tokens
+                        // Check if this is a permanent token (expires_at = '2099-12-31 23:59:59')
+                        $isPermanent = false;
+                        $checkPerm = $conn_qr->prepare("SELECT expires_at FROM student_qr_tokens WHERE id = ? AND expires_at = '2099-12-31 23:59:59' LIMIT 1");
+                        if ($checkPerm) {
+                            $checkPerm->bind_param('i', $tokenId);
+                            $checkPerm->execute();
+                            $isPermanent = $checkPerm->get_result()->num_rows > 0;
+                        }
+                        
+                        if ($isPermanent) {
+                            // For permanent tokens, don't mark as used - they can be reused
+                            $usingDynamicToken = true;
+                        } else {
+                            // For timed tokens, mark as used
+                            $tokUpd = $conn_qr->prepare("UPDATE student_qr_tokens SET used_at = NOW() WHERE id = ? AND used_at IS NULL AND revoked_at IS NULL AND expires_at > NOW()");
+                            if ($tokUpd) {
+                                $tokUpd->bind_param('i', $tokenId);
+                                $tokUpd->execute();
+                                if ($tokUpd->affected_rows === 1) {
+                                    $usingDynamicToken = true;
                                 }
+                            }
+                        }
+                        
+                        if ($usingDynamicToken) {
+                            // Resolve student name
+                            $selStud = $conn_qr->prepare("SELECT student_name FROM tbl_student WHERE tbl_student_id = ? AND user_id = ? AND school_id = ? LIMIT 1");
+                            if ($selStud) {
+                                $selStud->bind_param('iii', $studentID, $user_id, $school_id);
+                                $selStud->execute();
+                                $rStud = $selStud->get_result()->fetch_assoc();
+                                $studentName = $rStud ? $rStud['student_name'] : 'Student';
                             }
                         }
                     }

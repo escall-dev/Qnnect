@@ -104,7 +104,8 @@ function ensureActivityLogsTableExists() {
             ip_address VARCHAR(45) NULL,
             user_agent TEXT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            additional_data TEXT NULL
+            additional_data TEXT NULL,
+            school_id INT DEFAULT 1
         )";
         mysqli_query($conn_qr, $create_table);
     }

@@ -13,16 +13,19 @@ class ActivityLogger {
     }
 
     public function log($action_type, $action_description, $affected_table = null, $affected_id = null, $additional_data = null) {
+        // Get school_id from session
+        $school_id = $_SESSION['school_id'] ?? 1;
+        
         $sql = "INSERT INTO activity_logs (
             user_id, action_type, action_description, affected_table, 
-            affected_id, ip_address, user_agent, created_at, additional_data
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+            affected_id, ip_address, user_agent, created_at, additional_data, school_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)";
 
         $stmt = $this->conn->prepare($sql);
         $additional_data_json = $additional_data ? json_encode($additional_data) : null;
         
         $stmt->bind_param(
-            "isssisss",
+            "isssisssi",
             $this->user_id,
             $action_type,
             $action_description,
@@ -30,7 +33,8 @@ class ActivityLogger {
             $affected_id,
             $this->ip_address,
             $this->user_agent,
-            $additional_data_json
+            $additional_data_json,
+            $school_id
         );
 
         return $stmt->execute();

@@ -101,16 +101,16 @@ $logs = $result->fetch_all(MYSQLI_ASSOC);
 $action_types_sql = "SELECT DISTINCT action_type FROM activity_logs 
                      WHERE school_id = ? AND user_id = ? ORDER BY action_type";
 $stmt = $conn_qr->prepare($action_types_sql);
-$stmt->bind_param("ii" . "ii" . , $school_id, $current_user_id . ", $school_id, $current_user_id" . );
+$stmt->bind_param("ii", $school_id, $current_user_id);
 $stmt->execute();
 $action_types_result = $stmt->get_result();
 $action_types = $action_types_result->fetch_all(MYSQLI_ASSOC);
 
-// Get users for filter (filtered by school)
-$users_sql = "SELECT id, email, firstname, lastname FROM users 
-              WHERE school_id = ? ORDER BY lastname, firstname";
-$stmt = $conn_qr->prepare($users_sql);
-$stmt->bind_param("i" . "ii" . , $school_id . ", $school_id, $current_user_id" . );
+// Get users for filter (filtered by school) - using login database
+$users_sql = "SELECT id, email, full_name FROM users 
+              WHERE school_id = ? ORDER BY full_name";
+$stmt = $conn_login->prepare($users_sql);
+$stmt->bind_param("i", $school_id);
 $stmt->execute();
 $users_result = $stmt->get_result();
 $users = $users_result->fetch_all(MYSQLI_ASSOC);
@@ -226,7 +226,7 @@ $users = $users_result->fetch_all(MYSQLI_ASSOC);
                                             <?php foreach ($users as $user): ?>
                                                 <option value="<?php echo $user['id']; ?>"
                                                         <?php echo $user_id == $user['id'] ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($user['lastname'] . ', ' . $user['firstname']); ?>
+                                                    <?php echo htmlspecialchars($user['full_name']); ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>

@@ -1734,9 +1734,9 @@ if (!isset($_SESSION['school_year']) || !isset($_SESSION['semester'])) {
                                 $user_id = $_GET['user_id'] ?? null;
                                 
                                 // Build query with modified JOIN to account for users table in login_register database
-                                $where_conditions = [];
-                                $params = [];
-                                $types = "";
+                                $where_conditions = ["al.user_id = ?", "al.school_id = ?"];
+                                $params = [$current_user_id, $school_id];
+                                $types = "ii";
                                 
                                 if ($start_date && $end_date) {
                                     $where_conditions[] = "al.created_at BETWEEN ? AND ?";
@@ -1818,21 +1818,27 @@ if (!isset($_SESSION['school_year']) || !isset($_SESSION['semester'])) {
                                     }
                                 }
                                 
-                                // Get unique action types for filter
-                                $action_types_sql = "SELECT DISTINCT action_type FROM activity_logs WHERE action_type IS NOT NULL AND action_type != '' ORDER BY action_type";
-                                $action_types_result = $conn_qr->query($action_types_sql);
+                                // Get unique action types for filter (filtered by current user and school)
+                                $action_types_sql = "SELECT DISTINCT action_type FROM activity_logs WHERE user_id = ? AND school_id = ? AND action_type IS NOT NULL AND action_type != '' ORDER BY action_type";
+                                $action_types_stmt = $conn_qr->prepare($action_types_sql);
+                                $action_types_stmt->bind_param("ii", $current_user_id, $school_id);
+                                $action_types_stmt->execute();
+                                $action_types_result = $action_types_stmt->get_result();
                                 $action_types = $action_types_result->fetch_all(MYSQLI_ASSOC);
                                 
-                                // Get users from QR database for filter dropdown
+                                // Get users from login database for filter dropdown (filtered by school)
                                 $users = [];
-                                $users_sql = "SELECT DISTINCT user_id FROM activity_logs WHERE user_id IS NOT NULL";
-                                $users_result = $conn_qr->query($users_sql);
+                                $users_sql = "SELECT id, email, full_name FROM users WHERE school_id = ? ORDER BY full_name";
+                                $users_stmt = $conn_login->prepare($users_sql);
+                                $users_stmt->bind_param("i", $school_id);
+                                $users_stmt->execute();
+                                $users_result = $users_stmt->get_result();
                                 
                                 if ($users_result && $users_result->num_rows > 0) {
                                     while ($user_row = $users_result->fetch_assoc()) {
                                         $users[] = [
-                                            'id' => $user_row['user_id'],
-                                            'name' => isset($user_emails[$user_row['user_id']]) ? $user_emails[$user_row['user_id']] : 'User ' . $user_row['user_id']
+                                            'id' => $user_row['id'],
+                                            'name' => $user_row['full_name']
                                         ];
                                     }
                                 }

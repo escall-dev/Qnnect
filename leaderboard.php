@@ -516,14 +516,13 @@ $total_days = $total_days_result->fetch_assoc()['total_days'];
                                         <th>Student Name</th>
                                         <th>Course & Section</th>
                                         <th>Attendance Count</th>
-                                        <th>Attendance Rate</th>
-                                        <th>Progress</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if(empty($students)): ?>
                                         <tr>
-                                            <td colspan="6" class="text-center">No attendance records found</td>
+                                            <td colspan="5" class="text-center">No attendance records found</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach($students as $student): ?>
@@ -551,16 +550,28 @@ $total_days = $total_days_result->fetch_assoc()['total_days'];
                                                 <td>
                                                     <?php 
                                                     $rate = $total_days > 0 ? round(($student['attendance_count'] / $total_days) * 100, 1) : 0;
-                                                    echo $rate . '%';
+                                                    
+                                                    // Determine status based on attendance rate
+                                                    if ($rate >= 90) {
+                                                        $status = 'Excellent';
+                                                        $statusClass = 'badge-success';
+                                                    } elseif ($rate >= 80) {
+                                                        $status = 'Good';
+                                                        $statusClass = 'badge-primary';
+                                                    } elseif ($rate >= 70) {
+                                                        $status = 'Moderate';
+                                                        $statusClass = 'badge-warning';
+                                                    } elseif ($rate >= 50) {
+                                                        $status = 'Poor';
+                                                        $statusClass = 'badge-danger';
+                                                    } else {
+                                                        $status = 'Better Drop';
+                                                        $statusClass = 'badge-dark';
+                                                    }
                                                     ?>
-                                                </td>
-                                                <td>
-                                                    <div class="progress">
-                                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $rate; ?>%" 
-                                                            aria-valuenow="<?php echo $rate; ?>" aria-valuemin="0" aria-valuemax="100">
-                                                            <?php echo $rate; ?>%
-                                                        </div>
-                                                    </div>
+                                                    <span class="badge <?php echo $statusClass; ?> p-2" style="font-size: 12px;">
+                                                        <?php echo $status; ?>
+                                                    </span>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
