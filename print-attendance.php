@@ -46,14 +46,16 @@ if (!isset($_SESSION['__print_attendance_debug_logged'])) {
     $_SESSION['__print_attendance_debug_logged'] = true;
 }
 
-// Get the selected dates, course_section, and school year from the form submission
+// Get the selected dates, course_section, subject, and school year from the form submission
 $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d', strtotime('-1 week'));
 $end_date = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-d');
 $selected_course_section = isset($_POST['course_section']) ? $_POST['course_section'] : '';
+$selected_subject = isset($_POST['selected_subject']) ? $_POST['selected_subject'] : '';
 $selected_day = isset($_POST['selected_day']) ? $_POST['selected_day'] : '';
 
 // Display text for course section (show "All Courses and Sections" when none selected)
 $display_course_section = !empty($selected_course_section) ? $selected_course_section : "All Courses and Sections";
+$display_subject = !empty($selected_subject) ? $selected_subject : "All Subjects";
 $display_day = !empty($selected_day) ? $selected_day : "All Days";
 
 // Fetch user's email from session
@@ -146,6 +148,27 @@ try {
     error_log('print-attendance: error building strict course_section list: ' . $e->getMessage());
 }
 
+// Get subjects for filter dropdown from actual attendance records
+$dynamic_subjects = [];
+try {
+    if ($user_id && $school_id) {
+        $subjects_sql = "SELECT DISTINCT tbl_subjects.subject_name 
+                         FROM tbl_attendance 
+                         LEFT JOIN tbl_subjects ON tbl_subjects.subject_id = tbl_attendance.subject_id 
+                         WHERE tbl_attendance.school_id = :school_id AND tbl_attendance.user_id = :user_id 
+                         AND tbl_subjects.subject_name IS NOT NULL AND tbl_subjects.subject_name != '' 
+                         ORDER BY tbl_subjects.subject_name";
+        $subjects_stmt = $conn->prepare($subjects_sql);
+        $subjects_stmt->bindParam(':school_id', $school_id, PDO::PARAM_INT);
+        $subjects_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $subjects_stmt->execute();
+        $dynamic_subjects = $subjects_stmt->fetchAll(PDO::FETCH_COLUMN);
+        error_log('print-attendance: fetched ' . count($dynamic_subjects) . ' subjects for user_id=' . $user_id . ' school_id=' . $school_id);
+    }
+} catch (Exception $e) {
+    error_log('print-attendance: error building subjects list: ' . $e->getMessage());
+}
+
 // Debug - Log input parameters
 error_log("Date Range: $start_date to $end_date, Course: $selected_course_section, Day: $selected_day");
 
@@ -154,9 +177,11 @@ $sql = "
     SELECT *, 
     DATE_FORMAT(time_in, '%r') AS formatted_time_in,
     DATE_FORMAT(time_in, '%Y-%m-%d') AS attendance_date,
-    DATE_FORMAT(time_in, '%W') AS day_of_week
+    DATE_FORMAT(time_in, '%W') AS day_of_week,
+    COALESCE(tbl_subjects.subject_name, 'Not specified') AS subject_name
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id 
+    LEFT JOIN tbl_subjects ON tbl_subjects.subject_id = tbl_attendance.subject_id
     WHERE time_in IS NOT NULL AND tbl_attendance.school_id = :school_id AND tbl_attendance.user_id = :user_id
 ";
 
@@ -169,6 +194,11 @@ if (!empty($start_date) && !empty($end_date)) {
 // Add course section filter
 if (!empty($selected_course_section)) {
     $sql .= " AND tbl_student.course_section = :course_section";
+}
+
+// Add subject filter
+if (!empty($selected_subject)) {
+    $sql .= " AND tbl_subjects.subject_name = :selected_subject";
 }
 
 // Add day of week filter
@@ -198,6 +228,11 @@ if (!empty($start_date) && !empty($end_date)) {
 if (!empty($selected_course_section)) {
     $stmt->bindParam(':course_section', $selected_course_section);
     error_log("Binding course section: $selected_course_section");
+}
+
+if (!empty($selected_subject)) {
+    $stmt->bindParam(':selected_subject', $selected_subject);
+    error_log("Binding subject: $selected_subject");
 }
 
 if (!empty($selected_day)) {
@@ -306,6 +341,7 @@ error_log("Results found: " . count($result));
             const startDate = document.getElementById('start_date').value;
             const endDate = document.getElementById('end_date').value;
             const courseSection = document.getElementById('course_section').value;
+            const selectedSubject = document.getElementById('selected_subject').value;
             const selectedDay = document.getElementById('selected_day').value;
             
             // Build URL with parameters
@@ -314,6 +350,7 @@ error_log("Results found: " . count($result));
             if (startDate) url += `&start_date=${startDate}`;
             if (endDate) url += `&end_date=${endDate}`;
             if (courseSection) url += `&course_section=${courseSection}`;
+            if (selectedSubject) url += `&selected_subject=${selectedSubject}`;
             if (selectedDay) url += `&selected_day=${selectedDay}`;
             
             // Redirect to export URL
@@ -357,10 +394,10 @@ error_log("Results found: " . count($result));
                 <p class="card-text"><strong>Date Range:</strong> <?= date('M d, Y', strtotime($start_date)) ?> to <?= date('M d, Y', strtotime($end_date)) ?></p>
                 <p class="card-text"><strong>Day:</strong> <?= htmlspecialchars($display_day) ?></p>
                 <p class="card-text"><strong>Course & Section:</strong> <?= htmlspecialchars($display_course_section) ?></p>
+                <p class="card-text"><strong>Subject:</strong> <?= htmlspecialchars($display_subject) ?></p>
                 <p class="card-text"><strong>School Year:</strong> <?= htmlspecialchars($school_year) ?></p>
                 <p class="card-text"><strong>Semester:</strong> <?= htmlspecialchars($semester) ?></p>
                 <p class="card-text"><strong>Instructor:</strong> <?= htmlspecialchars($instructor_name) ?></p>
-                <p class="card-text"><strong>Subject:</strong> <?= htmlspecialchars($subject_name) ?></p>
             </div>
         </div>
 
@@ -399,6 +436,21 @@ error_log("Results found: " . count($result));
                         </div>
                     </div>
                     <div class="form-group row">
+                        <label for="selected_subject" class="col-sm-4 col-form-label text-right">Subject:</label>
+                        <div class="col-sm-8">
+                            <select name="selected_subject" id="selected_subject" class="form-control">
+                                <option value="">All Subjects</option>
+                                <?php if (!empty($dynamic_subjects)): ?>
+                                    <?php foreach ($dynamic_subjects as $subject): ?>
+                                        <option value="<?= htmlspecialchars($subject) ?>" <?= ($selected_subject === $subject) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($subject) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
                         <label for="selected_day" class="col-sm-4 col-form-label text-right">Day:</label>
                         <div class="col-sm-8">
                             <select name="selected_day" id="selected_day" class="form-control">
@@ -409,7 +461,7 @@ error_log("Results found: " . count($result));
                                 <option value="Thursday" <?= ($selected_day == 'Thursday') ? 'selected' : '' ?>>Thursday</option>
                                 <option value="Friday" <?= ($selected_day == 'Friday') ? 'selected' : '' ?>>Friday</option>
                                 <option value="Saturday" <?= ($selected_day == 'Saturday') ? 'selected' : '' ?>>Saturday</option>
-                                <option value="Sunday" <?= ($selected_day == 'Sunday') ? 'selected' : '' ?>>Sunday</option>
+                              
                             </select>
                         </div>
                     </div>
@@ -451,6 +503,7 @@ error_log("Results found: " . count($result));
                 <tr>
                     <th>Name</th>
                     <th>Course & Section</th>
+                    <th>Subject</th>
                     <th>Date</th>
                     <th>Day</th>
                     <th>Time In</th>
@@ -463,6 +516,7 @@ error_log("Results found: " . count($result));
                         <tr>
                             <td><?= htmlspecialchars($row['student_name']) ?></td>
                             <td><?= htmlspecialchars($row['course_section']) ?></td>
+                            <td><?= htmlspecialchars($row['subject_name'] ?? 'Not specified') ?></td>
                             <td><?= htmlspecialchars(date('M d, Y', strtotime($row['attendance_date']))) ?></td>
                             <td><?= htmlspecialchars($row['day_of_week']) ?></td>
                             <td><?= htmlspecialchars($row['formatted_time_in']) ?></td>
@@ -473,7 +527,7 @@ error_log("Results found: " . count($result));
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="6" class="text-center">No attendance records found for the selected criteria.</td>
+                        <td colspan="7" class="text-center">No attendance records found for the selected criteria.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>

@@ -34,6 +34,7 @@ $format = isset($_GET['format']) ? $_GET['format'] : 'csv';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d', strtotime('-1 week'));
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 $selected_course_section = isset($_GET['course_section']) ? $_GET['course_section'] : '';
+$selected_subject = isset($_GET['selected_subject']) ? $_GET['selected_subject'] : '';
 $selected_day = isset($_GET['selected_day']) ? $_GET['selected_day'] : '';
 
 // Prepare the SQL statement with filtering (filtered by user)
@@ -41,6 +42,7 @@ $sql = "
     SELECT 
         tbl_student.student_name,
         tbl_student.course_section,
+        COALESCE(tbl_subjects.subject_name, 'Not specified') AS subject_name,
         DATE_FORMAT(time_in, '%Y-%m-%d') AS attendance_date,
         DATE_FORMAT(time_in, '%W') AS day_of_week,
         DATE_FORMAT(time_in, '%r') AS formatted_time_in,
@@ -50,6 +52,7 @@ $sql = "
         END AS status
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id 
+    LEFT JOIN tbl_subjects ON tbl_subjects.subject_id = tbl_attendance.subject_id
     WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? AND time_in IS NOT NULL
 ";
 
@@ -61,6 +64,11 @@ if (!empty($start_date) && !empty($end_date)) {
 // Add course section filter
 if (!empty($selected_course_section)) {
     $sql .= " AND tbl_student.course_section = ?";
+}
+
+// Add subject filter
+if (!empty($selected_subject)) {
+    $sql .= " AND tbl_subjects.subject_name = ?";
 }
 
 // Add day of week filter
@@ -89,6 +97,12 @@ if (!empty($selected_course_section)) {
     $bindTypes .= "s";
 }
 
+// Add subject parameter
+if (!empty($selected_subject)) {
+    $bindParams[] = $selected_subject;
+    $bindTypes .= "s";
+}
+
 // Add day parameter
 if (!empty($selected_day)) {
     $bindParams[] = $selected_day;
@@ -109,6 +123,11 @@ if (!empty($start_date) && !empty($end_date)) {
 // Add course section parameter
 if (!empty($selected_course_section)) {
     $stmt->bindParam($paramIndex++, $selected_course_section, PDO::PARAM_STR);
+}
+
+// Add subject parameter
+if (!empty($selected_subject)) {
+    $stmt->bindParam($paramIndex++, $selected_subject, PDO::PARAM_STR);
 }
 
 // Add day parameter

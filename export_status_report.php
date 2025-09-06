@@ -25,6 +25,7 @@ $format = isset($_GET['format']) ? $_GET['format'] : 'csv';
 // Get filters
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 $course_filter = isset($_GET['course']) ? $_GET['course'] : '';
+$subject_filter = isset($_GET['subject']) ? $_GET['subject'] : '';
 $date_range = isset($_GET['date_range']) ? $_GET['date_range'] : 'all';
 
 // Default date range values
@@ -79,42 +80,38 @@ try {
 $school_id = $_SESSION['school_id'] ?? 1;
 $user_id = $_SESSION['user_id'] ?? 0;
 
-// Prepare the SQL statement with new subject/instructor logic
+// Prepare the SQL statement with actual subject data from attendance records
 $sql = "SELECT 
     tbl_student.student_name,
     tbl_student.course_section,
     DATE_FORMAT(tbl_attendance.time_in, '%Y-%m-%d') AS attendance_date,
     DATE_FORMAT(tbl_attendance.time_in, '%r') AS time_in,
     tbl_attendance.status,
-    COALESCE(ts.subjects, 'Not scheduled') AS subject_name,
+    COALESCE(tbl_subjects.subject_name, 'Not specified') AS subject_name,
     :instructor_name AS instructor_name
 FROM tbl_attendance 
 LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id
-LEFT JOIN (
-    SELECT section, GROUP_CONCAT(DISTINCT subject ORDER BY subject SEPARATOR ', ') AS subjects
-    FROM teacher_schedules
-    WHERE school_id = :ts_school AND user_id = :ts_user AND status = 'active' AND teacher_username = :teacher_username
-    GROUP BY section
-) ts ON ts.section = tbl_student.course_section
+LEFT JOIN tbl_subjects ON tbl_subjects.subject_id = tbl_attendance.subject_id
 WHERE tbl_attendance.school_id = :att_school AND tbl_attendance.user_id = :att_user AND DATE(tbl_attendance.time_in) BETWEEN :start_date AND :end_date";
 
 // Add status filter if selected
 if (!empty($status_filter)) { $sql .= " AND tbl_attendance.status = :status"; }
 if (!empty($course_filter)) { $sql .= " AND tbl_student.course_section = :course"; }
+if (!empty($subject_filter)) { $sql .= " AND tbl_subjects.subject_name = :subject"; }
 
 $sql .= " ORDER BY tbl_attendance.time_in DESC LIMIT 1000";
 
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':instructor_name', $instructorName);
-$stmt->bindParam(':ts_school', $school_id, PDO::PARAM_INT);
-$stmt->bindParam(':ts_user', $user_id, PDO::PARAM_INT);
-$stmt->bindParam(':teacher_username', $teacherUsername);
 $stmt->bindParam(':att_school', $school_id, PDO::PARAM_INT);
 $stmt->bindParam(':att_user', $user_id, PDO::PARAM_INT);
 $stmt->bindParam(':start_date', $start_date);
 $stmt->bindParam(':end_date', $end_date);
 if (!empty($status_filter)) { $stmt->bindParam(':status', $status_filter); }
 if (!empty($course_filter)) { $stmt->bindParam(':course', $course_filter); }
+if (!empty($subject_filter)) { 
+    $stmt->bindParam(':subject', $subject_filter); 
+}
 
 $stmt->execute();
 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -129,6 +126,7 @@ logActivity(
         'format' => $format,
         'status_filter' => $status_filter,
         'course_filter' => $course_filter,
+        'subject_filter' => $subject_filter,
         'date_range' => $date_range,
         'start_date' => $start_date,
         'end_date' => $end_date,

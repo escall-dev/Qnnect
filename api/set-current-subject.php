@@ -89,6 +89,7 @@ if ($subjectName === '') {
 
 // Always persist name
 $_SESSION['current_subject_name'] = $subjectName;
+error_log("Subject set in session: " . $subjectName);
 
 // Ensure we have a subject_id: look up or create if not provided
 try {
@@ -153,6 +154,7 @@ try {
 
     if ($subjectId !== null && $subjectId > 0) {
         $_SESSION['current_subject_id'] = $subjectId;
+        error_log("Subject ID set in session: " . $subjectId);
     }
 } catch (Exception $e) {
     echo json_encode(['success'=>false,'message'=>'Failed to set subject','error'=>$e->getMessage()]);

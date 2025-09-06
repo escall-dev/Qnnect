@@ -19,6 +19,7 @@ $school_id = $_SESSION['school_id'] ?? 1;
 $selected_status = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 $selected_date_range = isset($_GET['date_range']) ? $_GET['date_range'] : 'all';
 $selected_course = isset($_GET['course_filter']) ? $_GET['course_filter'] : '';
+$selected_subject = isset($_GET['subject_filter']) ? $_GET['subject_filter'] : '';
 
 // Default date range values - show all data by default
 $start_date = '2025-01-01';  // Start from beginning of year
@@ -59,6 +60,23 @@ try {
         $courses[] = $row['course_section'];
     }
     
+    // Get all subjects for filter dropdown from actual attendance records
+    $subjectsQuery = "SELECT DISTINCT tbl_subjects.subject_name 
+                      FROM tbl_attendance 
+                      LEFT JOIN tbl_subjects ON tbl_subjects.subject_id = tbl_attendance.subject_id 
+                      WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? 
+                      AND tbl_subjects.subject_name IS NOT NULL AND tbl_subjects.subject_name != '' 
+                      ORDER BY tbl_subjects.subject_name";
+    $subjectsStmt = $conn_qr->prepare($subjectsQuery);
+    $subjectsStmt->bind_param("ii", $school_id, $user_id);
+    $subjectsStmt->execute();
+    $subjectsResult = $subjectsStmt->get_result();
+    $subjects = [];
+    
+    while ($row = $subjectsResult->fetch_assoc()) {
+        $subjects[] = $row['subject_name'];
+    }
+    
     // Get current user's name & username from the users table (login_register DB)
     $userNameQuery = "SELECT username, full_name FROM users WHERE id = ?";
     $userNameStmt = $conn_login->prepare($userNameQuery);
@@ -90,31 +108,22 @@ try {
         DATE_FORMAT(tbl_attendance.time_in, '%Y-%m-%d') AS attendance_date,
         DATE_FORMAT(tbl_attendance.time_in, '%r') AS time_in,
         tbl_attendance.status,
-        COALESCE(ts.subjects, 'Not scheduled') AS subject_name,
+        COALESCE(tbl_subjects.subject_name, 'Not specified') AS subject_name,
         ? AS instructor_name
     FROM tbl_attendance 
     LEFT JOIN tbl_student ON tbl_student.tbl_student_id = tbl_attendance.tbl_student_id
-    /* Aggregate subjects per section for this teacher from teacher_schedules */
-    LEFT JOIN (
-        SELECT section, GROUP_CONCAT(DISTINCT subject ORDER BY subject SEPARATOR ', ') AS subjects
-        FROM teacher_schedules
-        WHERE school_id = ? AND user_id = ? AND status = 'active' AND teacher_username = ?
-        GROUP BY section
-    ) ts ON ts.section = tbl_student.course_section
+    LEFT JOIN tbl_subjects ON tbl_subjects.subject_id = tbl_attendance.subject_id
     WHERE tbl_attendance.school_id = ? AND tbl_attendance.user_id = ? AND DATE(tbl_attendance.time_in) BETWEEN ? AND ?";
 
     // Parameter order must match placeholders in query
     $params = [
         $instructorName,      // ? AS instructor_name
-        $school_id,           // school_id in derived table
-        $user_id,             // user_id in derived table
-        $username,            // teacher_username in derived table
         $school_id,           // tbl_attendance.school_id filter
         $user_id,             // tbl_attendance.user_id filter
         $start_date,          // date range start
         $end_date             // date range end
     ];
-    $types = "siisiiss"; // s (name), i, i, s (username), i, i, s, s
+    $types = "siiss"; // s (name), i, i, s, s
     
     // Add status filter if selected
     if (!empty($selected_status)) {
@@ -127,6 +136,13 @@ try {
     if (!empty($selected_course)) {
         $statusQuery .= " AND tbl_student.course_section = ?";
         $params[] = $selected_course;
+        $types .= "s";
+    }
+    
+    // Add subject filter if selected
+    if (!empty($selected_subject)) {
+        $statusQuery .= " AND tbl_subjects.subject_name = ?";
+        $params[] = $selected_subject;
         $types .= "s";
     }
     
@@ -165,6 +181,7 @@ try {
 } catch(Exception $e) {
     error_log("Error in attendance_status.php: " . $e->getMessage());
     $courses = [];
+    $subjects = [];
     $attendanceStatusData = [];
     $totalRecords = 0;
     $onTimeCount = 0;
@@ -438,6 +455,19 @@ try {
                                 </div>
                                 <div class="col-md-3 filter-col">
                                     <div class="form-group">
+                                        <label for="subject_filter">Subject:</label>
+                                        <select name="subject_filter" id="subject_filter" class="form-control">
+                                            <option value="">All Subjects</option>
+                                            <?php foreach ($subjects as $subject): ?>
+                                                <option value="<?= htmlspecialchars($subject) ?>" <?= ($selected_subject == $subject) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($subject) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 filter-col">
+                                    <div class="form-group">
                                         <label for="date_range">Date Range:</label>
                                         <select name="date_range" id="date_range" class="form-control">
                                             <option value="all" <?= ($selected_date_range == 'all') ? 'selected' : '' ?>>All Time</option>
@@ -486,6 +516,7 @@ try {
                             <strong>Date Range:</strong> <?= date('M d, Y', strtotime($start_date)) ?> to <?= date('M d, Y', strtotime($end_date)) ?><br>
                             <strong>Status:</strong> <?= !empty($selected_status) ? $selected_status : 'All' ?><br>
                             <strong>Course:</strong> <?= !empty($selected_course) ? $selected_course : 'All' ?><br>
+                            <strong>Subject:</strong> <?= !empty($selected_subject) ? $selected_subject : 'All' ?><br>
                             <strong>Generated on:</strong> <?= date('M d, Y h:i A') ?>
                         </p>
                     </div>
@@ -583,6 +614,7 @@ try {
                 // Get current filters
                 const statusFilter = document.getElementById('status_filter').value;
                 const courseFilter = document.getElementById('course_filter').value;
+                const subjectFilter = document.getElementById('subject_filter').value;
                 const dateRange = document.getElementById('date_range').value;
                 const startDate = document.getElementById('start_date').value;
                 const endDate = document.getElementById('end_date').value;
@@ -596,6 +628,10 @@ try {
                 
                 if (courseFilter) {
                     url += '&course=' + encodeURIComponent(courseFilter);
+                }
+                
+                if (subjectFilter) {
+                    url += '&subject=' + encodeURIComponent(subjectFilter);
                 }
                 
                 if (dateRange) {
