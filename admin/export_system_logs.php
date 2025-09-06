@@ -104,11 +104,23 @@ function exportToExcel($logs, $is_super_admin) {
     
     // Add data
     foreach ($logs as $log) {
+        // Format time to 12-hour Philippines timezone
+        $philippines_time = new DateTime($log['created_at'], new DateTimeZone('UTC'));
+        $philippines_time->setTimezone(new DateTimeZone('Asia/Manila'));
+        
+        // Replace school ID with school name in details
+        $details = $log['details'] ?? '';
+        if (preg_match('/School:\s*(\d+)/', $details, $matches)) {
+            $school_id = $matches[1];
+            $school_name = $log['school_name'] ?? 'Unknown School';
+            $details = str_replace("School: {$school_id}", "School: {$school_name}", $details);
+        }
+        
         $row = [
-            date('M j, Y H:i', strtotime($log['created_at'])),
+            $philippines_time->format('M j, Y g:i A'),
             $log['username'] ?? 'System',
             $log['action'],
-            $log['details'] ?? ''
+            $details
         ];
         if ($is_super_admin) {
             $row[] = $log['school_name'] ?? 'N/A';
@@ -133,10 +145,22 @@ function exportToPDF($logs, $is_super_admin) {
     echo str_repeat('=', 80) . "\n\n";
     
     foreach ($logs as $log) {
-        echo "Time: " . date('M j, Y H:i', strtotime($log['created_at'])) . "\n";
+        // Format time to 12-hour Philippines timezone
+        $philippines_time = new DateTime($log['created_at'], new DateTimeZone('UTC'));
+        $philippines_time->setTimezone(new DateTimeZone('Asia/Manila'));
+        
+        // Replace school ID with school name in details
+        $details = $log['details'] ?? '';
+        if (preg_match('/School:\s*(\d+)/', $details, $matches)) {
+            $school_id = $matches[1];
+            $school_name = $log['school_name'] ?? 'Unknown School';
+            $details = str_replace("School: {$school_id}", "School: {$school_name}", $details);
+        }
+        
+        echo "Time: " . $philippines_time->format('M j, Y g:i A') . "\n";
         echo "User: " . ($log['username'] ?? 'System') . "\n";
         echo "Action: " . $log['action'] . "\n";
-        echo "Details: " . ($log['details'] ?? '') . "\n";
+        echo "Details: " . $details . "\n";
         if ($is_super_admin) {
             echo "School: " . ($log['school_name'] ?? 'N/A') . "\n";
         }
@@ -185,10 +209,24 @@ function exportToPrint($logs, $is_super_admin) {
             <tbody>
                 <?php foreach ($logs as $log): ?>
                 <tr>
-                    <td><?php echo date('M j, Y H:i', strtotime($log['created_at'])); ?></td>
+                    <td><?php 
+                        // Format time to 12-hour Philippines timezone
+                        $philippines_time = new DateTime($log['created_at'], new DateTimeZone('UTC'));
+                        $philippines_time->setTimezone(new DateTimeZone('Asia/Manila'));
+                        echo $philippines_time->format('M j, Y g:i A');
+                    ?></td>
                     <td><?php echo htmlspecialchars($log['username'] ?? 'System'); ?></td>
                     <td><?php echo htmlspecialchars($log['action']); ?></td>
-                    <td><?php echo htmlspecialchars($log['details'] ?? ''); ?></td>
+                    <td><?php 
+                        // Replace school ID with school name in details
+                        $details = $log['details'] ?? '';
+                        if (preg_match('/School:\s*(\d+)/', $details, $matches)) {
+                            $school_id = $matches[1];
+                            $school_name = $log['school_name'] ?? 'Unknown School';
+                            $details = str_replace("School: {$school_id}", "School: {$school_name}", $details);
+                        }
+                        echo htmlspecialchars($details);
+                    ?></td>
                     <?php if ($is_super_admin): ?>
                     <td><?php echo htmlspecialchars($log['school_name'] ?? 'N/A'); ?></td>
                     <?php endif; ?>

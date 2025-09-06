@@ -18,8 +18,7 @@ function getSchoolBranding($conn, $school_id = null) {
         return getDefaultBranding();
     }
     
-    $sql = "SELECT s.*, 
-            (SELECT u.profile_image FROM users u WHERE u.school_id = s.id AND u.role = 'admin' AND u.profile_image IS NOT NULL ORDER BY u.id ASC LIMIT 1) as logo_path 
+    $sql = "SELECT s.*, s.logo_path 
             FROM schools s WHERE s.id = ? AND s.status = 'active' LIMIT 1";
     $stmt = mysqli_prepare($conn, $sql);
     

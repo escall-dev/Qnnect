@@ -636,6 +636,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         if ($stmt->execute()) {
+            // Also update the schools table in the login database for logo consistency
+            if ($school_logo_path != '') {
+                try {
+                    require_once 'conn/db_connect.php';
+                    $stmt_schools = mysqli_prepare($conn_login, 'UPDATE schools SET logo_path = ? WHERE id = ?');
+                    mysqli_stmt_bind_param($stmt_schools, 'si', $school_logo_path, $school_id);
+                    mysqli_stmt_execute($stmt_schools);
+                    mysqli_stmt_close($stmt_schools);
+                } catch (Exception $e) {
+                    error_log("Failed to update schools table: " . $e->getMessage());
+                }
+            }
+            
             $_SESSION['success'] = "School information updated successfully!";
             if ($school_logo_path != '') {
                 $_SESSION['success'] .= " School logo updated.";

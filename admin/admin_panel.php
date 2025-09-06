@@ -342,8 +342,7 @@ if (isset($_POST['action'])) {
             if (!$is_super_admin) { echo json_encode(['success' => false, 'message' => 'Access denied']); exit(); }
             $sid = isset($_POST['school_id']) ? (int)$_POST['school_id'] : 0;
             if ($sid <= 0) { echo json_encode(['success' => false, 'message' => 'Invalid school id']); exit(); }
-            $stmt = mysqli_prepare($conn, 'SELECT s.id, s.name, s.code, s.status, s.created_at, 
-                (SELECT u.profile_image FROM users u WHERE u.school_id = s.id AND u.role = "admin" AND u.profile_image IS NOT NULL ORDER BY u.id ASC LIMIT 1) as logo_path 
+            $stmt = mysqli_prepare($conn, 'SELECT s.id, s.name, s.code, s.status, s.created_at, s.logo_path 
                 FROM schools s WHERE s.id = ? LIMIT 1');
             mysqli_stmt_bind_param($stmt, 'i', $sid);
             mysqli_stmt_execute($stmt);
@@ -420,41 +419,28 @@ if (isset($_POST['action'])) {
             $filepath = $upload_dir . $filename;
             
             if (move_uploaded_file($file['tmp_name'], $filepath)) {
-                // Find the admin user for this school and update their profile_image
-                $stmt = mysqli_prepare($conn, 'SELECT id FROM users WHERE school_id = ? AND role = "admin" LIMIT 1');
-                mysqli_stmt_bind_param($stmt, 'i', $school_id);
-                mysqli_stmt_execute($stmt);
-                $result = mysqli_stmt_get_result($stmt);
-                $admin_user = mysqli_fetch_assoc($result);
+                // Update the school's logo_path directly in the schools table
+                $stmt = mysqli_prepare($conn, 'UPDATE schools SET logo_path = ? WHERE id = ?');
+                mysqli_stmt_bind_param($stmt, 'si', $filepath, $school_id);
+                $success = mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
                 
-                if ($admin_user) {
-                    // Update the admin user's profile image (which serves as school logo)
-                    $stmt = mysqli_prepare($conn, 'UPDATE users SET profile_image = ? WHERE id = ?');
-                    mysqli_stmt_bind_param($stmt, 'si', $filepath, $admin_user['id']);
-                    $success = mysqli_stmt_execute($stmt);
-                    mysqli_stmt_close($stmt);
-                    
-                    if ($success) {
-                        // Also update the school_info table in QR database if it exists
-                        try {
-                            require_once '../conn/db_connect_pdo.php';
-                            $stmt_qr = $conn_qr->prepare("UPDATE school_info SET school_logo_path = ?, updated_at = NOW() WHERE school_id = ?");
-                            $stmt_qr->execute([$filepath, $school_id]);
-                        } catch (Exception $e) {
-                            // Log the error but don't fail the main operation
-                            error_log("Failed to update school_info table: " . $e->getMessage());
-                        }
-                        
-                        logActivity($conn, 'SCHOOL_LOGO_UPDATED', "School ID: {$school_id}, Logo: {$filepath}");
-                        echo json_encode(['success' => true, 'message' => 'Logo uploaded successfully', 'logo_path' => $filepath]);
-                    } else {
-                        unlink($filepath); // Delete uploaded file if database update fails
-                        echo json_encode(['success' => false, 'message' => 'Failed to update database']);
+                if ($success) {
+                    // Also update the school_info table in QR database if it exists
+                    try {
+                        require_once '../conn/db_connect_pdo.php';
+                        $stmt_qr = $conn_qr->prepare("UPDATE school_info SET school_logo_path = ?, updated_at = NOW() WHERE school_id = ?");
+                        $stmt_qr->execute([$filepath, $school_id]);
+                    } catch (Exception $e) {
+                        // Log the error but don't fail the main operation
+                        error_log("Failed to update school_info table: " . $e->getMessage());
                     }
+                    
+                    logActivity($conn, 'SCHOOL_LOGO_UPDATED', "School ID: {$school_id}, Logo: {$filepath}");
+                    echo json_encode(['success' => true, 'message' => 'Logo uploaded successfully', 'logo_path' => $filepath]);
                 } else {
-                    unlink($filepath); // Delete uploaded file
-                    echo json_encode(['success' => false, 'message' => 'No admin user found for this school']);
+                    unlink($filepath); // Delete uploaded file if database update fails
+                    echo json_encode(['success' => false, 'message' => 'Failed to update database']);
                 }
             } else {
                 echo json_encode(['success' => false, 'message' => 'Failed to upload file']);
@@ -1287,14 +1273,28 @@ $total_pages = ceil($total_logs / $logs_per_page);
                                 <tbody>
                                     <?php foreach ($logs as $log): ?>
                                     <tr>
-                                        <td><?php echo date('M j, Y H:i', strtotime($log['created_at'])); ?></td>
+                                        <td><?php 
+                                            // Set Philippines timezone and format to 12-hour
+                                            $philippines_time = new DateTime($log['created_at'], new DateTimeZone('UTC'));
+                                            $philippines_time->setTimezone(new DateTimeZone('Asia/Manila'));
+                                            echo $philippines_time->format('M j, Y g:i A');
+                                        ?></td>
                                         <td><?php echo htmlspecialchars($log['username'] ?? 'System'); ?></td>
                                         <td>
                                             <span class="badge bg-primary"><?php echo htmlspecialchars($log['action']); ?></span>
                                         </td>
                                         <td>
                                             <div style="max-width: 300px; word-wrap: break-word;">
-                                                <?php echo htmlspecialchars($log['details'] ?? ''); ?>
+                                                <?php 
+                                                $details = $log['details'] ?? '';
+                                                // Replace school ID references with school names
+                                                if (preg_match('/School:\s*(\d+)/', $details, $matches)) {
+                                                    $school_id = $matches[1];
+                                                    $school_name = $log['school_name'] ?? 'Unknown School';
+                                                    $details = str_replace("School: {$school_id}", "School: {$school_name}", $details);
+                                                }
+                                                echo htmlspecialchars($details);
+                                                ?>
                                             </div>
                                         </td>
                                         <?php if ($is_super_admin): ?>

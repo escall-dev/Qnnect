@@ -14,16 +14,8 @@ function sanitize_input($data) {
 
 // Get schools for dropdown with logos
 function getSchools($conn) {
-    // Fix: Use DISTINCT to prevent duplicate schools when multiple admins exist
-    // Get the first admin's profile image for each school as logo
-    $sql = "SELECT DISTINCT s.id, s.name, s.code, s.theme_color,
-            (SELECT u.profile_image 
-             FROM users u 
-             WHERE u.school_id = s.id 
-             AND u.role = 'admin' 
-             AND u.profile_image IS NOT NULL 
-             ORDER BY u.id ASC 
-             LIMIT 1) as logo_path
+    // Get schools with their dedicated logo_path column
+    $sql = "SELECT DISTINCT s.id, s.name, s.code, s.theme_color, s.logo_path
             FROM schools s 
             WHERE s.status = 'active' 
             ORDER BY s.name";
