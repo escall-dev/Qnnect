@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 07, 2025 at 02:41 PM
+-- Generation Time: Sep 18, 2025 at 07:37 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -55,11 +55,12 @@ INSERT INTO `recent_logins` (`id`, `username`, `profile_image`, `last_login`, `c
 (939, 'BaklangNaglalaptop', 'image/SPCPC-logo-trans.png', '2025-09-04 05:53:18', '2025-09-04 05:48:15', 20),
 (945, 'escall test', 'uploads/profile_images/profile_1756984059.jpg', '2025-09-04 11:13:04', '2025-09-04 11:07:31', 20),
 (960, 'Qnnect', 'uploads/profile_images/profile_1756905565_01574ba13f2a0720.png', '2025-09-04 11:53:24', '2025-09-04 11:53:16', 20),
-(965, 'comsi', 'uploads/profile_images/profile_1757170140.png', '2025-09-06 15:07:36', '2025-09-06 09:10:02', 21),
+(965, 'comsi', 'uploads/profile_images/profile_1757170140.png', '2025-09-10 13:01:08', '2025-09-06 09:10:02', 21),
 (984, 'cnhs sve', 'uploads/school_logos/school_logo_22_1757156301.png', '2025-09-06 11:03:43', '2025-09-06 11:03:43', 22),
-(985, 'CNHS-SVE', 'uploads/profile_images/profile_1757173044.png', '2025-09-06 15:37:29', '2025-09-06 11:04:22', 22),
-(993, 'Arnold Aranaydo', 'uploads/profile_images/profile_1757168042.jpg', '2025-09-06 15:24:57', '2025-09-06 11:18:37', 20),
-(1018, 'cnhs', 'uploads/profile_images/profile_1757171001_71b51651d91f3766.png', '2025-09-06 15:03:43', '2025-09-06 15:03:30', 22);
+(985, 'CNHS-SVE', 'uploads/profile_images/profile_1757173044.png', '2025-09-18 04:03:48', '2025-09-06 11:04:22', 22),
+(993, 'Arnold Aranaydo', 'uploads/profile_images/profile_1757168042.jpg', '2025-09-18 05:24:53', '2025-09-06 11:18:37', 20),
+(1018, 'cnhs', 'uploads/profile_images/profile_1757171001_71b51651d91f3766.png', '2025-09-06 15:03:43', '2025-09-06 15:03:30', 22),
+(1047, 'testingonly', 'image/SPCPC-logo-trans.png', '2025-09-18 05:24:44', '2025-09-18 04:38:23', 20);
 
 -- --------------------------------------------------------
 
@@ -996,7 +997,29 @@ INSERT INTO `system_logs` (`id`, `user_id`, `school_id`, `action`, `details`, `i
 (866, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-06 15:27:43'),
 (867, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-06 15:34:57'),
 (868, 45, 22, 'USER_LOGIN', 'School: 22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-06 15:35:53'),
-(869, 45, 22, 'USER_LOGIN', 'School: 22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-06 15:37:18');
+(869, 45, 22, 'USER_LOGIN', 'School: 22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-06 15:37:18'),
+(870, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-10 12:55:13'),
+(871, 43, 21, 'USER_LOGIN', 'School: 21', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-10 12:58:29'),
+(872, 43, 21, 'USER_LOGIN', 'School: 21', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-10 13:01:08'),
+(873, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-11 00:18:02'),
+(874, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-11 00:33:44'),
+(875, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 00:13:20'),
+(876, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 00:32:12'),
+(877, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 01:01:49'),
+(878, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 01:04:18'),
+(879, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 03:27:40'),
+(880, 45, 22, 'USER_LOGIN', 'School: 22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 03:27:52'),
+(881, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '192.168.254.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-18 03:52:01'),
+(882, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '192.168.254.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-18 04:03:11'),
+(883, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 04:03:56'),
+(884, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '192.168.254.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-18 04:10:13'),
+(885, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '192.168.254.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-18 04:12:14'),
+(886, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '192.168.254.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-18 04:13:54'),
+(887, 48, 20, 'USER_LOGIN', 'School: 20', '192.168.254.131', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15', '2025-09-18 04:38:23'),
+(888, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 04:43:05'),
+(889, 48, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 04:50:54'),
+(890, 26, NULL, 'SUPER_ADMIN_LOGIN', 'Super admin logged in', '192.168.254.131', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15', '2025-09-18 05:21:00'),
+(891, 34, 20, 'USER_LOGIN', 'School: 20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-18 05:24:53');
 
 -- --------------------------------------------------------
 
@@ -1330,11 +1353,33 @@ INSERT INTO `tbl_user_logs` (`log_id`, `username`, `user_type`, `log_in_time`, `
 (890, 'Qnnect', 'Super Admin', '2025-09-06 23:23:40', NULL, '::1', 26, 0),
 (891, 'Qnnect', 'Super Admin', '2025-09-06 23:23:56', NULL, '::1', 26, 0),
 (892, 'Arnold Aranaydo', 'admin', '2025-09-06 23:24:06', '2025-09-06 23:24:36', '::1', 34, 20),
-(893, 'Arnold Aranaydo', 'admin', '2025-09-06 23:24:34', NULL, '::1', 34, 20),
+(893, 'Arnold Aranaydo', 'admin', '2025-09-06 23:24:34', '2025-09-18 09:00:00', '::1', 34, 20),
 (894, 'Qnnect', 'Super Admin', '2025-09-06 23:27:43', NULL, '::1', 26, 0),
 (895, 'Qnnect', 'Super Admin', '2025-09-06 23:34:57', NULL, '::1', 26, 0),
 (896, 'CNHS-SVE', 'admin', '2025-09-06 23:35:53', NULL, '::1', 45, 22),
-(897, 'CNHS-SVE', 'admin', '2025-09-06 23:37:18', NULL, '::1', 45, 22);
+(897, 'CNHS-SVE', 'admin', '2025-09-06 23:37:18', NULL, '::1', 45, 22),
+(898, 'Arnold Aranaydo', 'admin', '2025-09-10 20:55:13', '2025-09-18 09:00:00', '::1', 34, 20),
+(899, 'comsi', 'admin', '2025-09-10 20:58:29', NULL, '::1', 43, 21),
+(900, 'comsi', 'admin', '2025-09-10 21:01:08', NULL, '::1', 43, 21),
+(901, 'Arnold Aranaydo', 'admin', '2025-09-11 08:18:02', '2025-09-18 09:00:00', '::1', 34, 20),
+(902, 'Arnold Aranaydo', 'admin', '2025-09-11 08:33:44', '2025-09-18 09:00:00', '::1', 34, 20),
+(903, 'Arnold Aranaydo', 'admin', '2025-09-18 08:13:20', '2025-09-18 09:00:00', '::1', 34, 20),
+(904, 'Arnold Aranaydo', 'admin', '2025-09-18 08:32:12', '2025-09-18 09:03:30', '::1', 34, 20),
+(905, 'Arnold Aranaydo', 'admin', '2025-09-18 09:01:49', '2025-09-18 09:04:43', '::1', 34, 20),
+(906, 'Arnold Aranaydo', 'admin', '2025-09-18 09:04:18', '2025-09-18 13:25:26', '::1', 34, 20),
+(907, 'Arnold Aranaydo', 'admin', '2025-09-18 11:27:40', '2025-09-18 13:25:26', '::1', 34, 20),
+(908, 'CNHS-SVE', 'admin', '2025-09-18 11:27:52', NULL, '::1', 45, 22),
+(909, 'Qnnect', 'Super Admin', '2025-09-18 11:52:01', NULL, '192.168.254.100', 26, 0),
+(910, 'Qnnect', 'Super Admin', '2025-09-18 12:03:11', NULL, '192.168.254.100', 26, 0),
+(911, 'Qnnect', 'Super Admin', '2025-09-18 12:03:56', NULL, '::1', 26, 0),
+(912, 'Qnnect', 'Super Admin', '2025-09-18 12:10:13', NULL, '192.168.254.100', 26, 0),
+(913, 'Qnnect', 'Super Admin', '2025-09-18 12:12:14', NULL, '192.168.254.100', 26, 0),
+(914, 'Qnnect', 'Super Admin', '2025-09-18 12:13:54', NULL, '192.168.254.100', 26, 0),
+(915, 'testingonly', 'admin', '2025-09-18 12:38:23', '2025-09-18 13:19:59', '192.168.254.131', 48, 20),
+(916, 'Qnnect', 'Super Admin', '2025-09-18 12:43:05', NULL, '::1', 26, 0),
+(917, 'testingonly', 'admin', '2025-09-18 12:50:54', NULL, '::1', 48, 20),
+(918, 'Qnnect', 'Super Admin', '2025-09-18 13:21:00', NULL, '192.168.254.131', 26, 0),
+(919, 'Arnold Aranaydo', 'admin', '2025-09-18 13:24:53', NULL, '::1', 34, 20);
 
 -- --------------------------------------------------------
 
@@ -1416,7 +1461,8 @@ INSERT INTO `users` (`id`, `full_name`, `email`, `username`, `password`, `profil
 (34, '', 'davidbayot8@gmail.com', 'Arnold Aranaydo', '$2y$10$fkvztF6Gc4zgSAJLSYtFa.2wV33lvSSZL9FoUg8wDk9qxpMvLq6LO', 'uploads/profile_images/profile_1757168042.jpg', NULL, NULL, 'User', 'admin', 20),
 (37, '', 'boyjuswa@gmail.com', 'Wency Trapago', '$2y$10$kuF/OaMDY4DlFZ5WLBXS0OveitUpkJFEU.2GjvKREtUiKcwXQrEuq', 'uploads/profile_images/profile_1757157070.jpg', NULL, NULL, 'User', 'admin', 20),
 (43, '', 'comsi@gmail.com', 'comsi', '$2y$10$hDKyMRsXWYSc1P3Lsp3zj..xgmHKWuAFLm1nJvb.frXFQ6FzWNSAW', 'uploads/profile_images/profile_1757170140.png', NULL, NULL, 'User', 'admin', 21),
-(45, '', 'cnhs-sve@gmail.com', 'CNHS-SVE', '$2y$10$0cgoS47JGNdFP5ILIhpyvevpWIYjE3BbQ9PYYnhP0JiYlkqYlJZOi', 'uploads/profile_images/profile_1757173044.png', NULL, NULL, 'User', 'admin', 22);
+(45, '', 'cnhs-sve@gmail.com', 'CNHS-SVE', '$2y$10$0cgoS47JGNdFP5ILIhpyvevpWIYjE3BbQ9PYYnhP0JiYlkqYlJZOi', 'uploads/profile_images/profile_1757173044.png', NULL, NULL, 'User', 'admin', 22),
+(48, '', 'test@gmail.com', 'testingonly', '$2y$10$GvpnlYmf1uNe70czf7UPUeNLswRP8fbebAOAB/pJcIPWZXZOOIdMq', 'image/SPCPC-logo-trans.png', NULL, NULL, 'User', 'admin', 20);
 
 --
 -- Indexes for dumped tables
@@ -1496,7 +1542,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `recent_logins`
 --
 ALTER TABLE `recent_logins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1030;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1052;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -1514,7 +1560,7 @@ ALTER TABLE `schools`
 -- AUTO_INCREMENT for table `system_logs`
 --
 ALTER TABLE `system_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=870;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=892;
 
 --
 -- AUTO_INCREMENT for table `system_settings`
@@ -1526,7 +1572,7 @@ ALTER TABLE `system_settings`
 -- AUTO_INCREMENT for table `tbl_user_logs`
 --
 ALTER TABLE `tbl_user_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=898;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=920;
 
 --
 -- AUTO_INCREMENT for table `theme_passkeys`
@@ -1538,7 +1584,7 @@ ALTER TABLE `theme_passkeys`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- Constraints for dumped tables

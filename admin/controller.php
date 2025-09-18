@@ -2,7 +2,7 @@
 // Use the same session handling as other pages
 require_once '../includes/session_config.php';
 
-// Check if user is logged in
+Check if user is logged in
 if (!isset($_SESSION['email'])) {
     header("Location: login.php");
     exit;

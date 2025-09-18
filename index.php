@@ -29,7 +29,13 @@ if (!$conn_login) {
 $conn = $conn_qr;
 
 // Get user's school_id from the users table
-$email = $_SESSION['email'];
+if (isset($_SESSION['email'])) {
+    $email = $_SESSION['email'];
+} else {
+    header("Location: /Qnnect/admin/login.php");
+    exit();
+}
+
 $user_query = "SELECT school_id, role FROM users WHERE email = ?";
 $stmt = $conn_login->prepare($user_query);
 $stmt->bind_param("s", $email);

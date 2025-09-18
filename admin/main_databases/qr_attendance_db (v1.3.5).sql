@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 07, 2025 at 02:40 PM
+-- Generation Time: Sep 18, 2025 at 07:37 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,57 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `qr_attendance_db`
 --
-
-DELIMITER $$
---
--- Procedures
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `CheckScheduleConflict` (IN `p_teacher_username` VARCHAR(255), IN `p_day_of_week` ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'), IN `p_start_time` TIME, IN `p_end_time` TIME, IN `p_school_id` INT, IN `p_exclude_id` INT, OUT `p_has_conflict` BOOLEAN)   BEGIN
-    DECLARE conflict_count INT DEFAULT 0;
-
-    SELECT COUNT(*) INTO conflict_count
-    FROM teacher_schedules
-    WHERE teacher_username = p_teacher_username
-    AND day_of_week = p_day_of_week
-    AND school_id = p_school_id
-    AND status = 'active'
-    AND (
-        (start_time < p_end_time AND end_time > p_start_time) OR
-        (p_start_time < end_time AND p_end_time > start_time)
-    )
-    AND (p_exclude_id IS NULL OR id != p_exclude_id);
-
-    SET p_has_conflict = (conflict_count > 0);
-END$$
-
---
--- Functions
---
-CREATE DEFINER=`root`@`localhost` FUNCTION `GetTeacherWeeklySchedule` (`p_teacher_username` VARCHAR(255), `p_school_id` INT) RETURNS TEXT CHARSET utf8mb4 COLLATE utf8mb4_general_ci DETERMINISTIC READS SQL DATA BEGIN
-    DECLARE result TEXT DEFAULT '';
-
-    SELECT GROUP_CONCAT(
-        CONCAT(
-            day_of_week, ': ',
-            subject, ' - ',
-            section, ' (',
-            TIME_FORMAT(start_time, '%h:%i %p'), ' - ',
-            TIME_FORMAT(end_time, '%h:%i %p'), ')',
-            IF(room IS NOT NULL, CONCAT(' in ', room), '')
-        ) ORDER BY 
-            FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'),
-            start_time
-        SEPARATOR '\n'
-    ) INTO result
-    FROM teacher_schedules
-    WHERE teacher_username = p_teacher_username
-    AND school_id = p_school_id
-    AND status = 'active';
-
-    RETURN IFNULL(result, 'No schedules found');
-END$$
-
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -295,8 +244,8 @@ INSERT INTO `class_time_settings` (`id`, `instructor_name`, `course_section`, `s
 (35, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 15, 1, '2025-08-23 14:21:53', '2025-09-04 05:46:50'),
 (38, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 2, 1, '2025-08-24 04:46:28', '2025-08-30 13:02:25'),
 (45, '', '', '', '00:00:00', 'active', '00:00:00', '', 17, 1, '2025-09-03 12:42:06', '2025-09-03 12:43:11'),
-(46, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 20, 1, '2025-09-04 01:07:34', '2025-09-06 15:24:57'),
-(50, '', '', '', '00:00:00', 'active', '00:00:00', '', 21, 1, '2025-09-06 09:12:18', '2025-09-06 15:07:36');
+(46, '', '', '', '00:00:00', 'active', '00:00:00', '', 20, 1, '2025-09-04 01:07:34', '2025-09-18 05:24:44'),
+(50, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 21, 1, '2025-09-06 09:12:18', '2025-09-10 13:01:15');
 
 -- --------------------------------------------------------
 
@@ -522,7 +471,78 @@ INSERT INTO `student_qr_tokens` (`id`, `student_id`, `token`, `expires_at`, `use
 (161, 68, 'jrwEJ0rfKmkO_KhTWCSLEg-aLwJAQ', '2025-09-06 18:13:17', NULL, '2025-09-06 18:12:17', '2025-09-06 18:12:17', 43, 21),
 (162, 68, 'VJ_FQw-wq3OzXvBg2-yJHA-aLwJAQ', '2025-09-06 18:13:17', '2025-09-06 18:12:37', NULL, '2025-09-06 18:12:17', 43, 21),
 (163, 69, '6I-BhRH99NIGrQ3yvDi3jQ-aLwfuw', '2025-09-06 19:50:15', NULL, '2025-09-06 19:49:15', '2025-09-06 19:49:15', 43, 21),
-(164, 69, 'be0c_SFRn_XkSDVyag0uPg-aLwfuw', '2025-09-06 19:50:15', '2025-09-06 19:49:39', NULL, '2025-09-06 19:49:15', 43, 21);
+(164, 69, 'be0c_SFRn_XkSDVyag0uPg-aLwfuw', '2025-09-06 19:50:15', '2025-09-06 19:49:39', NULL, '2025-09-06 19:49:15', 43, 21),
+(165, 70, 'WXsV_30hnSuDAvaIzSw83Q-aMF2dA', '2025-09-11 21:00:36', NULL, '2025-09-10 21:00:36', '2025-09-10 21:00:36', 43, 21),
+(166, 70, 'F10KezMOGVf9CK7Lnh1ZFw-aMF2dA', '2025-09-11 21:00:36', '2025-09-10 21:00:48', NULL, '2025-09-10 21:00:36', 43, 21),
+(167, 34, '-Yz6tI8nHOXtC30yPKJJBQ-aMIVQA', '2025-09-11 08:19:08', NULL, '2025-09-11 08:18:08', '2025-09-11 08:18:08', 34, 20),
+(168, 34, 'GZO8QJEvnS9ww0kdmtqY_g-aMIVQA', '2025-09-11 08:19:08', NULL, NULL, '2025-09-11 08:18:08', 34, 20),
+(169, 13, 'kTsk_spI_wjf85SYvjhu7g-aMIVSQ', '2025-09-11 08:19:17', NULL, '2025-09-11 08:18:17', '2025-09-11 08:18:17', 34, 20),
+(170, 13, 'oDJheq07B8maSjoMCol42Q-aMIVSQ', '2025-09-11 08:19:17', '2025-09-11 08:18:49', NULL, '2025-09-11 08:18:17', 34, 20),
+(171, 34, 'byV6HW-suqCzIwrz858lVA-aMIZdA', '2025-09-11 08:37:04', NULL, '2025-09-11 08:36:04', '2025-09-11 08:36:04', 34, 20),
+(172, 34, 'ggCIiei0Z0ZYKQawSh5K0A-aMIZdA', '2025-09-11 08:37:04', NULL, NULL, '2025-09-11 08:36:04', 34, 20),
+(173, 13, 'fx9dSjdcGmLEfADtx9pxMg-aMIZ9g', '2025-09-11 08:39:14', NULL, '2025-09-11 08:38:14', '2025-09-11 08:38:14', 34, 20),
+(174, 13, 'iJAVVQOZ9U-U6NH6hO5SBA-aMIZ9g', '2025-09-11 08:39:14', '2025-09-11 08:39:06', NULL, '2025-09-11 08:38:14', 34, 20),
+(175, 21, 'iqYd9JGBitQqVyBenb2MQQ-aMIaPw', '2025-09-11 08:40:27', '2025-09-11 08:39:52', NULL, '2025-09-11 08:39:27', 34, 20),
+(176, 28, 'iZTRS-IvOh1vYHE3iDqOog-aMIaaw', '2025-09-11 08:41:11', NULL, '2025-09-11 08:40:34', '2025-09-11 08:40:11', 34, 20),
+(177, 28, '54zS1V0n1k7v5S40Ixu78A-aMIagg', '2025-09-11 08:41:34', NULL, '2025-09-11 08:40:34', '2025-09-11 08:40:34', 34, 20),
+(178, 28, 'TFEXT90ftftXNLNDwQRRbg-aMIagg', '2025-09-11 08:41:34', '2025-09-11 08:40:53', NULL, '2025-09-11 08:40:34', 34, 20),
+(179, 19, 'jcd2o5PJj7odAM_p__TDcw-aMIaqQ', '2025-09-11 08:42:13', '2025-09-11 08:41:27', NULL, '2025-09-11 08:41:13', 34, 20),
+(180, 29, '160aKkBRXvka4zHusCJDpQ-aMIaxQ', '2025-09-11 08:42:41', NULL, '2025-09-11 08:41:41', '2025-09-11 08:41:41', 34, 20),
+(181, 29, 'Vi9B5UEujSWHy4-cXm84Cw-aMIaxQ', '2025-09-11 08:42:41', '2025-09-11 08:41:54', NULL, '2025-09-11 08:41:41', 34, 20),
+(182, 31, 'aLOH6v52W9ShQce6rP69ZA-aMIa4Q', '2025-09-11 08:43:09', NULL, '2025-09-11 08:42:09', '2025-09-11 08:42:09', 34, 20),
+(183, 31, 'qn2q8mCvDzqn0mRKRme-yg-aMIa4Q', '2025-09-11 08:43:09', '2025-09-11 08:42:23', NULL, '2025-09-11 08:42:09', 34, 20),
+(184, 32, 'tBsz6lhzJALWNXl1BkpzaA-aMIa_g', '2025-09-11 08:43:38', '2025-09-11 08:42:55', NULL, '2025-09-11 08:42:38', 34, 20),
+(185, 16, 'YcunqwPggzrfvzDcdq53kQ-aMIbKw', '2025-09-11 08:44:23', '2025-09-11 08:44:04', NULL, '2025-09-11 08:43:23', 34, 20),
+(186, 34, 'hKFddkhDKL68ENtnp4k9Vg-aMIbaQ', '2025-09-11 08:45:25', NULL, NULL, '2025-09-11 08:44:25', 34, 20),
+(187, 71, 'bWH7WeBKxVUFuDwF-Ptwxg-aMIbtg', '2025-09-11 08:46:42', NULL, '2025-09-11 08:45:43', '2025-09-11 08:45:42', 34, 20),
+(188, 71, '0JtBE82soUirUZZHub7hJA-aMIbtw', '2025-09-11 08:46:43', '2025-09-11 08:45:58', NULL, '2025-09-11 08:45:43', 34, 20),
+(189, 18, '_KzL3q_vtoEpk-UyVNsY5Q-aMIb1A', '2025-09-11 08:47:12', '2025-09-11 08:46:28', NULL, '2025-09-11 08:46:13', 34, 20),
+(190, 72, 'KUMHBDJFlkXVg47w6BcrBw-aMIcLw', '2025-09-11 08:48:43', NULL, '2025-09-11 08:47:43', '2025-09-11 08:47:43', 34, 20),
+(191, 72, 'SDLfX90XOaVHnOAiqVVLjg-aMIcLw', '2025-09-11 08:48:43', '2025-09-11 08:48:10', NULL, '2025-09-11 08:47:43', 34, 20),
+(192, 33, 'do1vU3z5y8NVq-P0jEmoxg-aMIcVg', '2025-09-11 08:49:22', NULL, '2025-09-11 08:48:22', '2025-09-11 08:48:22', 34, 20),
+(193, 33, 'q9PcPjfzCT9DGV-A0o3tZg-aMIcVg', '2025-09-11 08:49:22', '2025-09-11 08:48:43', NULL, '2025-09-11 08:48:22', 34, 20),
+(194, 22, 'wW2ZyJ-kN3uPbMbtyMq9cg-aMIccw', '2025-09-11 08:49:51', '2025-09-11 08:49:03', NULL, '2025-09-11 08:48:52', 34, 20),
+(195, 23, '3ZC04uCSUe6y6TE8yjREjQ-aMIcjQ', '2025-09-11 08:50:17', '2025-09-11 08:49:35', NULL, '2025-09-11 08:49:17', 34, 20),
+(196, 20, 'Smn4z_H62s1TIJcbk6YH6Q-aMIcqA', '2025-09-11 08:50:44', '2025-09-11 08:50:29', NULL, '2025-09-11 08:49:44', 34, 20),
+(197, 15, 'JzEC7dsMoM4ejZxFHn1xyw-aMIc7A', '2025-09-11 08:51:52', '2025-09-11 08:51:12', NULL, '2025-09-11 08:50:52', 34, 20),
+(198, 24, 'e0ptxbIR8q3rM_W9fiJFvw-aMIdgw', '2025-09-11 08:54:23', '2025-09-11 08:53:43', NULL, '2025-09-11 08:53:23', 34, 20),
+(199, 27, 'k43Lvbt8qAhnIZR75h18wA-aMIgVw', '2025-09-11 09:06:27', '2025-09-11 09:05:45', NULL, '2025-09-11 09:05:27', 34, 20),
+(200, 26, 'UGku8m4_TAd7E8_shj1jHA-aMIgeA', '2025-09-11 09:07:00', '2025-09-11 09:06:19', NULL, '2025-09-11 09:06:00', 34, 20),
+(201, 30, 'DEbaTk8JN5SD8NirZg2EJg-aMIpvg', '2025-09-11 09:46:34', '2025-09-11 09:45:51', NULL, '2025-09-11 09:45:34', 34, 20),
+(202, 21, 'L4tjTSM35h1FbZE1j0okeg-aMtQhQ', '2025-09-18 08:22:25', '2025-09-18 08:21:55', NULL, '2025-09-18 08:21:25', 34, 20),
+(203, 19, 'tpGI0uXRklw48BCbvpSZxA-aMtQvQ', '2025-09-18 08:23:21', '2025-09-18 08:22:36', NULL, '2025-09-18 08:22:21', 34, 20),
+(204, 18, 'ypVIGtiJPj4PTq-uSlQovw-aMtQ4Q', '2025-09-18 08:23:57', '2025-09-18 08:23:09', NULL, '2025-09-18 08:22:57', 34, 20),
+(205, 29, 'EWp7AERoebxtSnDW30ChsQ-aMtRDw', '2025-09-18 08:24:43', '2025-09-18 08:24:02', NULL, '2025-09-18 08:23:43', 34, 20),
+(206, 28, 'TdwyWM_AaHWnPPVlZmyX6g-aMtROA', '2025-09-18 08:25:24', '2025-09-18 08:24:43', NULL, '2025-09-18 08:24:24', 34, 20),
+(207, 26, '1MH9lZYN7rQgyN6nkR2-5g-aMtRbA', '2025-09-18 08:26:16', '2025-09-18 08:25:32', NULL, '2025-09-18 08:25:16', 34, 20),
+(208, 15, '9HY6zE2TL_uvYtKGXAyphg-aMtRoA', '2025-09-18 08:27:08', '2025-09-18 08:26:24', NULL, '2025-09-18 08:26:08', 34, 20),
+(209, 72, 'nmqQuG9rLLi2_mPNuiq_Bw-aMtS4w', '2025-09-18 08:32:31', NULL, '2025-09-18 08:31:31', '2025-09-18 08:31:31', 34, 20),
+(210, 72, 'LQMWTgkARSfRFt5AoqqHcA-aMtS4w', '2025-09-18 08:32:31', NULL, NULL, '2025-09-18 08:31:31', 34, 20),
+(211, 71, '1xvlSND2EQEs8F_kPckxJg-aMtTVg', '2025-09-18 08:34:26', '2025-09-18 08:33:43', NULL, '2025-09-18 08:33:26', 34, 20),
+(212, 72, 'YASA8oCOBF6an2sEkC1vOw-aMtTjg', '2025-09-18 08:35:22', NULL, '2025-09-18 08:34:22', '2025-09-18 08:34:22', 34, 20),
+(213, 72, 'Uqx_z9sF9oN-L6UAZof1dg-aMtTjg', '2025-09-18 08:35:22', '2025-09-18 08:34:46', NULL, '2025-09-18 08:34:22', 34, 20),
+(214, 71, 'afG1ZmYq2JWiW6ApBjlbMg-aMtTvA', '2025-09-18 08:36:08', '2025-09-18 08:35:37', NULL, '2025-09-18 08:35:08', 34, 20),
+(215, 25, '5w5q9q0LZdC3qMM-vB2i1w-aMtU2A', '2025-09-18 08:40:52', '2025-09-18 08:40:06', NULL, '2025-09-18 08:39:52', 34, 20),
+(216, 30, 'icCOg3-Cz1PwG2Fs6jPNbg-aMtVAQ', '2025-09-18 08:41:33', '2025-09-18 08:40:54', NULL, '2025-09-18 08:40:33', 34, 20),
+(217, 72, 'X33kHm4UPofHhZVrLpG02g-aMta5g', '2025-09-18 09:06:42', NULL, '2025-09-18 09:05:42', '2025-09-18 09:05:42', 34, 20),
+(218, 72, 'zShXK4s6fxnCo-nB_wSKGQ-aMta5g', '2025-09-18 09:06:42', NULL, NULL, '2025-09-18 09:05:42', 34, 20),
+(219, 16, 'uXfFDB_ESKzABUvdmY6-Gw-aMteag', '2025-09-18 09:21:42', NULL, '2025-09-18 09:21:16', '2025-09-18 09:20:42', 34, 20),
+(220, 16, 'LpxDJw5dEqbNAMiIEtZ0kQ-aMtejA', '2025-09-18 09:22:16', '2025-09-18 09:21:31', NULL, '2025-09-18 09:21:16', 34, 20),
+(221, 23, '8KZL7fpF0LL7Uz0s9fWdfQ-aMtg2A', '2025-09-18 09:32:04', NULL, '2025-09-18 09:31:45', '2025-09-18 09:31:04', 34, 20),
+(222, 23, 'hfHP3UHK-tD-gMuhxxXX_Q-aMthAQ', '2025-09-18 09:32:45', '2025-09-18 09:32:07', NULL, '2025-09-18 09:31:45', 34, 20),
+(223, 22, 'DkXyvhuQYABOAChCCnd3Cg-aMthIg', '2025-09-18 09:33:18', '2025-09-18 09:32:31', NULL, '2025-09-18 09:32:18', 34, 20),
+(224, 33, 'TLLgZFFppsHjXVfLurBfzA-aMth1A', '2025-09-18 09:36:16', '2025-09-18 09:35:31', NULL, '2025-09-18 09:35:16', 34, 20),
+(225, 17, 'K7KSM4IOwdkWBi7kd57MiA-aMtmgA', '2025-09-18 09:56:12', '2025-09-18 09:55:43', NULL, '2025-09-18 09:55:12', 34, 20),
+(226, 73, 'qMZgvyb-lRSaTTLQ9eR7UA-aMuPxw', '2025-09-18 12:52:19', NULL, '2025-09-18 12:52:17', '2025-09-18 12:51:19', 48, 20),
+(227, 73, 'uVLUzoBSxk6ESF_A4uKn1g-aMuPxw', '2025-09-18 12:52:19', NULL, '2025-09-18 12:52:17', '2025-09-18 12:51:19', 48, 20),
+(228, 73, '4Cv5YJPv75vM2Vy7HbtAJw-aMuP2w', '2025-09-18 12:56:39', NULL, '2025-09-18 12:52:17', '2025-09-18 12:51:39', 48, 20),
+(229, 73, 'TJcvTOasQqPQTb41sa25mQ-aMuP2w', '2025-09-18 12:56:39', NULL, '2025-09-18 12:52:17', '2025-09-18 12:51:39', 48, 20),
+(230, 73, 'mz3xKs9j7gLRV0LsBiWlvg-aMuQAQ', '2025-09-18 12:57:17', NULL, '2025-09-18 12:52:17', '2025-09-18 12:52:17', 48, 20),
+(231, 73, 'qDzBf9rmwdpUqLfYgD4LBQ-aMuQAQ', '2025-09-18 12:57:17', '2025-09-18 12:53:42', NULL, '2025-09-18 12:52:17', 48, 20),
+(232, 72, 'n_WExhlsS9RwAc2pWqG8eA-aMuYDQ', '2025-09-18 13:27:37', NULL, '2025-09-18 13:26:39', '2025-09-18 13:26:37', 34, 20),
+(233, 72, 'cluIo7tMBPxKZJ9ETPPHzA-aMuYDQ', '2025-09-18 13:27:37', NULL, '2025-09-18 13:26:39', '2025-09-18 13:26:37', 34, 20),
+(234, 72, 'RzpQLgvv66p_rUGR_W3bng-aMuYDw', '2025-09-18 13:27:39', NULL, '2025-09-18 13:26:39', '2025-09-18 13:26:39', 34, 20),
+(235, 72, 'eVWvRf8SWIgpHOnALHhl3g-aMuYDw', '2025-09-18 13:27:39', NULL, NULL, '2025-09-18 13:26:39', 34, 20);
 
 -- --------------------------------------------------------
 
@@ -626,7 +646,45 @@ INSERT INTO `tbl_attendance` (`tbl_attendance_id`, `tbl_student_id`, `time_in`, 
 (83, 65, '2025-09-06 11:48:06', 'On Time', 'general', NULL, 34, 20, 21, 43),
 (84, 69, '2025-09-06 11:49:39', 'On Time', 'general', NULL, 34, 20, 21, 43),
 (85, 69, '2025-09-06 11:50:36', 'Late', 'general', NULL, 34, 19, 21, 43),
-(86, 69, '2025-09-06 11:50:47', 'Late', 'general', NULL, 34, 15, 21, 43);
+(86, 69, '2025-09-06 11:50:47', 'Late', 'general', NULL, 34, 15, 21, 43),
+(87, 70, '2025-09-10 13:00:48', 'On Time', 'general', NULL, 34, 21, 21, 43),
+(89, 13, '2025-09-11 00:39:06', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(90, 21, '2025-09-11 00:39:52', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(91, 28, '2025-09-11 00:40:53', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(92, 19, '2025-09-11 00:41:27', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(93, 29, '2025-09-11 00:41:54', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(94, 31, '2025-09-11 00:42:23', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(95, 32, '2025-09-11 00:42:55', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(96, 16, '2025-09-11 00:44:04', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(97, 71, '2025-09-11 00:45:58', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(98, 18, '2025-09-11 00:46:28', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(99, 72, '2025-09-11 00:48:10', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(100, 33, '2025-09-11 00:48:43', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(101, 22, '2025-09-11 00:49:03', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(102, 23, '2025-09-11 00:49:35', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(103, 20, '2025-09-11 00:50:29', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(104, 15, '2025-09-11 00:51:12', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(105, 24, '2025-09-11 00:53:43', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(106, 27, '2025-09-11 01:05:45', 'Late', 'general', NULL, 35, 22, 20, 34),
+(107, 26, '2025-09-11 01:06:19', 'Late', 'general', NULL, 35, 22, 20, 34),
+(108, 30, '2025-09-11 01:45:51', 'Late', 'general', NULL, 35, 22, 20, 34),
+(109, 21, '2025-09-18 00:21:55', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(110, 19, '2025-09-18 00:22:36', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(111, 18, '2025-09-18 00:23:09', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(112, 29, '2025-09-18 00:24:02', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(113, 28, '2025-09-18 00:24:43', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(114, 26, '2025-09-18 00:25:32', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(115, 15, '2025-09-18 00:26:24', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(117, 72, '2025-09-18 00:34:46', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(118, 71, '2025-09-18 00:35:37', 'On Time', 'general', NULL, 35, 22, 20, 34),
+(119, 25, '2025-09-18 00:40:06', 'Late', 'general', NULL, 35, 22, 20, 34),
+(120, 30, '2025-09-18 00:40:54', 'Late', 'general', NULL, 35, 22, 20, 34),
+(121, 16, '2025-09-18 01:21:31', 'Late', 'general', NULL, 35, 22, 20, 34),
+(122, 23, '2025-09-18 01:32:07', 'Late', 'general', NULL, 35, 22, 20, 34),
+(123, 22, '2025-09-18 01:32:31', 'Late', 'general', NULL, 35, 22, 20, 34),
+(124, 33, '2025-09-18 01:35:31', 'Late', 'general', NULL, 35, 22, 20, 34),
+(125, 17, '2025-09-18 01:55:43', 'Late', 'general', NULL, 35, 22, 20, 34),
+(126, 73, '2025-09-18 04:53:42', 'On Time', 'general', NULL, 37, 23, 20, 48);
 
 -- --------------------------------------------------------
 
@@ -659,7 +717,9 @@ INSERT INTO `tbl_courses` (`course_id`, `course_name`, `user_id`, `school_id`, `
 (53, 'BSCS', 38, 20, '2025-09-04 05:51:49'),
 (54, 'BSIS', 37, 20, '2025-09-04 06:28:48'),
 (55, 'TEST 1', 43, 21, '2025-09-06 09:11:08'),
-(56, 'TEST 2', 43, 21, '2025-09-06 11:49:12');
+(56, 'TEST 2', 43, 21, '2025-09-06 11:49:12'),
+(57, 'test', 43, 21, '2025-09-10 12:59:20'),
+(58, 'BSIS', 48, 20, '2025-09-18 04:51:15');
 
 -- --------------------------------------------------------
 
@@ -766,7 +826,11 @@ INSERT INTO `tbl_face_verification_logs` (`log_id`, `student_id`, `student_name`
 (143, 66, 'test 2', 'Success', '2025-09-06 17:58:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Face captured during registration', 21, 43),
 (144, 67, 'test 3', 'Success', '2025-09-06 18:11:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Face captured during registration', 21, 43),
 (145, 68, 'test 4', 'Success', '2025-09-06 18:11:57', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Face captured during registration', 21, 43),
-(146, 69, 'test 5', 'Success', '2025-09-06 19:49:08', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Face captured during registration', 21, 43);
+(146, 69, 'test 5', 'Success', '2025-09-06 19:49:08', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Face captured during registration', 21, 43),
+(147, 70, 'test 6', 'Success', '2025-09-10 20:59:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 21, 43),
+(148, 71, 'kenneth casais', 'Success', '2025-09-11 08:45:30', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 20, 34),
+(149, 72, 'wisdom r culaway', 'Success', '2025-09-11 08:47:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 20, 34),
+(150, 73, 'GARDO', 'Success', '2025-09-18 12:51:10', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Face captured during registration', 20, 48);
 
 -- --------------------------------------------------------
 
@@ -798,7 +862,9 @@ INSERT INTO `tbl_instructors` (`instructor_id`, `instructor_name`, `subject`, `c
 (32, 'BaklangNaglalaptop', '', '2025-09-04 05:48:18', 1, NULL),
 (33, 'escall test', '', '2025-09-04 11:07:50', 1, NULL),
 (34, 'comsi', '', '2025-09-06 09:12:04', 1, NULL),
-(35, 'Arnold Aranaydo', '', '2025-09-06 11:11:32', 1, NULL);
+(35, 'Arnold Aranaydo', '', '2025-09-06 11:11:32', 1, NULL),
+(36, 'CNHS-SVE', '', '2025-09-18 03:27:55', 1, NULL),
+(37, 'testingonly', '', '2025-09-18 04:41:55', 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -829,7 +895,10 @@ INSERT INTO `tbl_instructor_subjects` (`id`, `instructor_id`, `subject_id`, `cre
 (13, 34, 19, '2025-09-06 11:20:56', 1),
 (14, 0, 20, '2025-09-06 11:47:41', 1),
 (15, 0, 19, '2025-09-06 11:50:13', 1),
-(16, 0, 15, '2025-09-06 11:50:43', 1);
+(16, 0, 15, '2025-09-06 11:50:43', 1),
+(17, 35, 22, '2025-09-11 00:38:37', 1),
+(18, 0, 22, '2025-09-11 00:50:24', 1),
+(19, 37, 23, '2025-09-18 04:53:20', 1);
 
 -- --------------------------------------------------------
 
@@ -860,7 +929,7 @@ INSERT INTO `tbl_sections` (`section_id`, `section_name`, `user_id`, `school_id`
 (210, 'ICT SHELBY', 1, 1, '2025-08-24 12:36:43', NULL),
 (211, 'ICT SHELBYie', 1, 1, '2025-08-24 12:38:12', NULL),
 (212, '11 AGHIMUAN', 1, 1, '2025-08-24 12:55:23', NULL),
-(213, '302', 1, 1, '2025-08-24 13:00:38', 51),
+(213, '302', 1, 1, '2025-08-24 13:00:38', 58),
 (214, '402', 30, 15, '2025-08-24 13:03:21', 44),
 (215, '12 EVOLVE', 30, 15, '2025-08-24 13:03:47', 45),
 (216, '12 EVOLVE', 1, 1, '2025-08-24 13:04:58', NULL),
@@ -871,7 +940,8 @@ INSERT INTO `tbl_sections` (`section_id`, `section_name`, `user_id`, `school_id`
 (221, '403', 38, 20, '2025-09-04 05:48:53', 52),
 (222, '301', 38, 20, '2025-09-04 05:51:49', 53),
 (223, '302', 37, 20, '2025-09-04 06:28:48', 54),
-(224, 'TEST', 43, 21, '2025-09-06 09:11:08', 56);
+(224, 'TEST', 43, 21, '2025-09-06 09:11:08', 56),
+(225, '3', 43, 21, '2025-09-10 12:59:20', 57);
 
 -- --------------------------------------------------------
 
@@ -950,7 +1020,11 @@ INSERT INTO `tbl_student` (`tbl_student_id`, `student_name`, `course_section`, `
 (66, 'test 2', 'TEST 1 - TEST', 'STU-43-21-3c02b462-f24f90e7a44375ef', NULL, 'face_1757152720_68bc05d07e352.jpg', 21, 43),
 (67, 'test 3', 'TEST 1 - TEST', 'STU-43-21-2a4e5e2f-b0531640e8c27f68', NULL, 'face_1757153496_68bc08d8e685e.jpg', 21, 43),
 (68, 'test 4', 'TEST 1 - TEST', 'STU-43-21-5766eae2-0ad00c202eec0bf7', NULL, 'face_1757153519_68bc08efe067f.jpg', 21, 43),
-(69, 'test 5', 'TEST 2 -TEST', 'STU-43-21-4b3ac2f4-d73e30e6d9a318ba', NULL, 'face_1757159352_68bc1fb872c6b.jpg', 21, 43);
+(69, 'test 5', 'TEST 2 -TEST', 'STU-43-21-4b3ac2f4-d73e30e6d9a318ba', NULL, 'face_1757159352_68bc1fb872c6b.jpg', 21, 43),
+(70, 'test 6', 'test-3', 'STU-43-21-b536415b-c8532684bd498ef9', NULL, 'face_1757509160_68c17628c0359.jpg', 21, 43),
+(71, 'kenneth casais', 'BSIS - 302', 'STU-34-20-7bdcbb8d-98f41eed80062b5a', NULL, 'face_1757551536_68c21bb0d1267.jpg', 20, 34),
+(72, 'wisdom r culaway', 'BSIS - 302', 'STU-34-20-74b21565-be5af6419796e089', NULL, 'face_1757551659_68c21c2bd7cc8.jpg', 20, 34),
+(73, 'GARDO', 'BSIS - 302', 'STU-48-20-cc53eaa6-6b21a490bd70b6f3', NULL, 'face_1758171075_68cb8fc3cbd6f.jpg', 20, 48);
 
 -- --------------------------------------------------------
 
@@ -985,7 +1059,10 @@ INSERT INTO `tbl_subjects` (`subject_id`, `subject_name`, `created_at`, `school_
 (17, 'set 5', '2025-09-06 10:09:29', 21, 43),
 (18, 'telekenesis', '2025-09-06 10:13:31', 21, 43),
 (19, 'metal bending', '2025-09-06 11:20:56', 21, 43),
-(20, 'blood bending', '2025-09-06 11:47:41', 21, 43);
+(20, 'blood bending', '2025-09-06 11:47:41', 21, 43),
+(21, 'testinh', '2025-09-10 13:00:25', 21, 43),
+(22, 'ENTRERPRISE ARCHITECTURE', '2025-09-11 00:38:37', 20, 34),
+(23, 'math', '2025-09-18 04:53:20', 20, 48);
 
 -- --------------------------------------------------------
 
@@ -1062,7 +1139,9 @@ INSERT INTO `teacher_schedules` (`id`, `teacher_username`, `subject`, `section`,
 (47, 'comsi', 'set 4', 'TEST 1 - TEST', 'Wednesday', '12:00:00', '13:00:00', 'ROOM 101', 21, 43, '2025-09-06 09:56:43', '2025-09-06 09:56:43', 'active'),
 (48, 'comsi', 'set 5', 'TEST 1 - TEST', 'Thursday', '09:00:00', '10:00:00', '1', 21, 43, '2025-09-06 09:57:10', '2025-09-06 09:57:10', 'active'),
 (49, 'comsi', 'telekenesis', 'TEST 1 - TEST', 'Friday', '07:00:00', '12:00:00', '200', 21, 43, '2025-09-06 10:11:08', '2025-09-06 10:11:08', 'active'),
-(50, 'comsi', 'metal bending', 'TEST 1 - TEST', 'Tuesday', '15:00:00', '18:00:00', 'Computer Laboratory', 21, 43, '2025-09-06 11:20:48', '2025-09-06 11:20:48', 'active');
+(50, 'comsi', 'metal bending', 'TEST 1 - TEST', 'Tuesday', '15:00:00', '18:00:00', 'Computer Laboratory', 21, 43, '2025-09-06 11:20:48', '2025-09-06 11:20:48', 'active'),
+(51, 'comsi', 'testinh', 'test-3', 'Saturday', '09:00:00', '11:00:00', 'katokis', 21, 43, '2025-09-10 12:59:52', '2025-09-10 12:59:52', 'active'),
+(52, 'testingonly', 'math', 'BSIS - 302', 'Wednesday', '12:30:00', '15:00:00', 'tabing ilog', 20, 48, '2025-09-18 04:53:14', '2025-09-18 04:53:14', 'active');
 
 --
 -- Triggers `teacher_schedules`
@@ -1298,7 +1377,9 @@ INSERT INTO `teacher_schedule_logs` (`id`, `schedule_id`, `action`, `old_values`
 (0, 40, 'UPDATE', '{\"teacher_username\": \"arnold_aranaydo\", \"subject\": \"ENTRERPRENEUR ARCHITECTURE\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Thursday\", \"start_time\": \"08:30:00\", \"end_time\": \"10:00:00\", \"room\": \"Old Poso Office\", \"school_id\": 20}', '{\"teacher_username\": \"Arnold Aranaydo\", \"subject\": \"ENTRERPRENEUR ARCHITECTURE\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Thursday\", \"start_time\": \"08:30:00\", \"end_time\": \"10:00:00\", \"room\": \"Old Poso Office\", \"school_id\": 20}', 'root@localhost', '2025-09-06 11:11:30'),
 (0, 40, 'UPDATE', '{\"teacher_username\": \"Arnold Aranaydo\", \"subject\": \"ENTRERPRENEUR ARCHITECTURE\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Thursday\", \"start_time\": \"08:30:00\", \"end_time\": \"10:00:00\", \"room\": \"Old Poso Office\", \"school_id\": 20}', '{\"teacher_username\": \"Arnold Aranaydo\", \"subject\": \"ENTRERPRISE ARCHITECTURE\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Thursday\", \"start_time\": \"08:30:00\", \"end_time\": \"10:00:00\", \"room\": \"Old Poso Office\", \"school_id\": 20}', 'root@localhost', '2025-09-06 11:12:56'),
 (0, 44, 'UPDATE', '{\"teacher_username\": \"comsi\", \"subject\": \"set 1\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"204\", \"school_id\": 21}', '{\"teacher_username\": \"comsi\", \"subject\": \"blood bending\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"204\", \"school_id\": 21}', 'root@localhost', '2025-09-06 11:19:50'),
-(0, 50, 'INSERT', NULL, '{\"teacher_username\": \"comsi\", \"subject\": \"metal bending\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Tuesday\", \"start_time\": \"15:00:00\", \"end_time\": \"18:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 21}', 'root@localhost', '2025-09-06 11:20:48');
+(0, 50, 'INSERT', NULL, '{\"teacher_username\": \"comsi\", \"subject\": \"metal bending\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Tuesday\", \"start_time\": \"15:00:00\", \"end_time\": \"18:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 21}', 'root@localhost', '2025-09-06 11:20:48'),
+(0, 51, 'INSERT', NULL, '{\"teacher_username\": \"comsi\", \"subject\": \"testinh\", \"section\": \"test-3\", \"day_of_week\": \"Saturday\", \"start_time\": \"09:00:00\", \"end_time\": \"11:00:00\", \"room\": \"katokis\", \"school_id\": 21}', 'root@localhost', '2025-09-10 12:59:52'),
+(0, 52, 'INSERT', NULL, '{\"teacher_username\": \"testingonly\", \"subject\": \"math\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Wednesday\", \"start_time\": \"12:30:00\", \"end_time\": \"15:00:00\", \"room\": \"tabing ilog\", \"school_id\": 20}', 'root@localhost', '2025-09-18 04:53:14');
 
 -- --------------------------------------------------------
 
@@ -1517,7 +1598,7 @@ ALTER TABLE `attendance_logs`
 -- AUTO_INCREMENT for table `class_time_settings`
 --
 ALTER TABLE `class_time_settings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -1541,61 +1622,61 @@ ALTER TABLE `school_info`
 -- AUTO_INCREMENT for table `student_qr_tokens`
 --
 ALTER TABLE `student_qr_tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=236;
 
 --
 -- AUTO_INCREMENT for table `tbl_attendance`
 --
 ALTER TABLE `tbl_attendance`
-  MODIFY `tbl_attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
+  MODIFY `tbl_attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
 
 --
 -- AUTO_INCREMENT for table `tbl_courses`
 --
 ALTER TABLE `tbl_courses`
-  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `tbl_face_verification_logs`
 --
 ALTER TABLE `tbl_face_verification_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=147;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
 
 --
 -- AUTO_INCREMENT for table `tbl_instructors`
 --
 ALTER TABLE `tbl_instructors`
-  MODIFY `instructor_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `instructor_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `tbl_instructor_subjects`
 --
 ALTER TABLE `tbl_instructor_subjects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `tbl_sections`
 --
 ALTER TABLE `tbl_sections`
-  MODIFY `section_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=225;
+  MODIFY `section_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=226;
 
 --
 -- AUTO_INCREMENT for table `tbl_student`
 --
 ALTER TABLE `tbl_student`
-  MODIFY `tbl_student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `tbl_student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `tbl_subjects`
 --
 ALTER TABLE `tbl_subjects`
-  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `teacher_schedules`
 --
 ALTER TABLE `teacher_schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `user_settings`

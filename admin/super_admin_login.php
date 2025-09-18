@@ -35,7 +35,7 @@ $error_message = null; $success_message = null;
 // AJAX: return super admin profiles
 if (isset($_POST['action']) && $_POST['action'] === 'get_super_admin_users') {
     header('Content-Type: application/json');
-    $sql = "SELECT u.id, u.username, u.email, u.profile_image, rl.last_login
+    $sql = "SELECT u.id, u.username,  u.profile_image, rl.last_login
             FROM users u
             LEFT JOIN recent_logins rl ON u.username = rl.username
             WHERE u.role = 'super_admin' AND u.username IS NOT NULL AND u.username != ''
