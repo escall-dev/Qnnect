@@ -1,7 +1,7 @@
 
 # Qnnect: A QR Code Digital Attendance Tracking System
 
-**Current Version:** v1.3.5
+**Current Version:** v1.3.6
 
 Qnnect is a comprehensive school management and attendance tracking system designed for educational institutions. It combines QR code technology with facial recognition to ensure secure, efficient, and tamper-resistant attendance, while providing robust tools for administrators and instructors.
 
