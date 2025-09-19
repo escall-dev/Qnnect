@@ -1386,6 +1386,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
                     ?>
                     <form action="controller.php?action=edit" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="redirect" value="admin_panel.php#profile">
+                        <input type="hidden" name="from_super_admin" value="1">
                         <div class="text-center mb-4">
                             <img id="ap_profile_preview" 
                                  src="<?php echo (!empty($curr_user['profile_image']) ? '../' . $curr_user['profile_image'] : 'image/SPCPC-logo-trans.png'); ?>" 

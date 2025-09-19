@@ -1700,7 +1700,6 @@ $schools = getSchools($conn);
             <ul>
                 Barcelona, Christian Danry<br>
                 Bayot, David Joshua<br>
-                Bismar, John Carl<br>
                 Escallente, Alexander Joerenz<br>
                 Lucenecio, Ma. Melissa<br>
                 Pinedes, Redgine<br>

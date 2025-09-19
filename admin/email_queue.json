@@ -1,0 +1,9 @@
+[
+    {
+        "to": "escall.dev027@gmail.com",
+        "subject": "Password Reset Test - Method 3",
+        "message": "This email was queued for later delivery.",
+        "timestamp": "2025-09-19 16:17:55",
+        "type": "password_reset"
+    }
+]
