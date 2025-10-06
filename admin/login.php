@@ -1700,7 +1700,6 @@ $schools = getSchools($conn);
             <ul>
                 Barcelona, Christian Danry<br>
                 Bayot, David Joshua<br>
-                Bismar, John Carl<br>
                 Escallente, Alexander Joerenz<br>
                 Lucenecio, Ma. Melissa<br>
                 Pinedes, Redgine<br>
@@ -1717,7 +1716,7 @@ $schools = getSchools($conn);
     
 
     <span class="flex-spacer" aria-hidden="true"></span>
-    <span class="app-version" title="Application Version">Current Version: 1.3.5</span>
+    <span class="app-version" title="Application Version">Current Version: 1.3.6</span>
 
   </footer>
 

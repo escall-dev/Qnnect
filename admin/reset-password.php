@@ -228,6 +228,14 @@ $stmt->close();
                 
                 <div class="title">Reset Password</div>
                 
+                <!-- Password Requirements Reminder -->
+                <div class="alert alert-info" style="margin-bottom: 20px; padding: 15px; border-radius: 8px; background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> <strong>Password Requirements:</strong><br>
+                    • Must be at least 8 characters long<br>
+                    • Must contain letters and numbers only<br>
+                    • No special characters allowed
+                </div>
+                
                 <!-- Form to reset the password - preserving the original form action -->
                 <form action="reset-password-process.php" method="post" style="width: 100%;">
                     <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">

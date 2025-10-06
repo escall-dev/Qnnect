@@ -6,6 +6,10 @@ require_once 'database.php';
 // Utilities
 function sa_sanitize($v){ return htmlspecialchars(trim((string)$v), ENT_QUOTES, 'UTF-8'); }
 
+// Brute force protection constants
+define('MAX_FAILED_ATTEMPTS', 5);
+define('LOCKOUT_TIME', 170); // 2:50 minutes in seconds
+
 // Ensure system_settings table exists
 $createTable = "CREATE TABLE IF NOT EXISTS system_settings (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -40,6 +44,8 @@ function upsert_setting($conn, $key, $value){
 }
 
 $PIN_KEY = 'super_admin_pin_hash';
+$FAILED_ATTEMPTS_KEY = 'super_admin_failed_attempts';
+$LOCKOUT_TIME_KEY = 'super_admin_lockout_until';
 
 // If user still has a super admin session with role set but PIN not validated, force full cleanup
 if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin' && empty($_SESSION['superadmin_pin_verified'])) {
@@ -50,6 +56,19 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin' && empty($_S
 $pin_hash = get_setting($conn, $PIN_KEY);
 
 $error_message = null; $success_message = null;
+
+// Check if account is locked out
+$lockout_until = (int)get_setting($conn, $LOCKOUT_TIME_KEY);
+$failed_attempts = (int)get_setting($conn, $FAILED_ATTEMPTS_KEY);
+$now = time();
+$is_locked = ($lockout_until > $now);
+
+if ($is_locked) {
+    $remaining_time = $lockout_until - $now;
+    $minutes = floor($remaining_time / 60);
+    $seconds = $remaining_time % 60;
+    $error_message = "Too many failed attempts. Please wait {$minutes}:{$seconds} before trying again.";
+}
 
 // Handle set PIN (bootstrap) when none exists
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_pin'])) {
@@ -80,7 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_pin'])) {
 
 // Handle verify PIN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_pin'])) {
-    if (!$pin_hash) {
+    if ($is_locked) {
+        // Don't process the form if locked out - message already set above
+    } else if (!$pin_hash) {
         $error_message = 'No PIN is configured yet. Please create one first.';
     } else {
         $pin = $_POST['pin'] ?? '';
@@ -88,13 +109,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_pin'])) {
         if ($pin === '' || !preg_match('/^\d{6}$/', $pin)) {
             $error_message = 'Enter a valid 6-digit PIN.';
         } else if (password_verify($pin, $pin_hash)) {
+            // Successful login - reset failed attempts counter
+            upsert_setting($conn, $FAILED_ATTEMPTS_KEY, '0');
+            upsert_setting($conn, $LOCKOUT_TIME_KEY, '0');
+            
             $_SESSION['superadmin_pin_verified'] = true;
             // Minor hardening: remember time
             $_SESSION['superadmin_pin_verified_at'] = time();
             header('Location: super_admin_login.php');
             exit();
         } else {
-            $error_message = 'Invalid PIN. Access denied.';
+            // Increment failed attempts
+            $failed_attempts++;
+            upsert_setting($conn, $FAILED_ATTEMPTS_KEY, (string)$failed_attempts);
+            
+            // Check if we need to lock the account
+            if ($failed_attempts >= MAX_FAILED_ATTEMPTS) {
+                $lockout_until = time() + LOCKOUT_TIME;
+                upsert_setting($conn, $LOCKOUT_TIME_KEY, (string)$lockout_until);
+                
+                $minutes = floor(LOCKOUT_TIME / 60);
+                $seconds = LOCKOUT_TIME % 60;
+                $error_message = "Too many failed attempts. Account locked for {$minutes}:{$seconds} minutes.";
+            } else {
+                $remaining_attempts = MAX_FAILED_ATTEMPTS - $failed_attempts;
+                $error_message = "Invalid PIN. Access denied. {$remaining_attempts} attempt" . 
+                                 ($remaining_attempts !== 1 ? 's' : '') . " remaining.";
+            }
         }
     }
 }
@@ -130,9 +171,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_pin'])) {
         .card .form-control::placeholder{ color: rgba(255,255,255,0.7); }
         a.link-white{ color:#fff; text-decoration:none; opacity:.9; }
         a.link-white:hover{ opacity:1; text-decoration:underline; }
+        .countdown { font-weight: bold; }
     </style>
 </head>
 <body>
+    <?php if ($is_locked): ?>
+    <script>
+        // Set up countdown timer if account is locked
+        document.addEventListener('DOMContentLoaded', function() {
+            const lockoutUntil = <?php echo $lockout_until; ?>;
+            const countdownElement = document.getElementById('countdown-timer');
+            
+            function updateCountdown() {
+                const now = Math.floor(Date.now() / 1000);
+                let secondsLeft = lockoutUntil - now;
+                
+                if (secondsLeft <= 0) {
+                    // Time's up, refresh the page
+                    location.reload();
+                    return;
+                }
+                
+                const minutes = Math.floor(secondsLeft / 60);
+                const seconds = secondsLeft % 60;
+                countdownElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                setTimeout(updateCountdown, 1000);
+            }
+            
+            if (countdownElement) {
+                updateCountdown();
+            }
+        });
+    </script>
+    <?php endif; ?>
     <div class="main-container">
         <div class="branding-section">
             <div class="top-logo"><img src="image/Qnnect-v1.2.png" alt="Qnnect Logo" class="spcpc-logo"></div>
@@ -143,7 +214,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_pin'])) {
         </div>
         <div class="login-section">
             <div class="login-container">
-                <?php if ($error_message): ?><div class="alert alert-danger"><?php echo $error_message; ?></div><?php endif; ?>
+                <?php if ($error_message): ?>
+                <div class="alert alert-danger">
+                    <?php if ($is_locked): ?>
+                        Too many failed attempts. Please wait <span id="countdown-timer" class="countdown">
+                            <?php echo floor($remaining_time / 60) . ':' . str_pad($remaining_time % 60, 2, '0', STR_PAD_LEFT); ?>
+                        </span> before trying again.
+                    <?php else: ?>
+                        <?php echo $error_message; ?>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
                 <?php if ($success_message): ?><div class="alert alert-success"><?php echo $success_message; ?></div><?php endif; ?>
 
                 <?php if (!$pin_hash): ?>
@@ -168,9 +249,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_pin'])) {
                         <form method="post" autocomplete="off">
                             <div class="mb-3">
                                 <label class="form-label">PIN</label>
-                                <input type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" class="form-control pin-input" name="pin" placeholder="••••••" required autofocus>
+                                <input type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" class="form-control pin-input" 
+                                       name="pin" placeholder="••••••" required autofocus <?php echo $is_locked ? 'disabled' : ''; ?>>
                             </div>
-                            <button class="btn-primary" type="submit" name="verify_pin">Verify PIN</button>
+                            <button class="btn-primary" type="submit" name="verify_pin" <?php echo $is_locked ? 'disabled' : ''; ?>>
+                                <?php echo $is_locked ? 'Account Locked' : 'Verify PIN'; ?>
+                            </button>
                             <div class="mt-3"><a class="link-white" href="login.php">Back to Admin Login</a></div>
                         </form>
                     </div>

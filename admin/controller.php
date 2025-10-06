@@ -1,10 +1,32 @@
 <?php
-// Use the same session handling as other pages
-require_once '../includes/session_config.php';
+// Determine if we're handling a super admin session or regular admin session
+// Check for URL parameters that would indicate super admin context
+$from_super_admin = isset($_POST['from_super_admin']) || 
+                   (isset($_POST['redirect']) && strpos($_POST['redirect'], 'admin_panel.php') !== false);
+
+// Flag this script as super admin context if needed
+if ($from_super_admin) {
+    define('SUPER_ADMIN_CONTEXT', true);
+}
+
+if ($from_super_admin) {
+    // Include super admin session configuration
+    require_once '../includes/session_config_superadmin.php';
+} else {
+    // Use regular session handling
+    require_once '../includes/session_config.php';
+}
+
+require_once '../includes/auth_functions.php';
 
 Check if user is logged in
 if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
+    // Redirect to appropriate login page
+    if ($from_super_admin) {
+        header("Location: super_admin_login.php");
+    } else {
+        header("Location: login.php");
+    }
     exit;
 }
 
@@ -154,7 +176,12 @@ function handleEdit() {
     // Redirect back to source if provided
     $redirect = $_POST['redirect'] ?? null;
     if ($redirect) {
-        header("Location: " . $redirect);
+        // If redirecting to admin_panel.php, this is a super admin operation
+        if (strpos($redirect, 'admin_panel.php') !== false) {
+            header("Location: " . $redirect);
+        } else {
+            header("Location: " . $redirect);
+        }
     } else {
         header("Location: users.php");
     }
