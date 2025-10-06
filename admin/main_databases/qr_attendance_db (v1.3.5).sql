@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 18, 2025 at 07:37 AM
+-- Generation Time: Oct 06, 2025 at 09:29 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -244,7 +244,7 @@ INSERT INTO `class_time_settings` (`id`, `instructor_name`, `course_section`, `s
 (35, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 15, 1, '2025-08-23 14:21:53', '2025-09-04 05:46:50'),
 (38, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 2, 1, '2025-08-24 04:46:28', '2025-08-30 13:02:25'),
 (45, '', '', '', '00:00:00', 'active', '00:00:00', '', 17, 1, '2025-09-03 12:42:06', '2025-09-03 12:43:11'),
-(46, '', '', '', '00:00:00', 'active', '00:00:00', '', 20, 1, '2025-09-04 01:07:34', '2025-09-18 05:24:44'),
+(46, '', '', '', '08:30:00', 'active', '00:00:00', '', 20, 1, '2025-09-04 01:07:34', '2025-09-30 00:23:33'),
 (50, '', '', '', '00:00:00', 'inactive', '00:00:00', '', 21, 1, '2025-09-06 09:12:18', '2025-09-10 13:01:15');
 
 -- --------------------------------------------------------
@@ -542,7 +542,29 @@ INSERT INTO `student_qr_tokens` (`id`, `student_id`, `token`, `expires_at`, `use
 (232, 72, 'n_WExhlsS9RwAc2pWqG8eA-aMuYDQ', '2025-09-18 13:27:37', NULL, '2025-09-18 13:26:39', '2025-09-18 13:26:37', 34, 20),
 (233, 72, 'cluIo7tMBPxKZJ9ETPPHzA-aMuYDQ', '2025-09-18 13:27:37', NULL, '2025-09-18 13:26:39', '2025-09-18 13:26:37', 34, 20),
 (234, 72, 'RzpQLgvv66p_rUGR_W3bng-aMuYDw', '2025-09-18 13:27:39', NULL, '2025-09-18 13:26:39', '2025-09-18 13:26:39', 34, 20),
-(235, 72, 'eVWvRf8SWIgpHOnALHhl3g-aMuYDw', '2025-09-18 13:27:39', NULL, NULL, '2025-09-18 13:26:39', 34, 20);
+(235, 72, 'eVWvRf8SWIgpHOnALHhl3g-aMuYDw', '2025-09-18 13:27:39', NULL, NULL, '2025-09-18 13:26:39', 34, 20),
+(236, 19, 'dTWguNaMwUF4TlwCr5FXBg-aNsjMA', '2025-09-30 08:29:16', '2025-09-30 08:24:32', NULL, '2025-09-30 08:24:16', 34, 20),
+(237, 18, 'sbr6KzuHJA1EFId0gcXjkw-aNsjWg', '2025-09-30 08:29:58', NULL, '2025-09-30 08:25:09', '2025-09-30 08:24:58', 34, 20),
+(238, 18, '95LmRQn6do36QmLFhek1ug-aNsjZQ', '2025-09-30 08:30:09', '2025-09-30 08:25:26', NULL, '2025-09-30 08:25:09', 34, 20),
+(239, 29, 'stNEeCQXSWJ6Whlizbn1UA-aNsjjA', '2025-09-30 08:30:48', '2025-09-30 08:26:05', NULL, '2025-09-30 08:25:48', 34, 20),
+(240, 28, '8ueFTLYy3UayhGMTeGUvPw-aNsjvA', '2025-09-30 08:31:36', '2025-09-30 08:26:52', NULL, '2025-09-30 08:26:36', 34, 20),
+(241, 26, 'J-X1JGUBL-EWfa-e-ESJ8Q-aNsj6A', '2025-09-30 08:32:20', '2025-09-30 08:27:34', NULL, '2025-09-30 08:27:20', 34, 20),
+(242, 33, 'n98xdgSb7ULZbm5k86NT4w-aNskCA', '2025-09-30 08:32:52', NULL, '2025-09-30 08:27:52', '2025-09-30 08:27:52', 34, 20),
+(243, 33, 'g_BqdWfWTcjRL6lQ_9oktg-aNskCA', '2025-09-30 08:32:52', '2025-09-30 08:28:06', NULL, '2025-09-30 08:27:52', 34, 20),
+(244, 72, 'EGhGj_rUOfwG_dk2L1F2jA-aNskNg', '2025-09-30 08:33:38', '2025-09-30 08:28:58', NULL, '2025-09-30 08:28:38', 34, 20),
+(245, 71, '7sFzMqsrc2hlOp8MtJbQqw-aNskXQ', '2025-09-30 08:34:17', '2025-09-30 08:29:32', NULL, '2025-09-30 08:29:17', 34, 20),
+(246, 15, 'uGv7Jb1aXvTxm9FvlNCPVA-aNskhw', '2025-09-30 08:34:59', '2025-09-30 08:30:17', NULL, '2025-09-30 08:29:59', 34, 20),
+(247, 17, 'GgQHAa4sdNLTK-f4Q1Cr6g-aNsksQ', '2025-09-30 08:35:41', '2025-09-30 08:30:59', NULL, '2025-09-30 08:30:41', 34, 20),
+(248, 30, 'Azakd50Rm4odMU-ggVisVg-aNsk6g', '2025-09-30 08:36:38', '2025-09-30 08:31:53', NULL, '2025-09-30 08:31:38', 34, 20),
+(249, 34, 'Jf06y4lQ4i4Db-YqBD4wEQ-aNslFw', '2025-09-30 08:37:23', '2025-09-30 08:32:54', NULL, '2025-09-30 08:32:23', 34, 20),
+(250, 27, 'TOq0Zr3FBQ0dlN0dFtPCHw-aNsl1g', '2025-09-30 08:40:34', '2025-09-30 08:35:51', NULL, '2025-09-30 08:35:34', 34, 20),
+(251, 24, 'wUBpg8k939EQDaMNtWGBuw-aNsmIg', '2025-09-30 08:41:50', '2025-09-30 08:37:08', NULL, '2025-09-30 08:36:50', 34, 20),
+(252, 31, 'x4o2Iq4ks3yshju07SYaOg-aNsnag', '2025-09-30 08:47:18', '2025-09-30 08:42:38', NULL, '2025-09-30 08:42:18', 34, 20),
+(253, 32, 'Xzuo5HMJVLPhSS4m1WCN_A-aNsnow', '2025-09-30 08:48:15', '2025-09-30 08:43:35', NULL, '2025-09-30 08:43:15', 34, 20),
+(254, 23, 'znFeXl_yNOzPO8feuQhHbQ-aNsn0g', '2025-09-30 08:49:02', '2025-09-30 08:44:18', NULL, '2025-09-30 08:44:02', 34, 20),
+(255, 22, 'Ks5Ix2U3xiXB1XFGayAfwQ-aNsoAQ', '2025-09-30 08:49:49', '2025-09-30 08:45:02', NULL, '2025-09-30 08:44:49', 34, 20),
+(256, 21, 'mqnIKhJGA5c_kl5NtZdQ9w-aNspNQ', '2025-09-30 08:54:57', NULL, '2025-09-30 08:50:41', '2025-09-30 08:49:57', 34, 20),
+(257, 21, 'TlRznyjLOFgWAz97MtqCKQ-aNspYQ', '2025-09-30 08:55:41', '2025-09-30 08:51:22', NULL, '2025-09-30 08:50:41', 34, 20);
 
 -- --------------------------------------------------------
 
@@ -684,7 +706,26 @@ INSERT INTO `tbl_attendance` (`tbl_attendance_id`, `tbl_student_id`, `time_in`, 
 (123, 22, '2025-09-18 01:32:31', 'Late', 'general', NULL, 35, 22, 20, 34),
 (124, 33, '2025-09-18 01:35:31', 'Late', 'general', NULL, 35, 22, 20, 34),
 (125, 17, '2025-09-18 01:55:43', 'Late', 'general', NULL, 35, 22, 20, 34),
-(126, 73, '2025-09-18 04:53:42', 'On Time', 'general', NULL, 37, 23, 20, 48);
+(126, 73, '2025-09-18 04:53:42', 'On Time', 'general', NULL, 37, 23, 20, 48),
+(127, 19, '2025-09-30 00:24:32', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(128, 18, '2025-09-30 00:25:26', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(129, 29, '2025-09-30 00:26:05', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(130, 28, '2025-09-30 00:26:52', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(131, 26, '2025-09-30 00:27:34', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(132, 33, '2025-09-30 00:28:06', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(133, 72, '2025-09-30 00:28:58', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(134, 71, '2025-09-30 00:29:32', 'On Time', 'general', NULL, 35, 24, 20, 34),
+(135, 15, '2025-09-30 00:30:17', 'Late', 'general', NULL, 35, 24, 20, 34),
+(136, 17, '2025-09-30 00:30:59', 'Late', 'general', NULL, 35, 24, 20, 34),
+(137, 30, '2025-09-30 00:31:53', 'Late', 'general', NULL, 35, 24, 20, 34),
+(138, 34, '2025-09-30 00:32:54', 'Late', 'general', NULL, 35, 24, 20, 34),
+(139, 27, '2025-09-30 00:35:51', 'Late', 'general', NULL, 35, 24, 20, 34),
+(140, 24, '2025-09-30 00:37:08', 'Late', 'general', NULL, 35, 24, 20, 34),
+(141, 31, '2025-09-30 00:42:38', 'Late', 'general', NULL, 35, 24, 20, 34),
+(142, 32, '2025-09-30 00:43:35', 'Late', 'general', NULL, 35, 24, 20, 34),
+(143, 23, '2025-09-30 00:44:18', 'Late', 'general', NULL, 35, 24, 20, 34),
+(144, 22, '2025-09-30 00:45:02', 'Late', 'general', NULL, 35, 24, 20, 34),
+(145, 21, '2025-09-30 00:51:22', 'Late', 'general', NULL, 35, 24, 20, 34);
 
 -- --------------------------------------------------------
 
@@ -898,7 +939,8 @@ INSERT INTO `tbl_instructor_subjects` (`id`, `instructor_id`, `subject_id`, `cre
 (16, 0, 15, '2025-09-06 11:50:43', 1),
 (17, 35, 22, '2025-09-11 00:38:37', 1),
 (18, 0, 22, '2025-09-11 00:50:24', 1),
-(19, 37, 23, '2025-09-18 04:53:20', 1);
+(19, 37, 23, '2025-09-18 04:53:20', 1),
+(20, 35, 24, '2025-09-30 00:23:38', 1);
 
 -- --------------------------------------------------------
 
@@ -1062,42 +1104,16 @@ INSERT INTO `tbl_subjects` (`subject_id`, `subject_name`, `created_at`, `school_
 (20, 'blood bending', '2025-09-06 11:47:41', 21, 43),
 (21, 'testinh', '2025-09-10 13:00:25', 21, 43),
 (22, 'ENTRERPRISE ARCHITECTURE', '2025-09-11 00:38:37', 20, 34),
-(23, 'math', '2025-09-18 04:53:20', 20, 48);
+(23, 'math', '2025-09-18 04:53:20', 20, 48),
+(24, 'IAS 1', '2025-09-30 00:23:38', 20, 34);
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `teacher_holidays`
 --
-
-CREATE TABLE `teacher_holidays` (
-  `id` int(11) NOT NULL,
-  `holiday_date` date NOT NULL,
-  `holiday_name` varchar(255) NOT NULL,
-  `holiday_type` enum('national','school','personal') DEFAULT 'school',
-  `school_id` int(11) DEFAULT 1,
-  `created_by` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `teacher_holidays`
---
-
-INSERT INTO `teacher_holidays` (`id`, `holiday_date`, `holiday_name`, `holiday_type`, `school_id`, `created_by`, `created_at`) VALUES
-(1, '2024-01-01', 'New Year\'s Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(2, '2024-04-09', 'Day of Valor (Araw ng Kagitingan)', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(3, '2024-05-01', 'Labor Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(4, '2024-06-12', 'Independence Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(5, '2024-08-21', 'Ninoy Aquino Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(6, '2024-08-30', 'National Heroes Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(7, '2024-11-01', 'All Saints\' Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(8, '2024-11-02', 'All Souls\' Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(9, '2024-11-30', 'Bonifacio Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(10, '2024-12-24', 'Christmas Eve', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(11, '2024-12-25', 'Christmas Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(12, '2024-12-30', 'Rizal Day', 'national', 1, NULL, '2025-07-27 08:46:39'),
-(13, '2024-12-31', 'New Year\'s Eve', 'national', 1, NULL, '2025-07-27 08:46:39');
+-- Error reading structure for table qr_attendance_db.teacher_holidays: #1932 - Table &#039;qr_attendance_db.teacher_holidays&#039; doesn&#039;t exist in engine
+-- Error reading data for table qr_attendance_db.teacher_holidays: #1064 - You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near &#039;FROM `qr_attendance_db`.`teacher_holidays`&#039; at line 1
 
 -- --------------------------------------------------------
 
@@ -1141,7 +1157,8 @@ INSERT INTO `teacher_schedules` (`id`, `teacher_username`, `subject`, `section`,
 (49, 'comsi', 'telekenesis', 'TEST 1 - TEST', 'Friday', '07:00:00', '12:00:00', '200', 21, 43, '2025-09-06 10:11:08', '2025-09-06 10:11:08', 'active'),
 (50, 'comsi', 'metal bending', 'TEST 1 - TEST', 'Tuesday', '15:00:00', '18:00:00', 'Computer Laboratory', 21, 43, '2025-09-06 11:20:48', '2025-09-06 11:20:48', 'active'),
 (51, 'comsi', 'testinh', 'test-3', 'Saturday', '09:00:00', '11:00:00', 'katokis', 21, 43, '2025-09-10 12:59:52', '2025-09-10 12:59:52', 'active'),
-(52, 'testingonly', 'math', 'BSIS - 302', 'Wednesday', '12:30:00', '15:00:00', 'tabing ilog', 20, 48, '2025-09-18 04:53:14', '2025-09-18 04:53:14', 'active');
+(52, 'testingonly', 'math', 'BSIS - 302', 'Wednesday', '12:30:00', '15:00:00', 'tabing ilog', 20, 48, '2025-09-18 04:53:14', '2025-09-18 04:53:14', 'active'),
+(53, 'Arnold Aranaydo', 'IAS 1', 'BSIS - 302', 'Tuesday', '08:00:00', '10:00:00', 'Poso Office', 20, 34, '2025-09-29 12:32:37', '2025-09-29 12:32:37', 'active');
 
 --
 -- Triggers `teacher_schedules`
@@ -1379,7 +1396,8 @@ INSERT INTO `teacher_schedule_logs` (`id`, `schedule_id`, `action`, `old_values`
 (0, 44, 'UPDATE', '{\"teacher_username\": \"comsi\", \"subject\": \"set 1\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"204\", \"school_id\": 21}', '{\"teacher_username\": \"comsi\", \"subject\": \"blood bending\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Monday\", \"start_time\": \"09:00:00\", \"end_time\": \"10:00:00\", \"room\": \"204\", \"school_id\": 21}', 'root@localhost', '2025-09-06 11:19:50'),
 (0, 50, 'INSERT', NULL, '{\"teacher_username\": \"comsi\", \"subject\": \"metal bending\", \"section\": \"TEST 1 - TEST\", \"day_of_week\": \"Tuesday\", \"start_time\": \"15:00:00\", \"end_time\": \"18:00:00\", \"room\": \"Computer Laboratory\", \"school_id\": 21}', 'root@localhost', '2025-09-06 11:20:48'),
 (0, 51, 'INSERT', NULL, '{\"teacher_username\": \"comsi\", \"subject\": \"testinh\", \"section\": \"test-3\", \"day_of_week\": \"Saturday\", \"start_time\": \"09:00:00\", \"end_time\": \"11:00:00\", \"room\": \"katokis\", \"school_id\": 21}', 'root@localhost', '2025-09-10 12:59:52'),
-(0, 52, 'INSERT', NULL, '{\"teacher_username\": \"testingonly\", \"subject\": \"math\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Wednesday\", \"start_time\": \"12:30:00\", \"end_time\": \"15:00:00\", \"room\": \"tabing ilog\", \"school_id\": 20}', 'root@localhost', '2025-09-18 04:53:14');
+(0, 52, 'INSERT', NULL, '{\"teacher_username\": \"testingonly\", \"subject\": \"math\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Wednesday\", \"start_time\": \"12:30:00\", \"end_time\": \"15:00:00\", \"room\": \"tabing ilog\", \"school_id\": 20}', 'root@localhost', '2025-09-18 04:53:14'),
+(0, 53, 'INSERT', NULL, '{\"teacher_username\": \"Arnold Aranaydo\", \"subject\": \"IAS 1\", \"section\": \"BSIS - 302\", \"day_of_week\": \"Tuesday\", \"start_time\": \"08:00:00\", \"end_time\": \"10:00:00\", \"room\": \"Poso Office\", \"school_id\": 20}', 'root@localhost', '2025-09-29 12:32:37');
 
 -- --------------------------------------------------------
 
@@ -1598,7 +1616,7 @@ ALTER TABLE `attendance_logs`
 -- AUTO_INCREMENT for table `class_time_settings`
 --
 ALTER TABLE `class_time_settings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -1622,13 +1640,13 @@ ALTER TABLE `school_info`
 -- AUTO_INCREMENT for table `student_qr_tokens`
 --
 ALTER TABLE `student_qr_tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=236;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=258;
 
 --
 -- AUTO_INCREMENT for table `tbl_attendance`
 --
 ALTER TABLE `tbl_attendance`
-  MODIFY `tbl_attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `tbl_attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=146;
 
 --
 -- AUTO_INCREMENT for table `tbl_courses`
@@ -1652,7 +1670,7 @@ ALTER TABLE `tbl_instructors`
 -- AUTO_INCREMENT for table `tbl_instructor_subjects`
 --
 ALTER TABLE `tbl_instructor_subjects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `tbl_sections`
@@ -1670,13 +1688,13 @@ ALTER TABLE `tbl_student`
 -- AUTO_INCREMENT for table `tbl_subjects`
 --
 ALTER TABLE `tbl_subjects`
-  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `teacher_schedules`
 --
 ALTER TABLE `teacher_schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `user_settings`
