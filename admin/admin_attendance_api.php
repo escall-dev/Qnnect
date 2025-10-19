@@ -63,7 +63,30 @@ if ($op === 'delete') {
 	exit();
 }
 
-// Fetch latest attendance from tbl_attendance, join students for names
+// Pagination support
+$page = max(1, (int)($_POST['page'] ?? $_GET['page'] ?? 1));
+$limit = max(1, min(100, (int)($_POST['limit'] ?? $_GET['limit'] ?? 10))); // Default 10 per page, max 100
+$offset = ($page - 1) * $limit;
+
+// Get total count for pagination
+if ($scopeSchoolId) {
+	$count_sql = "SELECT COUNT(*) as total FROM tbl_attendance a WHERE a.school_id = ?";
+	$count_stmt = mysqli_prepare($conn_qr, $count_sql);
+	mysqli_stmt_bind_param($count_stmt, 'i', $scopeSchoolId);
+	mysqli_stmt_execute($count_stmt);
+	$count_res = mysqli_stmt_get_result($count_stmt);
+} else {
+	$count_sql = "SELECT COUNT(*) as total FROM tbl_attendance a";
+	$count_res = mysqli_query($conn_qr, $count_sql);
+}
+
+$total_records = 0;
+if ($count_res) {
+	$count_row = mysqli_fetch_assoc($count_res);
+	$total_records = (int)($count_row['total'] ?? 0);
+}
+
+// Fetch latest attendance from tbl_attendance, join students for names with pagination
 if ($scopeSchoolId) {
 	$sql = "SELECT a.tbl_attendance_id AS id, a.tbl_student_id AS student_id, a.time_in, a.status, a.school_id,
 	               s.student_name, s.course_section
@@ -71,9 +94,9 @@ if ($scopeSchoolId) {
 	        LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id AND s.school_id = a.school_id
 	        WHERE a.school_id = ?
 	        ORDER BY a.time_in DESC
-	        LIMIT 500";
+	        LIMIT ? OFFSET ?";
 	$stmt = mysqli_prepare($conn_qr, $sql);
-	mysqli_stmt_bind_param($stmt, 'i', $scopeSchoolId);
+	mysqli_stmt_bind_param($stmt, 'iii', $scopeSchoolId, $limit, $offset);
 	mysqli_stmt_execute($stmt);
 	$res = mysqli_stmt_get_result($stmt);
 } else {
@@ -82,8 +105,11 @@ if ($scopeSchoolId) {
 	        FROM tbl_attendance a
 	        LEFT JOIN tbl_student s ON s.tbl_student_id = a.tbl_student_id AND s.school_id = a.school_id
 	        ORDER BY a.time_in DESC
-	        LIMIT 500";
-	$res = mysqli_query($conn_qr, $sql);
+	        LIMIT ? OFFSET ?";
+	$stmt = mysqli_prepare($conn_qr, $sql);
+	mysqli_stmt_bind_param($stmt, 'ii', $limit, $offset);
+	mysqli_stmt_execute($stmt);
+	$res = mysqli_stmt_get_result($stmt);
 }
 
 $rows = [];
@@ -105,7 +131,19 @@ if ($conn_login && !empty($rows)) {
         foreach ($rows as &$r) { $r['school_name'] = isset($map[(int)($r['school_id'] ?? 0)]) ? $map[(int)$r['school_id']] : null; }
     }
 }
-echo json_encode(['success'=>true,'attendance'=>$rows]);
+$total_pages = ceil($total_records / $limit);
+
+echo json_encode([
+	'success'=>true,
+	'attendance'=>$rows,
+	'pagination' => [
+		'current_page' => $page,
+		'total_pages' => $total_pages,
+		'total_records' => $total_records,
+		'limit' => $limit,
+		'offset' => $offset
+	]
+]);
 exit();
 
 

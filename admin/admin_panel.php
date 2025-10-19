@@ -735,6 +735,65 @@ $total_pages = ceil($total_logs / $logs_per_page);
         .school-name-colored { font-weight: 600; }
         .table thead th { position: sticky; top: 0; background: #ffffff; z-index: 1; }
         .course-row:hover { filter: brightness(0.98); }
+        
+        /* Data table pagination styles */
+        .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: #f8f9fa;
+        }
+        .table-dark th {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            color: white !important;
+        }
+        .pagination-sm .page-link {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.875rem;
+            border-radius: 6px !important;
+            margin: 0 2px;
+        }
+        .pagination {
+            gap: 2px;
+        }
+        .pagination .page-item {
+            margin: 0 1px;
+        }
+        .pagination .page-link {
+            color: var(--primary-color);
+            border-color: #dee2e6;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            color: white !important;
+            font-weight: 700 !important;
+            font-size: 0.95rem !important;
+            box-shadow: 0 2px 8px rgba(9, 135, 68, 0.3) !important;
+            transform: translateY(-1px);
+            z-index: 2;
+            position: relative;
+        }
+        .pagination .page-item.active .page-link:hover {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            color: white !important;
+            transform: translateY(-1px);
+        }
+        .pagination .page-link:hover {
+            color: var(--primary-color);
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            transform: translateY(-1px);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        .text-muted {
+            color: #6c757d !important;
+        }
+        .btn-group-sm > .btn, .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body>
@@ -1434,8 +1493,45 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 </div>
             </div>
             <div class="card-body">
+                <!-- Pagination Info -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted" id="students_info">
+                        Showing <span id="students_showing_from">0</span> to <span id="students_showing_to">0</span> of <span id="students_total_records">0</span> entries
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label mb-0">Show:</label>
+                        <select class="form-select form-select-sm" id="students_per_page" style="width: auto;">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="table-responsive">
-                    <table class="table table-sm"><thead><tr><th>Name</th><th>Course/Section</th><th>School</th><th>Actions</th></tr></thead><tbody id="students_table_body"></tbody></table>
+                    <table class="table table-sm table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Course/Section</th>
+                                <th>School</th>
+                                <th width="120">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students_table_body">
+                            <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-center mt-3">
+                    <nav aria-label="Students pagination">
+                        <ul class="pagination pagination-sm mb-0" id="students_pagination">
+                            <!-- Pagination buttons will be generated here -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -1450,8 +1546,47 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 </div>
             </div>
             <div class="card-body">
+                <!-- Pagination Info -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted" id="attendance_info">
+                        Showing <span id="attendance_showing_from">0</span> to <span id="attendance_showing_to">0</span> of <span id="attendance_total_records">0</span> entries
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label mb-0">Show:</label>
+                        <select class="form-select form-select-sm" id="attendance_per_page" style="width: auto;">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="table-responsive">
-                    <table class="table table-sm"><thead><tr><th>Time In</th><th>Status</th><th>Student</th><th>Course/Section</th><th>School</th><th>Actions</th></tr></thead><tbody id="attendance_table_body"></tbody></table>
+                    <table class="table table-sm table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Time In</th>
+                                <th>Status</th>
+                                <th>Student</th>
+                                <th>Course/Section</th>
+                                <th>School</th>
+                                <th width="120">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance_table_body">
+                            <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-center mt-3">
+                    <nav aria-label="Attendance pagination">
+                        <ul class="pagination pagination-sm mb-0" id="attendance_pagination">
+                            <!-- Pagination buttons will be generated here -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -1466,8 +1601,49 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 </div>
             </div>
             <div class="card-body">
+                <!-- Pagination Info -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted" id="schedules_info">
+                        Showing <span id="schedules_showing_from">0</span> to <span id="schedules_showing_to">0</span> of <span id="schedules_total_records">0</span> entries
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label mb-0">Show:</label>
+                        <select class="form-select form-select-sm" id="schedules_per_page" style="width: auto;">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="table-responsive">
-                    <table class="table table-sm"><thead><tr><th>Subject</th><th>Instructor</th><th>Section</th><th>Day</th><th>Start</th><th>End</th><th>Room</th><th>Actions</th></tr></thead><tbody id="schedules_table_body"></tbody></table>
+                    <table class="table table-sm table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Subject</th>
+                                <th>Instructor</th>
+                                <th>Section</th>
+                                <th>Day</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Room</th>
+                                <th width="120">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedules_table_body">
+                            <tr><td colspan="8" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-center mt-3">
+                    <nav aria-label="Schedules pagination">
+                        <ul class="pagination pagination-sm mb-0" id="schedules_pagination">
+                            <!-- Pagination buttons will be generated here -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -2506,15 +2682,34 @@ $total_pages = ceil($total_logs / $logs_per_page);
         }
 
         <?php if ($is_super_admin): ?>
-        async function loadStudents() {
+        let studentsCurrentPage = 1;
+        let studentsPerPage = 10;
+        
+        async function loadStudents(page = 1) {
+            studentsCurrentPage = page;
+            studentsPerPage = parseInt(document.getElementById('students_per_page').value) || 10;
+            
             const params = new URLSearchParams();
-            params.append('action','get_students_scoped');
+            params.append('page', studentsCurrentPage.toString());
+            params.append('limit', studentsPerPage.toString());
+            
             const r = await fetch('admin_students_api.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
             const data = await r.json();
             const tbody = document.getElementById('students_table_body');
             if (!tbody) return;
+            
             tbody.innerHTML = '';
-            if (!data.success) { tbody.innerHTML = '<tr><td colspan="4">Failed to load students</td></tr>'; return; }
+            if (!data.success) { 
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load students</td></tr>'; 
+                return; 
+            }
+            
+            if (data.students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No students found</td></tr>';
+                updateStudentsPaginationInfo(data.pagination);
+                return;
+            }
+            
             data.students.forEach(s => {
                 const tr = document.createElement('tr');
                 const tdName = document.createElement('td'); tdName.textContent = s.student_name || '';
@@ -2530,9 +2725,78 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 tr.appendChild(tdName); tr.appendChild(tdCourse); tr.appendChild(tdSchool); tr.appendChild(tdAct);
                 tbody.appendChild(tr);
             });
+            
+            updateStudentsPaginationInfo(data.pagination);
+            generateStudentsPagination(data.pagination);
         }
-        document.getElementById('students_refresh')?.addEventListener('click', loadStudents);
-        document.addEventListener('DOMContentLoaded', loadStudents);
+        
+        function updateStudentsPaginationInfo(pagination) {
+            const showingFrom = (pagination.current_page - 1) * pagination.limit + 1;
+            const showingTo = Math.min(pagination.current_page * pagination.limit, pagination.total_records);
+            
+            document.getElementById('students_showing_from').textContent = showingFrom;
+            document.getElementById('students_showing_to').textContent = showingTo;
+            document.getElementById('students_total_records').textContent = pagination.total_records;
+        }
+        
+        function generateStudentsPagination(pagination) {
+            const paginationContainer = document.getElementById('students_pagination');
+            if (!paginationContainer) return;
+            
+            paginationContainer.innerHTML = '';
+            
+            if (pagination.total_pages <= 1) return;
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${pagination.current_page <= 1 ? 'disabled' : ''}`;
+            const prevLink = document.createElement('a');
+            prevLink.className = 'page-link';
+            prevLink.href = '#';
+            prevLink.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (pagination.current_page > 1) loadStudents(pagination.current_page - 1);
+            });
+            prevLi.appendChild(prevLink);
+            paginationContainer.appendChild(prevLi);
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.current_page - 2);
+            const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+                const link = document.createElement('a');
+                link.className = 'page-link';
+                link.href = '#';
+                link.textContent = i;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadStudents(i);
+                });
+                li.appendChild(link);
+                paginationContainer.appendChild(li);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${pagination.current_page >= pagination.total_pages ? 'disabled' : ''}`;
+            const nextLink = document.createElement('a');
+            nextLink.className = 'page-link';
+            nextLink.href = '#';
+            nextLink.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (pagination.current_page < pagination.total_pages) loadStudents(pagination.current_page + 1);
+            });
+            nextLi.appendChild(nextLink);
+            paginationContainer.appendChild(nextLi);
+        }
+        document.getElementById('students_refresh')?.addEventListener('click', () => loadStudents(1));
+        document.getElementById('students_per_page')?.addEventListener('change', () => loadStudents(1));
+        document.addEventListener('DOMContentLoaded', () => loadStudents(1));
         <?php endif; ?>
 
         <?php if ($is_super_admin): ?>
@@ -2572,7 +2836,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
             if (!data.success) { await showError(data.message || 'Save failed'); return; }
             _studentModal?.hide();
             await showSuccess('Student saved successfully.');
-            loadStudents();
+            loadStudents(studentsCurrentPage);
         }
         async function deleteStudent(id) {
             const ok = await showConfirm({ title:'Delete Student', message:'Are you sure you want to delete this student?' });
@@ -2580,7 +2844,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
             const params = new URLSearchParams(); params.append('op','delete'); params.append('tbl_student_id', id);
             const res = await fetch('admin_students_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
             const data = await res.json(); if (!data.success) { await showError(data.message || 'Delete failed'); return; }
-            await showSuccess('Student deleted.'); loadStudents();
+            await showSuccess('Student deleted.'); loadStudents(studentsCurrentPage);
         }
 
         document.getElementById('student_add_btn')?.addEventListener('click', openStudentCreate);
@@ -2794,7 +3058,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 
                 _attendanceModal?.hide();
                 await showSuccess('Attendance saved.');
-                loadAttendance();
+                loadAttendance(attendanceCurrentPage);
             } catch (error) {
                 await showError('Error saving attendance');
             }
@@ -2804,7 +3068,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
             const p = new URLSearchParams(); p.append('op','delete'); p.append('id', id);
             const res = await fetch('admin_attendance_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: p.toString() });
             const data = await res.json(); if (!data.success) { await showError(data.message || 'Delete failed'); return; }
-            await showSuccess('Attendance deleted.'); loadAttendance();
+            await showSuccess('Attendance deleted.'); loadAttendance(attendanceCurrentPage);
         }
         document.getElementById('attendance_add_btn')?.addEventListener('click', openAttendanceCreate);
 
@@ -2883,9 +3147,23 @@ $total_pages = ceil($total_logs / $logs_per_page);
             if (!subject || !teacher || !section || !schoolId) { await showError('Please fill all required fields including instructor'); return; }
             const p=new URLSearchParams(); p.append('op', id ? 'update':'create'); if (id) p.append('id', id); p.append('subject', subject); p.append('teacher_username', teacher); p.append('section', section); p.append('day_of_week', day); p.append('start_time', start); p.append('end_time', end); p.append('room', room); p.append('school_id', schoolId);
             const res = await fetch('admin_schedules_api.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString() }); const data = await res.json(); if (!data.success) { await showError(data.message || 'Save failed'); return; }
-            _scheduleModal?.hide(); await showSuccess('Schedule saved.'); loadSchedules();
+            _scheduleModal?.hide(); await showSuccess('Schedule saved.'); loadSchedules(schedulesCurrentPage);
         }
-        async function deleteSchedule(id) { const ok = await showConfirm({ title:'Delete Schedule', message:'Proceed to delete schedule?' }); if (!ok) return; const p=new URLSearchParams(); p.append('op','delete'); p.append('id', id); const res=await fetch('admin_schedules_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Delete failed'); return;} await showSuccess('Schedule deleted.'); loadSchedules(); }
+        async function deleteSchedule(id) { 
+            const ok = await showConfirm({ title:'Delete Schedule', message:'Proceed to delete schedule?' }); 
+            if (!ok) return; 
+            const p=new URLSearchParams(); 
+            p.append('op','delete'); 
+            p.append('id', id); 
+            const res=await fetch('admin_schedules_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); 
+            const data=await res.json(); 
+            if(!data.success){ 
+                await showError(data.message||'Delete failed'); 
+                return;
+            } 
+            await showSuccess('Schedule deleted.'); 
+            loadSchedules(schedulesCurrentPage); 
+        }
         document.getElementById('schedule_add_btn')?.addEventListener('click', openScheduleCreate);
 
         // ---- Courses CRUD ----
@@ -2905,13 +3183,34 @@ $total_pages = ceil($total_logs / $logs_per_page);
         async function saveSection() { const id=document.getElementById('section_id').value; const name=document.getElementById('section_name').value.trim(); const courseId=document.getElementById('section_course_id').value; const schoolId=document.getElementById('section_school_id').value; if(!name||!courseId||!schoolId){ await showError('Please fill all fields'); return;} const p=new URLSearchParams(); p.append('entity','section'); p.append('op', id?'update':'create'); if(id)p.append('section_id', id); p.append('section_name', name); p.append('course_id', courseId); p.append('school_id', schoolId); const res=await fetch('admin_courses_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Save failed'); return;} _sectionModal?.hide(); await showSuccess('Section saved.'); loadCoursesSections(); }
         async function deleteSection(id) { const ok=await showConfirm({title:'Delete Section', message:'Delete this section?' }); if(!ok) return; const p=new URLSearchParams(); p.append('entity','section'); p.append('op','delete'); p.append('section_id', id); const res=await fetch('admin_courses_api.php',{method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()}); const data=await res.json(); if(!data.success){ await showError(data.message||'Delete failed'); return;} await showSuccess('Section deleted.'); loadCoursesSections(); }
         document.getElementById('section_add_btn')?.addEventListener('click', openSectionCreate);
-        async function loadAttendance() {
-            const r = await fetch('admin_attendance_api.php', { method:'POST' });
+        let attendanceCurrentPage = 1;
+        let attendancePerPage = 10;
+        
+        async function loadAttendance(page = 1) {
+            attendanceCurrentPage = page;
+            attendancePerPage = parseInt(document.getElementById('attendance_per_page').value) || 10;
+            
+            const params = new URLSearchParams();
+            params.append('page', attendanceCurrentPage.toString());
+            params.append('limit', attendancePerPage.toString());
+            
+            const r = await fetch('admin_attendance_api.php', { method:'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
             const data = await r.json();
             const tbody = document.getElementById('attendance_table_body');
             if (!tbody) return;
+            
             tbody.innerHTML='';
-            if (!data.success) { tbody.innerHTML = '<tr><td colspan="6">Failed to load</td></tr>'; return; }
+            if (!data.success) { 
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load attendance</td></tr>'; 
+                return; 
+            }
+            
+            if (data.attendance.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No attendance records found</td></tr>';
+                updateAttendancePaginationInfo(data.pagination);
+                return;
+            }
+            
             data.attendance.forEach(a => {
                 const tr = document.createElement('tr');
                 const c1 = document.createElement('td'); c1.textContent = a.time_in || '';
@@ -2929,6 +3228,74 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tr.appendChild(c4); tr.appendChild(c5); tr.appendChild(c6);
                 tbody.appendChild(tr);
             });
+            
+            updateAttendancePaginationInfo(data.pagination);
+            generateAttendancePagination(data.pagination);
+        }
+        
+        function updateAttendancePaginationInfo(pagination) {
+            const showingFrom = (pagination.current_page - 1) * pagination.limit + 1;
+            const showingTo = Math.min(pagination.current_page * pagination.limit, pagination.total_records);
+            
+            document.getElementById('attendance_showing_from').textContent = showingFrom;
+            document.getElementById('attendance_showing_to').textContent = showingTo;
+            document.getElementById('attendance_total_records').textContent = pagination.total_records;
+        }
+        
+        function generateAttendancePagination(pagination) {
+            const paginationContainer = document.getElementById('attendance_pagination');
+            if (!paginationContainer) return;
+            
+            paginationContainer.innerHTML = '';
+            
+            if (pagination.total_pages <= 1) return;
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${pagination.current_page <= 1 ? 'disabled' : ''}`;
+            const prevLink = document.createElement('a');
+            prevLink.className = 'page-link';
+            prevLink.href = '#';
+            prevLink.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (pagination.current_page > 1) loadAttendance(pagination.current_page - 1);
+            });
+            prevLi.appendChild(prevLink);
+            paginationContainer.appendChild(prevLi);
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.current_page - 2);
+            const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+                const link = document.createElement('a');
+                link.className = 'page-link';
+                link.href = '#';
+                link.textContent = i;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadAttendance(i);
+                });
+                li.appendChild(link);
+                paginationContainer.appendChild(li);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${pagination.current_page >= pagination.total_pages ? 'disabled' : ''}`;
+            const nextLink = document.createElement('a');
+            nextLink.className = 'page-link';
+            nextLink.href = '#';
+            nextLink.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (pagination.current_page < pagination.total_pages) loadAttendance(pagination.current_page + 1);
+            });
+            nextLi.appendChild(nextLink);
+            paginationContainer.appendChild(nextLi);
         }
         
         // Function to format time from 24-hour to 12-hour format
@@ -2956,13 +3323,34 @@ $total_pages = ceil($total_logs / $logs_per_page);
             }
         }
         
-        async function loadSchedules() {
-            const r = await fetch('admin_schedules_api.php', { method:'POST' });
+        let schedulesCurrentPage = 1;
+        let schedulesPerPage = 10;
+        
+        async function loadSchedules(page = 1) {
+            schedulesCurrentPage = page;
+            schedulesPerPage = parseInt(document.getElementById('schedules_per_page').value) || 10;
+            
+            const params = new URLSearchParams();
+            params.append('page', schedulesCurrentPage.toString());
+            params.append('limit', schedulesPerPage.toString());
+            
+            const r = await fetch('admin_schedules_api.php', { method:'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
             const data = await r.json();
             const tbody = document.getElementById('schedules_table_body');
             if (!tbody) return;
+            
             tbody.innerHTML='';
-            if (!data.success) { tbody.innerHTML = '<tr><td colspan="8">Failed to load</td></tr>'; return; }
+            if (!data.success) { 
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load schedules</td></tr>'; 
+                return; 
+            }
+            
+            if (data.schedules.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No schedules found</td></tr>';
+                updateSchedulesPaginationInfo(data.pagination);
+                return;
+            }
+            
             data.schedules.forEach(s => {
                 const tr = document.createElement('tr');
                 // Format start and end times to 12-hour format
@@ -2976,6 +3364,74 @@ $total_pages = ceil($total_logs / $logs_per_page);
                 grp.appendChild(e); grp.appendChild(d); act.appendChild(grp); tr.appendChild(act);
                 tbody.appendChild(tr);
             });
+            
+            updateSchedulesPaginationInfo(data.pagination);
+            generateSchedulesPagination(data.pagination);
+        }
+        
+        function updateSchedulesPaginationInfo(pagination) {
+            const showingFrom = (pagination.current_page - 1) * pagination.limit + 1;
+            const showingTo = Math.min(pagination.current_page * pagination.limit, pagination.total_records);
+            
+            document.getElementById('schedules_showing_from').textContent = showingFrom;
+            document.getElementById('schedules_showing_to').textContent = showingTo;
+            document.getElementById('schedules_total_records').textContent = pagination.total_records;
+        }
+        
+        function generateSchedulesPagination(pagination) {
+            const paginationContainer = document.getElementById('schedules_pagination');
+            if (!paginationContainer) return;
+            
+            paginationContainer.innerHTML = '';
+            
+            if (pagination.total_pages <= 1) return;
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${pagination.current_page <= 1 ? 'disabled' : ''}`;
+            const prevLink = document.createElement('a');
+            prevLink.className = 'page-link';
+            prevLink.href = '#';
+            prevLink.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (pagination.current_page > 1) loadSchedules(pagination.current_page - 1);
+            });
+            prevLi.appendChild(prevLink);
+            paginationContainer.appendChild(prevLi);
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.current_page - 2);
+            const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+                const link = document.createElement('a');
+                link.className = 'page-link';
+                link.href = '#';
+                link.textContent = i;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadSchedules(i);
+                });
+                li.appendChild(link);
+                paginationContainer.appendChild(li);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${pagination.current_page >= pagination.total_pages ? 'disabled' : ''}`;
+            const nextLink = document.createElement('a');
+            nextLink.className = 'page-link';
+            nextLink.href = '#';
+            nextLink.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (pagination.current_page < pagination.total_pages) loadSchedules(pagination.current_page + 1);
+            });
+            nextLi.appendChild(nextLink);
+            paginationContainer.appendChild(nextLi);
         }
         async function loadCoursesSections() {
             const r = await fetch('admin_courses_api.php', { method:'POST' });
@@ -3042,8 +3498,10 @@ $total_pages = ceil($total_logs / $logs_per_page);
             const firstToggle = document.querySelector('#courses_hier_tbody .toggle-btn');
             if (firstToggle) firstToggle.click();
         }
-        document.getElementById('attendance_refresh')?.addEventListener('click', loadAttendance);
-        document.getElementById('schedules_refresh')?.addEventListener('click', loadSchedules);
+        document.getElementById('attendance_refresh')?.addEventListener('click', () => loadAttendance(1));
+        document.getElementById('attendance_per_page')?.addEventListener('change', () => loadAttendance(1));
+        document.getElementById('schedules_refresh')?.addEventListener('click', () => loadSchedules(1));
+        document.getElementById('schedules_per_page')?.addEventListener('change', () => loadSchedules(1));
         document.getElementById('courses_refresh')?.addEventListener('click', () => { loadCoursesSections(); });
         // Keep section course select in sync with courses list
         document.getElementById('courses_refresh')?.addEventListener('click', () => {
@@ -3056,7 +3514,7 @@ $total_pages = ceil($total_logs / $logs_per_page);
         fetch('admin_courses_api.php', { method:'POST' })
             .then(r=>r.json())
             .then(d=>{ if (d && d.success) populateCourseSelectForSections(d.courses||[]); });
-        document.addEventListener('DOMContentLoaded', () => { loadAttendance(); loadSchedules(); loadCoursesSections(); });
+        document.addEventListener('DOMContentLoaded', () => { loadAttendance(1); loadSchedules(1); loadCoursesSections(); });
         <?php endif; ?>
         
         // Backup & Restore functionality
@@ -3274,9 +3732,9 @@ $total_pages = ceil($total_logs / $logs_per_page);
                         await showSuccess(data.message);
                         
                         // Refresh relevant sections
-                        if (typeof loadStudents === 'function') loadStudents();
-                        if (typeof loadAttendance === 'function') loadAttendance();
-                        if (typeof loadSchedules === 'function') loadSchedules();
+                        if (typeof loadStudents === 'function') loadStudents(1);
+                        if (typeof loadAttendance === 'function') loadAttendance(1);
+                        if (typeof loadSchedules === 'function') loadSchedules(1);
                     } else {
                         result.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
                     }

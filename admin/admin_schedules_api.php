@@ -94,15 +94,39 @@ if ($op === 'get') {
 	exit();
 }
 
+// Pagination support
+$page = max(1, (int)($_POST['page'] ?? $_GET['page'] ?? 1));
+$limit = max(1, min(100, (int)($_POST['limit'] ?? $_GET['limit'] ?? 10))); // Default 10 per page, max 100
+$offset = ($page - 1) * $limit;
+
+// Get total count for pagination
+if ($scopeSchoolId) {
+	$count_sql = "SELECT COUNT(*) as total FROM teacher_schedules WHERE school_id = ? AND status = 'active'";
+	$count_stmt = mysqli_prepare($conn_qr, $count_sql);
+	mysqli_stmt_bind_param($count_stmt, 'i', $scopeSchoolId);
+	mysqli_stmt_execute($count_stmt);
+	$count_res = mysqli_stmt_get_result($count_stmt);
+} else {
+	$count_sql = "SELECT COUNT(*) as total FROM teacher_schedules WHERE status = 'active'";
+	$count_res = mysqli_query($conn_qr, $count_sql);
+}
+
+$total_records = 0;
+if ($count_res) {
+	$count_row = mysqli_fetch_assoc($count_res);
+	$total_records = (int)($count_row['total'] ?? 0);
+}
+
+// Get paginated data
 $rows = [];
 if ($scopeSchoolId) {
 	$sql = "SELECT id, subject, section, day_of_week, start_time, end_time, room, teacher_username, school_id
 	        FROM teacher_schedules
 	        WHERE school_id = ? AND status = 'active'
 	        ORDER BY FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), start_time DESC
-	        LIMIT 1000";
+	        LIMIT ? OFFSET ?";
 	$stmt = mysqli_prepare($conn_qr, $sql);
-	mysqli_stmt_bind_param($stmt, 'i', $scopeSchoolId);
+	mysqli_stmt_bind_param($stmt, 'iii', $scopeSchoolId, $limit, $offset);
 	mysqli_stmt_execute($stmt);
 	$res = mysqli_stmt_get_result($stmt);
 } else {
@@ -110,8 +134,11 @@ if ($scopeSchoolId) {
 	        FROM teacher_schedules
 	        WHERE status = 'active'
 	        ORDER BY FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), start_time DESC
-	        LIMIT 1000";
-	$res = mysqli_query($conn_qr, $sql);
+	        LIMIT ? OFFSET ?";
+	$stmt = mysqli_prepare($conn_qr, $sql);
+	mysqli_stmt_bind_param($stmt, 'ii', $limit, $offset);
+	mysqli_stmt_execute($stmt);
+	$res = mysqli_stmt_get_result($stmt);
 }
 if ($res) { while ($r = mysqli_fetch_assoc($res)) { $rows[] = $r; } }
 // Map school names if available
@@ -131,7 +158,19 @@ if ($conn_login && !empty($rows)) {
         foreach ($rows as &$r) { $r['school_name'] = isset($map[(int)($r['school_id'] ?? 0)]) ? $map[(int)$r['school_id']] : null; }
     }
 }
-echo json_encode(['success'=>true,'schedules'=>$rows]);
+$total_pages = ceil($total_records / $limit);
+
+echo json_encode([
+	'success'=>true,
+	'schedules'=>$rows,
+	'pagination' => [
+		'current_page' => $page,
+		'total_pages' => $total_pages,
+		'total_records' => $total_records,
+		'limit' => $limit,
+		'offset' => $offset
+	]
+]);
 exit();
 
 

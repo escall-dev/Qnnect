@@ -204,6 +204,34 @@ if ($test_result) {
             min-width: 200px;
         }
 
+        /* Student search input styling */
+        #studentSearchInput {
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #studentSearchInput:focus {
+            border-color: #098744;
+            box-shadow: 0 0 0 0.2rem rgba(9, 135, 68, 0.25);
+        }
+
+        .input-group-text {
+            background-color: #098744;
+            border-color: #098744;
+            color: white;
+        }
+
+        #clearSearchBtn {
+            border-color: #6c757d;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        #clearSearchBtn:hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
         /* Status badge styles */
         .status-badge {
             padding: 5px 10px;
@@ -353,14 +381,18 @@ if ($test_result) {
                 <div class="filters-container">
                     <div class="d-flex flex-wrap align-items-center w-100">
                         <div class="form-group mr-2 mb-0">
-                            <select class="form-control form-control-sm" id="studentFilter">
-                                <option value="">All Students</option>
-                                <?php foreach ($students as $student): ?>
-                                    <option value="<?php echo htmlspecialchars($student); ?>">
-                                        <?php echo htmlspecialchars($student); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="studentSearchInput" placeholder="Search students..." autocomplete="off">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" style="display: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <small class="text-muted" id="searchResultsCount" style="display: none;"></small>
                         </div>
                         
                         <div class="form-group mr-2 mb-0">
@@ -467,6 +499,7 @@ if ($test_result) {
             // Initialize DataTable
             const table = initializeStandardDataTable('#logsTable', {
                 responsive: true,
+                searching: true, // Enable search functionality
                 order: [[2, 'desc']],
                 dom: '<"row"<"col-md-6"B><"col-md-6"f>>rtip',
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
@@ -498,6 +531,33 @@ if ($test_result) {
                 ]
             });
             
+            // Custom search function for student names
+            let currentStudentSearch = '';
+            $.fn.dataTable.ext.search.push(
+                function(settings, data, dataIndex) {
+                    // Only apply this search to our specific table
+                    if (settings.nTable.id !== 'logsTable') {
+                        return true;
+                    }
+                    
+                    // If no search term, show all rows
+                    if (!currentStudentSearch) {
+                        return true;
+                    }
+                    
+                    // Check if the student name (column 0) contains the search term
+                    const studentName = data[0] || '';
+                    const match = studentName.toLowerCase().includes(currentStudentSearch.toLowerCase());
+                    
+                    // Debug logging for first few rows
+                    if (dataIndex < 3) {
+                        console.log(`Row ${dataIndex}: "${studentName}" contains "${currentStudentSearch}"? ${match}`);
+                    }
+                    
+                    return match;
+                }
+            );
+            
             // Additional styling for buttons
             $('.dt-buttons .btn-success').css({
                 'background-color': '#098744',
@@ -505,13 +565,70 @@ if ($test_result) {
             });
             
             // Apply filters and update export form values
-            $('#studentFilter').on('change', function() {
-                table.column(1).search(this.value).draw();
-                $('#export_student').val(this.value);
+            // Real-time student search functionality with debouncing
+            let searchTimeout;
+            $('#studentSearchInput').on('keyup input', function() {
+                const searchValue = this.value;
+                
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+                
+                // Set new timeout for debouncing (300ms delay)
+                searchTimeout = setTimeout(function() {
+                    console.log('Searching for:', searchValue);
+                    
+                    // Update the global search variable
+                    currentStudentSearch = searchValue;
+                    
+                    // Clear any existing column/global searches and apply our custom search
+                    table.search('').columns().search('').draw();
+                    $('#export_student').val(searchValue);
+                    
+                    console.log('Applied custom search, value:', searchValue);
+                    
+                    // Get info after search
+                    const info = table.page.info();
+                    console.log('Search results info:', info);
+                    
+                    // Show feedback for search results
+                    const resultCountElement = $('#searchResultsCount');
+                    
+                    if (searchValue) {
+                        if (info.recordsDisplay === 0) {
+                            resultCountElement.text('No students found').show();
+                            console.log('No students found matching:', searchValue);
+                        } else {
+                            const resultText = info.recordsDisplay === 1 
+                                ? '1 result found' 
+                                : `${info.recordsDisplay} results found`;
+                            resultCountElement.text(resultText).show();
+                            console.log(`Found ${info.recordsDisplay} student(s) matching:`, searchValue);
+                        }
+                    } else {
+                        resultCountElement.hide();
+                    }
+                }, 300);
+                
+                // Show/hide clear button
+                if (searchValue.length > 0) {
+                    $('#clearSearchBtn').show();
+                } else {
+                    $('#clearSearchBtn').hide();
+                }
+            });
+            
+            // Clear search button functionality
+            $('#clearSearchBtn').on('click', function() {
+                $('#studentSearchInput').val('').trigger('input');
+                $(this).hide();
+                $('#studentSearchInput').focus();
+                // Also clear the custom search
+                currentStudentSearch = '';
+                table.draw();
             });
             
             $('#statusFilter').on('change', function() {
-                table.column(2).search(this.value).draw();
+                table.column(1).search(this.value).draw();
                 $('#export_status').val(this.value);
             });
             
@@ -599,7 +716,7 @@ if ($test_result) {
                 printContent.appendChild(tableClone[0]);
                 
                 // Create and append filters info if filters are applied
-                const student = $('#studentFilter').val();
+                const student = $('#studentSearchInput').val();
                 const status = $('#statusFilter').val();
                 const date = $('#dateFilter').val();
                 
@@ -664,7 +781,7 @@ if ($test_result) {
                 const studentInput = document.createElement('input');
                 studentInput.type = 'hidden';
                 studentInput.name = 'student';
-                studentInput.value = $('#studentFilter').val() || '';
+                studentInput.value = $('#studentSearchInput').val() || '';
                 
                 const statusInput = document.createElement('input');
                 statusInput.type = 'hidden';
@@ -700,7 +817,7 @@ if ($test_result) {
                 const studentInput = document.createElement('input');
                 studentInput.type = 'hidden';
                 studentInput.name = 'student';
-                studentInput.value = $('#studentFilter').val() || '';
+                studentInput.value = $('#studentSearchInput').val() || '';
                 
                 const statusInput = document.createElement('input');
                 statusInput.type = 'hidden';
@@ -736,8 +853,8 @@ if ($test_result) {
         
         // Apply filters function
         function applyFilters() {
-            // Trigger change events on all filters to apply them
-            $('#studentFilter').trigger('change');
+            // Trigger input events on all filters to apply them
+            $('#studentSearchInput').trigger('input');
             $('#statusFilter').trigger('change');
             $('#dateFilter').trigger('change');
         }
@@ -745,7 +862,7 @@ if ($test_result) {
         // Reset filters function
         function resetFilters() {
             // Reset all filter values
-            $('#studentFilter').val('');
+            $('#studentSearchInput').val('').trigger('input');
             $('#statusFilter').val('');
             $('#dateFilter').val('');
             
@@ -754,10 +871,14 @@ if ($test_result) {
             $('#export_status').val('');
             $('#export_date').val('');
             
-            // Remove any custom filtering function
-            while ($.fn.dataTable.ext.search.length > 0) {
-                $.fn.dataTable.ext.search.pop();
+            // Clear custom search
+            if (typeof currentStudentSearch !== 'undefined') {
+                currentStudentSearch = '';
             }
+            
+            // Hide search result count and clear button
+            $('#searchResultsCount').hide();
+            $('#clearSearchBtn').hide();
             
             // Redraw the table with no filters
             $('#logsTable').DataTable().search('').columns().search('').draw();

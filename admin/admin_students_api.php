@@ -160,23 +160,49 @@ if ($op === 'delete') {
 	exit();
 }
 
-// Default: list
+// Default: list with pagination
+$page = max(1, (int)($_POST['page'] ?? $_GET['page'] ?? 1));
+$limit = max(1, min(100, (int)($_POST['limit'] ?? $_GET['limit'] ?? 10))); // Default 10 per page, max 100
+$offset = ($page - 1) * $limit;
+
+// Get total count for pagination
+if ($scopeSchoolId) {
+	$count_sql = "SELECT COUNT(*) as total FROM tbl_student s WHERE s.school_id = ?";
+	$count_stmt = mysqli_prepare($conn_qr, $count_sql);
+	mysqli_stmt_bind_param($count_stmt, 'i', $scopeSchoolId);
+	mysqli_stmt_execute($count_stmt);
+	$count_res = mysqli_stmt_get_result($count_stmt);
+} else {
+	$count_sql = "SELECT COUNT(*) as total FROM tbl_student s";
+	$count_res = mysqli_query($conn_qr, $count_sql);
+}
+
+$total_records = 0;
+if ($count_res) {
+	$count_row = mysqli_fetch_assoc($count_res);
+	$total_records = (int)($count_row['total'] ?? 0);
+}
+
+// Get paginated data
 if ($scopeSchoolId) {
 	$sql = "SELECT s.tbl_student_id, s.student_name, s.course_section, s.school_id
 	        FROM tbl_student s
 	        WHERE s.school_id = ?
 	        ORDER BY s.tbl_student_id DESC
-	        LIMIT 500";
+	        LIMIT ? OFFSET ?";
 	$stmt = mysqli_prepare($conn_qr, $sql);
-	mysqli_stmt_bind_param($stmt, 'i', $scopeSchoolId);
+	mysqli_stmt_bind_param($stmt, 'iii', $scopeSchoolId, $limit, $offset);
 	mysqli_stmt_execute($stmt);
 	$res = mysqli_stmt_get_result($stmt);
 } else {
 	$sql = "SELECT s.tbl_student_id, s.student_name, s.course_section, s.school_id
 	        FROM tbl_student s
 	        ORDER BY s.tbl_student_id DESC
-	        LIMIT 500";
-	$res = mysqli_query($conn_qr, $sql);
+	        LIMIT ? OFFSET ?";
+	$stmt = mysqli_prepare($conn_qr, $sql);
+	mysqli_stmt_bind_param($stmt, 'ii', $limit, $offset);
+	mysqli_stmt_execute($stmt);
+	$res = mysqli_stmt_get_result($stmt);
 }
 
 $students = [];
@@ -208,7 +234,19 @@ if ($conn_login && !empty($students)) {
 	}
 }
 
-echo json_encode(['success' => true, 'students' => $students]);
+$total_pages = ceil($total_records / $limit);
+
+echo json_encode([
+	'success' => true, 
+	'students' => $students,
+	'pagination' => [
+		'current_page' => $page,
+		'total_pages' => $total_pages,
+		'total_records' => $total_records,
+		'limit' => $limit,
+		'offset' => $offset
+	]
+]);
 exit();
 
 

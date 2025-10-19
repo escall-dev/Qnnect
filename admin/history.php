@@ -98,23 +98,21 @@ try {
     $current_user_id = $_SESSION['user_id'] ?? 0;
     $current_school_id = $_SESSION['school_id'] ?? 0;
     
-    // Get distinct users for filter (filtered by school_id and user_id)
-    $users_query = "SELECT DISTINCT username FROM tbl_user_logs WHERE school_id = ? AND user_id = ? ORDER BY username";
-    $users_stmt = mysqli_prepare($conn, $users_query);
-    mysqli_stmt_bind_param($users_stmt, "ii", $current_school_id, $current_user_id);
-    mysqli_stmt_execute($users_stmt);
-    $users_result = mysqli_stmt_get_result($users_stmt);
-    
-    if (!$users_result) {
-        throw new Exception("Error fetching users: " . mysqli_error($conn));
-    }
-    
+    // Get distinct users for filter (filtered by school_id and user_id - show only current user)
+    // Get current user's username from session instead of database variations
+    $current_username = $_SESSION['username'] ?? '';
     $users = [];
-    while ($row = mysqli_fetch_assoc($users_result)) {
-        $users[] = $row['username'];
+    if (!empty($current_username)) {
+        $users[] = $current_username;
     }
+    
+    // Debug: Log what users are being fetched
+    error_log("Current username from session: $current_username");
+    
+    // Add HTML comment for debugging
+    echo "<!-- Debug: Current username from session: $current_username -->";
 
-    // Get all logs - MAKE SURE TO USE FRESH DATA (filtered by school_id and user_id)
+    // Get all logs - MAKE SURE TO USE FRESH DATA (filtered by school_id and user_id - show only current user)
     $logs_query = "SELECT * FROM tbl_user_logs WHERE school_id = ? AND user_id = ? ORDER BY log_in_time DESC";
     $logs_stmt = mysqli_prepare($conn, $logs_query);
     mysqli_stmt_bind_param($logs_stmt, "ii", $current_school_id, $current_user_id);
@@ -130,8 +128,12 @@ try {
         $logs[] = $row;
     }
 
-    // Debug output
+    // Debug output - log what data we have
     error_log("History page loaded - Records found: " . count($logs));
+    error_log("Session info: user_id=$current_user_id, school_id=$current_school_id");
+    if (!empty($logs)) {
+        error_log("Sample log entry: " . print_r($logs[0], true));
+    }
 
 } catch(Exception $e) {
     error_log("Error in user logs: " . $e->getMessage());
@@ -143,7 +145,7 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Test query (filtered by school_id and user_id)
+// Test query (filtered by school_id and user_id - show only current user)
 $test_query = "SELECT COUNT(*) as count FROM tbl_user_logs WHERE school_id = ? AND user_id = ?";
 $test_stmt = mysqli_prepare($conn, $test_query);
 mysqli_stmt_bind_param($test_stmt, "ii", $current_school_id, $current_user_id);
@@ -413,9 +415,9 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
                     <div class="d-flex flex-wrap align-items-center w-100">
                         <div class="form-group mr-2 mb-0">
                             <select class="form-control form-control-sm" id="userFilter">
-                                <option value="">All Users</option>
+                                <option value="">All Logs</option>
                                 <?php foreach ($users as $user): ?>
-                                    <option value="<?php echo htmlspecialchars($user); ?>">
+                                    <option value="<?php echo htmlspecialchars($user); ?>" selected>
                                         <?php echo htmlspecialchars($user); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -424,7 +426,9 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
                         
                         <div class="form-group mr-2 mb-0">
                             <select class="form-control form-control-sm" id="usertypeFilter">
+                                <option value="">All Types</option>
                                 <option value="Admin">Admin</option>
+                                <option value="User">User</option>
                             </select>
                         </div>
                         
@@ -625,14 +629,21 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
                 'margin-right': '5px'
             });
             
+            // Apply default username filter if a specific user is selected
+            const defaultUser = $('#userFilter option:selected').val();
+            if (defaultUser) {
+                table.column(0).search(defaultUser).draw();
+            }
+            
             // Update export form values when filters change
             $('#userFilter').on('change', function() {
-                table.column(1).search(this.value).draw();
+                console.log('User filter changed to:', this.value);
+                table.column(0).search(this.value).draw();
                 $('#export_user').val(this.value);
             });
             
             $('#usertypeFilter').on('change', function() {
-                table.column(2).search(this.value).draw();
+                table.column(1).search(this.value).draw();
                 $('#export_user_type').val(this.value);
             });
             
@@ -835,18 +846,21 @@ while ($row = mysqli_fetch_assoc($check_structure)) {
 
         // Sidebar toggle function
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            const toggleButton = document.querySelector('.sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('.main');
+            const toggleButton = document.querySelector('.bx-menu');
 
-            sidebar.classList.toggle('active');
-            main.classList.toggle('active');
-            toggleButton.classList.toggle('rotate');
+            if (sidebar) {
+                sidebar.classList.toggle('close');
+            }
+            if (toggleButton) {
+                toggleButton.classList.toggle('rotate');
+            }
         }
 
         // Add event listener for sidebar toggle
         document.addEventListener('DOMContentLoaded', function() {
-            const toggleButton = document.querySelector('.sidebar-toggle');
+            const toggleButton = document.querySelector('.bx-menu');
             if (toggleButton) {
                 toggleButton.onclick = toggleSidebar;
             }
