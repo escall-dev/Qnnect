@@ -19,7 +19,7 @@ if ($from_super_admin) {
 
 require_once '../includes/auth_functions.php';
 
-Check if user is logged in
+// Check if user is logged in
 if (!isset($_SESSION['email'])) {
     // Redirect to appropriate login page
     if ($from_super_admin) {
@@ -160,6 +160,10 @@ function handleEdit() {
                 }
                 
                 $_SESSION['success'] = "Profile updated successfully!";
+                // Mark if password was changed so frontend can show a specific confirmation
+                if (!empty($password)) {
+                    $_SESSION['password_changed'] = true;
+                }
             } else {
                 $_SESSION['error'] = "Error updating profile: " . $stmt->error;
             }

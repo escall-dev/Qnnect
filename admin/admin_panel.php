@@ -3829,5 +3829,14 @@ $total_pages = ceil($total_logs / $logs_per_page);
             }
         });
     </script>
+    <?php
+    // If password was changed, show a confirmation modal when the admin panel loads
+    if (isset($_SESSION['password_changed']) && $_SESSION['password_changed']) {
+        // Prepare a small inline script to show the success modal with a specific message
+        echo "<script>document.addEventListener('DOMContentLoaded', function() { if (typeof showSuccess === 'function') { showSuccess('Your password has been changed successfully.','Password Changed'); } });</script>";
+        // Clear the flag so it doesn't show again on subsequent requests
+        unset($_SESSION['password_changed']);
+    }
+    ?>
 </body>
 </html>
