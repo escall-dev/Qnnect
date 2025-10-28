@@ -1002,3 +1002,10 @@ try {
         $section = $parts[1] ?? '';
         
         if (!in_array($course, $courses) && !empty($course)) {
+            $courses[] = $course;
+        }
+    }
+} catch (Exception $e) {
+    // Swallow non-fatal errors while building filter lists
+}
+?>
