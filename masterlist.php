@@ -200,7 +200,9 @@ if ($column_result->num_rows == 0) {
         }
 
         .table tbody tr:hover {
-            background-color: #076a34;
+            filter: brightness(110%);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
         }
 
         /* Action buttons styling */

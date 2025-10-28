@@ -196,6 +196,41 @@ $schools = getSchools($conn);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             height: 100vh;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* Background image overlay for theme customization */
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 100% 100%;
+            background-position: center top;
+            background-repeat: no-repeat;
+            opacity: 0;
+            filter: blur(3px);
+            transition: opacity 0.6s ease-in-out;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .background-overlay.active {
+            opacity: 0.5;
+        }
+
+        /* Add a subtle gradient overlay on top of background for better readability */
+        .background-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(9, 135, 68, 0.2) 0%, 
+                rgba(10, 92, 46, 0.2) 100%);
         }
 
         .main-container {
@@ -203,6 +238,7 @@ $schools = getSchools($conn);
             height: 100vh;
             position: relative;
             overflow: hidden;
+            z-index: 1;
         }
 
         /* Left Section - Branding */
@@ -261,7 +297,7 @@ $schools = getSchools($conn);
         }
 
         .tagline {
-            font-size: 28px;
+            font-size: 40px;
             font-weight: 400;
             opacity: 0.9;
             color: white;
@@ -272,7 +308,7 @@ $schools = getSchools($conn);
         /* Right Section - Login Panel */
         .login-section {
             flex: 0 0 750px;
-            background: var(--primary-color);
+            background: rgba(9, 135, 68, 0.3);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -745,7 +781,7 @@ $schools = getSchools($conn);
 
   /* Each policy item must be position:relative for absolute child */
   .policy-item {
-    position: relative;          /* important */
+    position: relative;
     display: inline-block;
     margin: 0 6px;
   }
@@ -757,6 +793,7 @@ $schools = getSchools($conn);
     border-radius: 6px;
     display: inline-block;
     font-weight: 600;
+    cursor: pointer;
   }
   .footer a.footer-link:hover,
   .footer a.footer-link:focus {
@@ -765,64 +802,78 @@ $schools = getSchools($conn);
     outline: none;
   }
 
-                /* Small hover modal (tooltip-like) - dark glass theme (readability enhanced) */
-                .hover-modal {
-            position: fixed; /* centered overlay panel */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(.97);
-            width: 520px;
-            max-width: min(90%, 640px);
-                background:
-                    linear-gradient(160deg, rgba(22,78,55,.90), rgba(14,55,38,.93)) padding-box;
-                color: #f2fff9;
-            padding: 28px 32px 30px;
-            border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.18);
-                box-shadow: 0 4px 12px -2px rgba(0,0,0,0.45), 0 20px 44px -10px rgba(0,0,0,0.55);
-            backdrop-filter: blur(12px) saturate(160%);
-            -webkit-backdrop-filter: blur(12px) saturate(160%);
-            z-index: 1000;
-            text-align: left;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.55;
-            letter-spacing: .25px;
-            opacity: 0;               /* hidden by default */
-            visibility: hidden;
-            pointer-events: none;      /* don't intercept clicks when hidden */
-            transition: opacity .14s ease, transform .22s cubic-bezier(.16,.84,.44,1);
-        }
+  /* Policy modal in branding section */
+  .policy-modal {
+    position: absolute;
+    top: 50%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    width: 95%;
+    max-width: 650px;
+    background: linear-gradient(160deg, rgba(22,78,55,.75), rgba(14,55,38,.78));
+    color: #f2fff9;
+    padding: 35px 40px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 100;
+    text-align: left;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    display: none;
+  }
 
-                .hover-modal:before {
-                    content: "";
-                    position: absolute;
-                    inset: 0;
-                    border-radius: inherit;
-                    background:
-                        radial-gradient(circle at 18% 22%, rgba(120,255,200,0.15), rgba(120,255,200,0) 62%),
-                        radial-gradient(circle at 82% 78%, rgba(9,135,68,0.22), rgba(9,135,68,0) 70%);
-                    pointer-events: none;
-                    mix-blend-mode: screen;
-                }
+  .policy-modal.active {
+    display: block;
+  }
 
-                .hover-modal .left strong,
-                .hover-modal .right strong { color:#8dfed4; font-weight:700; letter-spacing:.45px; text-shadow:0 0 6px rgba(141,254,212,0.4); }
-                .hover-modal p { margin:0 0 14px; font-size:15px; line-height:1.55; color:#e6f9f1; }
-                .hover-modal .separator { background: linear-gradient(to bottom, rgba(141,254,212,0.65), rgba(141,254,212,0.08)); }
-                .hover-modal a { color:#9bffe0; text-decoration:underline; }
-                .hover-modal a:hover { text-decoration:none; color:#cffff0; }
-                .hover-modal small, .hover-modal li { color:#d9f5eb; }
-  
+  .policy-modal h3 {
+    color: #8dfed4;
+    font-weight: 700;
+    font-size: 24px;
+    margin: 0 0 20px 0;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 6px rgba(141,254,212,0.3);
+    text-align: center;
+  }
 
-  /* show hover modal when the policy-item or the modal itself is hovered or focused */
-    .policy-item:hover .hover-modal,
-    .policy-item:focus-within .hover-modal,
-    .hover-modal:hover {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-        transform: translate(-50%, -50%) scale(1);
-    }
+  .policy-modal p {
+    margin: 0 0 16px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #e6f9f1;
+  }
+
+  .policy-modal ul {
+    margin: 10px 0;
+    padding-left: 20px;
+    color: #d9f5eb;
+  }
+
+  .policy-modal .close-modal-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .policy-modal .close-modal-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+  }
   
   
   /* Overlay modal (large full content on click) */
@@ -973,6 +1024,9 @@ $schools = getSchools($conn);
     </style>
 </head>
 <body>
+    <!-- Background overlay for school-specific images -->
+    <div class="background-overlay" id="backgroundOverlay"></div>
+    
     <div class="main-container">
         <!-- Left Section - Branding -->
         <div class="branding-section">
@@ -989,6 +1043,13 @@ $schools = getSchools($conn);
                 <div class="tagline">
                 Scan in. Stay Synced.
                 </div>
+            </div>
+
+            <!-- Policy Modal -->
+            <div class="policy-modal" id="policyModal">
+                <button class="close-modal-btn" onclick="closePolicyModal()">&times;</button>
+                <h3 id="policyModalTitle">Title</h3>
+                <div id="policyModalContent">Content</div>
             </div>
         </div>
 
@@ -1227,14 +1288,6 @@ $schools = getSchools($conn);
                 }
             });
             
-            // Update theme colors
-            const school = schools.find(s => s.id == schoolId);
-            if (school && school.theme_color) {
-                document.documentElement.style.setProperty('--primary-color', school.theme_color);
-                const secondaryColor = adjustBrightness(school.theme_color, -20);
-                document.documentElement.style.setProperty('--secondary-color', secondaryColor);
-            }
-            
             // Enable continue button
             document.getElementById('btn_step1').disabled = false;
             
@@ -1246,19 +1299,82 @@ $schools = getSchools($conn);
 
         // Handle school item clicks
         function handleSchoolClick(schoolId) {
+            console.log('=== handleSchoolClick called ===');
+            console.log('School ID clicked:', schoolId);
+            console.log('Available schools:', schools);
+            
             // Find the index of the clicked school
             const schoolIndex = schools.findIndex(s => s.id == schoolId);
+            console.log('School index found:', schoolIndex);
+            
             if (schoolIndex !== -1) {
                 currentSchoolIndex = schoolIndex;
                 updateSchoolCarousel();
+                
+                // Set background image based on school
+                console.log('Setting background for school:', schools[schoolIndex]);
+                setSchoolBackgroundImage(schools[schoolIndex]);
             } else {
+                console.log('School not found in array, using default');
                 // Handle default schools (SPCPC = 1, Computer Site Inc. = 2)
                 currentSchoolIndex = schoolId - 1;
                 updateSchoolCarousel();
+                
+                // Set background for default schools
+                const defaultSchool = {
+                    id: schoolId,
+                    name: schoolId === 1 ? 'SPCPC' : 'Computer Site Inc.'
+                };
+                console.log('Setting background for default school:', defaultSchool);
+                setSchoolBackgroundImage(defaultSchool);
             }
             
             // Select the school
             selectSchool(schoolId);
+        }
+
+        // Set background image based on selected school
+        function setSchoolBackgroundImage(school) {
+            console.log('setSchoolBackgroundImage called with:', school);
+            const overlay = document.getElementById('backgroundOverlay');
+            if (!overlay) {
+                console.error('Background overlay element not found!');
+                return;
+            }
+            
+            let backgroundImageUrl = '';
+            
+            // Map school names to their background images
+            const schoolName = school.name.toLowerCase();
+            console.log('School name (lowercase):', schoolName);
+            
+            if (schoolName.includes('computer site') || schoolName.includes('comsite')) {
+                backgroundImageUrl = 'uploads/login_school_bg/comsite.jpeg';
+                console.log('Matched Computer Site - Setting background:', backgroundImageUrl);
+            } else if (schoolName.includes('cnhs') && schoolName.includes('san vicente')) {
+                backgroundImageUrl = 'uploads/login_school_bg/cnhs-sv_extension.jpeg';
+                console.log('Matched CNHS San Vicente - Setting background:', backgroundImageUrl);
+            } else if (schoolName.includes('spcpc') || schoolName.includes('san pedro') || schoolName.includes('polytechnic')) {
+                backgroundImageUrl = 'uploads/login_school_bg/spcpc-bg.png';
+                console.log('Matched SPCPC - Setting background:', backgroundImageUrl);
+            } else {
+                console.log('No match found for school name:', schoolName);
+                console.log('Attempting default SPCPC background for unmatched school');
+                // Default to SPCPC background if no other match
+                backgroundImageUrl = 'uploads/login_school_bg/spcpc.png';
+            }
+            
+            // Apply or remove background image
+            if (backgroundImageUrl) {
+                console.log('Applying background image:', backgroundImageUrl);
+                overlay.style.backgroundImage = `url('${backgroundImageUrl}')`;
+                overlay.classList.add('active');
+                console.log('Background image applied successfully');
+            } else {
+                console.log('Removing background image');
+                overlay.style.backgroundImage = '';
+                overlay.classList.remove('active');
+            }
         }
 
         // Navigate between schools - carousel style
@@ -1313,6 +1429,17 @@ $schools = getSchools($conn);
                 selectedSchoolId = schoolId;
                 document.getElementById('selected_school_id').value = schoolId;
                 document.getElementById('btn_step1').disabled = false;
+                
+                // Update background image for current school
+                if (schools.length > 0) {
+                    setSchoolBackgroundImage(schools[currentSchoolIndex]);
+                } else {
+                    const defaultSchool = {
+                        id: schoolId,
+                        name: schoolId === 1 ? 'SPCPC' : 'Computer Site Inc.'
+                    };
+                    setSchoolBackgroundImage(defaultSchool);
+                }
             }
         }
 
@@ -1665,60 +1792,55 @@ $schools = getSchools($conn);
         <!-- FOOTER HTML -->
            
  <footer class="footer" role="contentinfo" aria-label="Footer">
-    <span class="policy-item" tabindex="0">
-      <a href="#" class="footer-link" data-key="privacy">Privacy Policy</a>
-      <div class="hover-modal" role="tooltip">
-       <!-- Privacy Policy -->
-        <p>The system collects only necessary information such as name, ID number, and attendance logs for the sole purpose of monitoring and recording attendance. All personal data is stored securely and will not be shared with third parties without consent, except when required by law. Users are assured that their information will be used responsibly and strictly for administrative purposes related to attendance tracking.</p>
-      </div>
+    <span class="policy-item">
+      <a href="#" class="footer-link" onclick="openPolicyModal('Privacy Policy', 'The system collects only necessary information such as name, ID number, and attendance logs for the sole purpose of monitoring and recording attendance. All personal data is stored securely and will not be shared with third parties without consent, except when required by law. Users are assured that their information will be used responsibly and strictly for administrative purposes related to attendance tracking.'); return false;">Privacy Policy</a>
     </span>
 
-    <span class="policy-item" tabindex="0">
-      <a href="#" class="footer-link" data-key="terms">Terms &amp; Policies</a>
-      <div class="hover-modal" role="tooltip">
-       <!-- Terms &amp; Policies -->
-        <p>Users agree to provide accurate information when registering or scanning their QR code. Any misuse of the system, such as attempting to scan on behalf of another individual or providing false details, is strictly prohibited. The administration reserves the right to review, suspend, or revoke access to the system in cases of policy violations. Continued use of the system signifies acceptance of these terms and conditions, which are subject to updates as needed to improve the service.</p>
-      </div>
+    <span class="policy-item">
+      <a href="#" class="footer-link" onclick="openPolicyModal('Terms &amp; Policies', 'Users agree to provide accurate information when registering or scanning their QR code. Any misuse of the system, such as attempting to scan on behalf of another individual or providing false details, is strictly prohibited. The administration reserves the right to review, suspend, or revoke access to the system in cases of policy violations. Continued use of the system signifies acceptance of these terms and conditions, which are subject to updates as needed to improve the service.'); return false;">Terms &amp; Policies</a>
     </span>
 
-    <span class="policy-item" tabindex="0">
-      <a href="#" class="footer-link" data-key="community">Community Standards</a>
-      <div class="hover-modal" role="tooltip">
-        <!-- Community Standards -->
-        <p>To maintain fairness and integrity, all users are expected to follow proper guidelines when using the QR Attendance Monitoring System. This includes scanning attendance honestly, respecting the privacy of others, and avoiding any actions that may disrupt the accuracy of records. The system is designed to promote accountability and transparency, and every member of the community is encouraged to uphold these values. Respectful use of the system ensures a reliable and trustworthy attendance record for everyone.</p>
-      </div>
+    <span class="policy-item">
+      <a href="#" class="footer-link" onclick="openPolicyModal('Community Standards', 'To maintain fairness and integrity, all users are expected to follow proper guidelines when using the QR Attendance Monitoring System. This includes scanning attendance honestly, respecting the privacy of others, and avoiding any actions that may disrupt the accuracy of records. The system is designed to promote accountability and transparency, and every member of the community is encouraged to uphold these values. Respectful use of the system ensures a reliable and trustworthy attendance record for everyone.'); return false;">Community Standards</a>
     </span>
 
-    <span class="policy-item" tabindex="0">
-        <a href="#" class="footer-link" data-key="community">About Us</a>
-        <div class="hover-modal" role="tooltip">
-            <div class="left">
-            <strong>A Capstone Project Developed By:</strong>
-            San Pedro City Polytechnic College <br>
-            BSIT - 402 | GROUP 1<br>
-           <br>
-            <ul>
-                Barcelona, Christian Danry<br>
-                Bayot, David Joshua<br>
-                Escallente, Alexander Joerenz<br>
-                Lucenecio, Ma. Melissa<br>
-                Pinedes, Redgine<br>
-            </ul>
-            </div> <br>
-            <div class="separator"></div>
-            <div class="right">
-           Qnnect © 2025
-            | To God be the Glory <br>
-            </div>
-        </div>
+    <span class="policy-item">
+        <a href="#" class="footer-link" onclick="openPolicyModal('About Qnnect', 'Qnnect is a QR Code–based Attendance Management System designed to automate and simplify the tracking of student attendance within academic institutions. It connects students, instructors, and administrators through a unified platform that ensures accuracy, speed, and reliability in attendance recording.<br><br>The system eliminates manual attendance errors by using unique QR codes assigned to every student. Once scanned, Qnnect instantly logs attendance data into the school\'s local database, ensuring secure and real-time record management even without internet access.<br><br>Qnnect also provides tools for administrators and instructors to manage schedules, subjects, and reports efficiently. Its design focuses on usability, data integrity, and local deployment, making it ideal for schools that prefer offline systems without depending on cloud services.<br><br>With Qnnect, attendance tracking becomes faster, more secure, and seamlessly integrated into daily academic operations.'); return false;">About Us</a>
     </span>
-
-    
 
     <span class="flex-spacer" aria-hidden="true"></span>
     <span class="app-version" title="Application Version">Current Version: 1.3.6</span>
 
   </footer>
+
+  <script>
+    // Policy Modal Functions
+    function openPolicyModal(title, content) {
+        const modal = document.getElementById('policyModal');
+        const modalTitle = document.getElementById('policyModalTitle');
+        const modalContent = document.getElementById('policyModalContent');
+        
+        modalTitle.textContent = title;
+        modalContent.innerHTML = '<p>' + content + '</p>';
+        modal.classList.add('active');
+    }
+
+    function closePolicyModal() {
+        const modal = document.getElementById('policyModal');
+        modal.classList.remove('active');
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('policyModal');
+        if (modal && modal.classList.contains('active')) {
+            // Don't close if clicking inside the modal
+            if (!modal.contains(e.target) && !e.target.classList.contains('footer-link')) {
+                closePolicyModal();
+            }
+        }
+    });
+  </script>
 
   <!-- Overlay for click (pop-up full content) -->
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
