@@ -41,7 +41,7 @@ function upsert_setting($conn, $key, $value){
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
     return $ok;
-}
+}   
 
 $PIN_KEY = 'super_admin_pin_hash';
 $FAILED_ATTEMPTS_KEY = 'super_admin_failed_attempts';
